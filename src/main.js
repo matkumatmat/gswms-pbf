@@ -34,6 +34,12 @@ const DomainRegistry = {
     cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME
   },
 
+  'getShortBatchLookup': {
+    factory: () => new BatchLookupService(new BatchLookupRepo()),
+    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
+    method: 'getShortBatchLookup'
+  },
+
   'updatePrintStatus': { factory: () => new ShippingLabelService(new ShippingLabelRepo()) }
 
 
@@ -125,7 +131,9 @@ function fetchUiData(action, reqPage = 1, reqLimit = 50) {
     const limitNum = parseInt(reqLimit) || 50;
 
     // Tarik data dari Service
-    const data = service.getPaginatedData(pageNum, limitNum);
+    const methodName = route.method || 'getPaginatedData';
+    // const data = service.getPaginatedData(pageNum, limitNum);
+    const data = service[methodName](pageNum, limitNum);
 
     // Siapkan payload balikan
     const responsePayload = { 
@@ -231,19 +239,47 @@ function doGet(e) {
       });
     }
 
-    // 6. Eksekusi Data Layer jika Cache kosong atau versi basi
+    // // 6. Eksekusi Data Layer jika Cache kosong atau versi basi
+    // // Pastikan di sini juga panggilnya pageNumber
+    // const data = service.getPaginatedData(pageNumber, limit);
+
+    // // 7. Simpan ke Cache selama 6 jam (21600 detik)
+    // cache.put(cacheKey, JSON.stringify(data), 21600);
+
+    // return responseHelper({ 
+    //   status: "success", 
+    //   source: `spreadsheet (v.${currentVersion})`, 
+    //   count: data.length, 
+    //   data: data 
+    // });
+
+// 6. Eksekusi Data Layer jika Cache kosong atau versi basi
     // Pastikan di sini juga panggilnya pageNumber
-    const data = service.getPaginatedData(pageNumber, limit);
+    // const data = service.getPaginatedData(pageNumber, limit);
+    // 6. Eksekusi Data Layer jika Cache kosong atau versi basi
+    const methodName = route.method || 'getPaginatedData';
+    const data = service[methodName](pageNumber, limit);
 
     // 7. Simpan ke Cache selama 6 jam (21600 detik)
-    cache.put(cacheKey, JSON.stringify(data), 21600);
+    // Penanganan khusus jika ukuran data melebihi batas maksimal CacheService (100 KB)
+    try {
+      const jsonString = JSON.stringify(data);
+      // Pengecekan kasar panjang string (1 karakter kira-kira 1-2 bytes).
+      // Batas aman diset di sekitar 90.000 karakter sebelum dilempar ke cache.
+      if (jsonString.length < 90000) {
+        cache.put(cacheKey, jsonString, 600); // 600 detik = 10 menit
+      }
+    } catch (cacheError) {
+      // Abaikan error cache (misal argumen terlalu besar), lanjutkan untuk me-return data
+      console.warn("Bypass cache, payload melebihi limit batas ukuran GAS.");
+    }
 
     return responseHelper({ 
       status: "success", 
       source: `spreadsheet (v.${currentVersion})`, 
       count: data.length, 
       data: data 
-    });
+    });    
 
   } catch (error) {
     return responseHelper({ 

@@ -13,6 +13,10 @@ class BatchLookupService {
             'perBucket', 'createdAt', 'updatedAt', 'updatedBy',
             'notes'
         ];
+        this.shortKeys = ['id', 'kodeBarang', 'namaBarangDagang',
+            'batch','expiryDate', 'perBucket'
+        ];
+
         this.fotoUrlKeys = [
             'idDrive', 'idUuid', 'folderPath', 'fileName', 'type', 'url', 'base64'
         ]
@@ -31,4 +35,20 @@ class BatchLookupService {
     const batchLookups = AppUtils.mapArrayToObject(rawData, this.tableKeys);
     return batchLookups.filter(e => e.batch !== null && e.batch !== '');
     }
+
+    getShortBatchLookup(page =1, requestedLimit = null) {
+        const limit = requestedLimit ? parseInt(requestedLimit) : 5000;
+        const rawData = this.repo.getPaginatedRawData(page, limit);
+        const fullBatchLookups = AppUtils.mapArrayToObject(rawData, this.tableKeys);
+        const validBatchLookups = fullBatchLookups.filter(e => e.batch !== null && e.batch !== '');        
+        return validBatchLookups.map(fullObj => {
+            let simpleObj = {};
+            this.shortKeys.forEach(key => {
+                simpleObj[key] = fullObj[key]
+            })
+            return simpleObj;
+        });
+    }
+
+
 }
