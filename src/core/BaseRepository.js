@@ -47,13 +47,18 @@ class BaseRepository {
     const range = sheet.getRange(calculatedStartRow, 1, rowsToFetch, maxCols);
     return range.getValues();
   }
-
-  /**
+/**
    * Menambahkan baris baru ke bawah tabel
    */
   appendRow(rowData) {
     const sheet = this._getSheet();
     sheet.appendRow(rowData);
+    
+    // Panggil audit secara otomatis terhadap baris yang baru saja masuk
+    if (typeof SystemTrigger !== 'undefined') {
+      SystemTrigger.runAudit(sheet, sheet.getLastRow());
+    }
+    
     return true;
   }
 }
