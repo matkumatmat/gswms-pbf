@@ -1,0 +1,36 @@
+<script>
+/**
+ * ClientConfig: Pusat kendali konfigurasi UI.
+ * Memisahkan data/label/status dari logic fungsional.
+ */
+const ClientConfig = {
+  
+  // Konfigurasi Badge/Status (Dictionary-Driven)
+  BADGE_STATUS: {
+    // Domain: Shipping
+    'BELUM_CETAK': { label: 'Belum Cetak', css: 'badge-warning' },
+    'PROSES':      { label: 'Sedang Proses', css: 'badge-info' },
+    'SUDAH_CETAK': { label: 'Sudah Cetak', css: 'badge-success' },
+    
+    // Domain: System/Hardware
+    'ERROR':       { label: 'Printer Error', css: 'badge-danger' },
+    'PENDING':     { label: 'Antrian Lokal', css: 'badge-warning' },
+
+    // Fallback
+    'DEFAULT':     { label: 'Unknown', css: 'badge-default' }
+  },
+
+  ICONS: {
+    DASHBOARD: 'layout-dashboard',
+    SHIPPING: 'package',
+    PRODUCT: 'tag',
+    PRINT: 'printer',
+    SAVE: 'save',
+    MENU: 'menu'
+  },
+
+  // Kamu bisa tambah config lain di sini nanti, misal:
+  // UI_SETTINGS: { ... },
+  // API_TIMEOUT: 5000
+};
+</script>

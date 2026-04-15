@@ -1,0 +1,136 @@
+<?!= include('src/client/pages/shipping_label/ShippingLabelStyle'); ?>
+
+<div class="app-container dashboard-layout">
+  
+  <div class="left-panel">
+    
+    <div class="summary-card">
+      <div>
+        <p style="text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: 600;">Antrian Hari Ini</p>
+        <h2 id="summaryCount">0</h2>
+      </div>
+      <i data-lucide="printer" style="width: 48px; height: 48px; opacity: 0.5;"></i>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Antrian Cetak (Belum Cetak)</div>
+      <div class="table-responsive">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>No. Dokumen</th>
+              <th>Customer</th>
+              <th>Qty</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="print-queue-body">
+            </tbody>
+        </table>
+      </div>
+    </div>
+    
+  </div> <div class="right-panel">
+    <h2 style="margin-bottom: 20px; color: var(--primary);">Form Label Pengiriman</h2>
+    
+    <form id="shippingForm">
+      
+      <div class="card section-recipient">
+        <div class="card-header">Konsumen</div>
+        
+        <div class="form-group dropdown-container">
+          <label>Cari Customer / Branch</label>
+          <input type="text" id="custSearch" placeholder="Ketik nama customer atau cabang..." autocomplete="off">
+          <div id="customDropdown" class="custom-dropdown"></div>
+        </div>
+
+        <div id="customerCard" class="customer-card">
+          <div class="cc-title" id="ccNameBranch">CUSTOMER NAME - BRANCH</div>
+          <div class="cc-row">
+            <i data-lucide="map-pin" style="width:16px;"></i>
+            <div>
+              <span id="ccAddress1"></span><br>
+              <span id="ccAddress2"></span>
+            </div>
+          </div>
+          <div class="cc-row">
+            <i data-lucide="phone" style="width:16px;"></i>
+            <span id="ccContact"></span>
+          </div>
+          <div class="cc-row">
+            <i data-lucide="user" style="width:16px;"></i>
+            <span id="ccPic"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card section-boxes">
+        <div class="card-header">Konfigurasi Box</div>
+        <div class="box-grid" id="boxGridContainer">
+          </div>
+      </div>
+
+      <button type="button" class="btn btn-primary" id="btnShowConfirm" style="width: 100%; padding: 12px; font-size: 16px;">
+        Review & Lanjutkan
+      </button>
+
+    </form>
+  </div> </div> <div id="modalBoxConfig" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <span id="modalBoxTitle">Tambah Konfigurasi Box</span>
+      <button class="btn-close-icon" onclick="closeModal('modalBoxConfig')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Jumlah Box (Dengan config yang sama)</label>
+        <input type="number" id="inputJmlBox" value="1" min="1">
+      </div>
+      <div class="form-group">
+        <label>Petugas</label>
+        <input type="text" id="inputBoxPetugas" value="Kaye">
+      </div>
+      <div class="form-group">
+        <label>Suhu (Temperature)</label>
+        <input type="text" id="inputBoxSuhu" value="2-8 °C">
+      </div>
+      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;">
+      <div class="form-group">
+        <label style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          Daftar Produk
+          <button type="button" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="addProductRow()">+ Tambah Item</button>
+        </label>
+        <div id="productRowsContainer"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" style="background:#64748b" onclick="closeModal('modalBoxConfig')">Batal</button>
+      <button class="btn btn-primary" onclick="saveBoxConfig()">Simpan Box</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalConfirm" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <span>Konfirmasi Data Payload</span>
+      <button class="btn-close-icon" onclick="closeModal('modalConfirm')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body" style="font-size: 13px; color: #334155;">
+      <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+        <strong>Penerima:</strong> <span id="confCustomer"></span><br>
+        <strong>Cabang:</strong> <span id="confBranch"></span><br>
+        <strong>Total Box Keseluruhan:</strong> <span id="confTotalBox" style="color:var(--primary); font-weight:bold;"></span>
+      </div>
+      <strong>Rincian Box:</strong>
+      <ul id="confBoxList" style="margin-top: 8px; padding-left: 20px; line-height: 1.6;"></ul>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" style="background:#64748b" onclick="closeModal('modalConfirm')">Kembali Edit</button>
+      <button class="btn btn-primary" id="btnFinalSubmit" onclick="executeSubmitPayload()">Generate & Simpan ke Sheet</button>
+    </div>
+  </div>
+</div>
+
+<?!= include('src/client/pages/shipping_label/ShippingLabelScript'); ?>

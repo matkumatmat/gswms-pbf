@@ -1,0 +1,119 @@
+<style>
+  :root {
+    --primary: #2563eb;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+  }
+  
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg);
+    margin: 0;
+    color: #333;
+  }
+  
+  .app-container {
+    width: 100%;
+  }
+  
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  
+  .box-component {
+    border-left: 4px solid var(--primary);
+    background: #f1f5f9;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #475569;
+  }
+  
+  input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  .btn-submit {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 16px;
+  }
+
+  pre {
+    background: #1e293b;
+    color: #a5b4fc;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+  /* --- BADGE STYLES --- */
+  .badge {
+    display: inline-block;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 12px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .badge-default { background-color: #e2e8f0; color: #475569; }
+  .badge-warning { background-color: #fef08a; color: #854d0e; }
+  .badge-info    { background-color: #bae6fd; color: #075985; }
+  .badge-success { background-color: #bbf7d0; color: #166534; }
+  .badge-danger  { background-color: #fecaca; color: #991b1b; }
+
+  /* --- DESKTOP GRID LAYOUT --- */
+  .dashboard-layout {
+    display: flex;
+    flex-direction: column; /* Mobile: Tumpuk ke bawah */
+    gap: 20px;
+  }
+  
+  .summary-card {
+    background: linear-gradient(135deg, var(--primary), #008f9e);
+    color: white; padding: 20px; border-radius: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  .summary-card h2 { margin: 0; font-size: 2rem; color: white; }
+  .summary-card p { margin: 0; opacity: 0.9; font-size: 0.9rem; }
+
+  @media (min-width: 1024px) {
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1fr 400px; /* Kiri proporsional, Kanan (Form) fix 400px */
+      align-items: start;
+    }
+    .right-panel { position: sticky; top: 80px; } /* Biar form ngikut pas di-scroll */
+    
+    /* Pindah form ke kanan dengan mengatur urutan CSS kalau perlu, 
+       tapi kita atur dari struktur HTML aja biar gampang */
+  }
+</style>

@@ -1,0 +1,399 @@
+<script>
+  // ====================================================================
+  // 1. GLOBAL STATE MANAGEMENT
+  // ====================================================================
+  let masterCustomers = [];
+  let selectedCustomerPayload = null; 
+  let boxConfigs = []; // Format: [{ start: 1, end: 2, count: 2, petugas: '', temp: '', products: [{name, qty}] }]
+  let totalCalculatedBoxes = 0; 
+
+  // ====================================================================
+  // 2. INITIALIZATION
+  // ====================================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    loadPrintQueue(); 
+    loadMasterCustomers();
+    renderBoxGrid(); // Inisialisasi kotak box kosong + tombol [+]
+  });
+
+  // ====================================================================
+  // 3. LOGIC CUSTOMER & DROPDOWN (MISI A)
+  // ====================================================================
+  function splitAddress15(fullAddress) {
+    if (!fullAddress) return { line1: '', line2: '' };
+    let text = fullAddress.trim();
+    if (text.length <= 15) return { line1: text, line2: '' };
+    
+    let splitIndex = text.lastIndexOf(' ', 15);
+    if (splitIndex === -1 || splitIndex === 0) splitIndex = 15; 
+    
+    let l1 = text.substring(0, splitIndex).trim();
+    let l2 = text.substring(splitIndex).trim().substring(0, 15).trim();
+    return { line1: l1, line2: l2 };
+  }
+
+  async function loadMasterCustomers() {
+    try {
+      masterCustomers = await GasApi.get('getCustomers', 1, 100); 
+    } catch (error) {
+      console.error("Gagal narik data customer:", error);
+    }
+  }
+
+  const searchInput = document.getElementById('custSearch');
+  const dropdown = document.getElementById('customDropdown');
+  const cardInfo = document.getElementById('customerCard');
+
+  searchInput.addEventListener('input', function(e) {
+    const keyword = e.target.value.toLowerCase();
+    dropdown.innerHTML = ''; 
+
+    if (keyword.length < 2) {
+      dropdown.classList.remove('show');
+      return;
+    }
+
+    const filtered = masterCustomers.filter(c => 
+      (c.namaKonsumen && c.namaKonsumen.toLowerCase().includes(keyword)) ||
+      (c.kotaCabang && c.kotaCabang.toLowerCase().includes(keyword))
+    );
+
+    if (filtered.length > 0) {
+      filtered.forEach(cust => {
+        const item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.innerHTML = `
+          <div class="di-title">${cust.namaKonsumen}</div>
+          <div class="di-sub">Cabang: ${cust.kotaCabang || '-'}</div>
+        `;
+        
+        item.addEventListener('click', () => {
+          selectedCustomerPayload = cust;
+          searchInput.value = cust.namaKonsumen;
+          dropdown.classList.remove('show');
+          
+          const alamatLengkap = `${cust.alamat || ''}, ${cust.kota || ''}`;
+          const splitAlamat = splitAddress15(alamatLengkap);
+          
+          document.getElementById('ccNameBranch').innerText = `${cust.namaKonsumen} - ${cust.kotaCabang || '-'}`;
+          document.getElementById('ccAddress1').innerText = `L1: ${splitAlamat.line1}`;
+          document.getElementById('ccAddress2').innerText = `L2: ${splitAlamat.line2}`;
+          document.getElementById('ccContact').innerText = cust.kontak || '-';
+          document.getElementById('ccPic').innerText = `PIC: ${cust.pic || '-'}`;
+          
+          cardInfo.classList.add('show');
+          lucide.createIcons();
+        });
+        dropdown.appendChild(item);
+      });
+      dropdown.classList.add('show');
+    } else {
+      dropdown.classList.remove('show');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.classList.remove('show');
+    }
+  });
+
+  // ====================================================================
+  // 4. LOGIC KONFIGURASI BOX (MODAL & GRID)
+  // ====================================================================
+  function openModal(modalId) { document.getElementById(modalId).classList.add('active'); }
+  function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
+
+  function renderBoxGrid() {
+    const container = document.getElementById('boxGridContainer');
+    container.innerHTML = '';
+    totalCalculatedBoxes = 0;
+
+    boxConfigs.forEach((config, index) => {
+      totalCalculatedBoxes += config.count;
+      const card = document.createElement('div');
+      card.className = 'box-card';
+      const labelText = config.count > 1 ? `Box ${config.start} - ${config.end}` : `Box ${config.start}`;
+      
+      // FIX EMOJI: Udah diganti pakai Lucide Icons yang cakep!
+      card.innerHTML = `
+        <button type="button" class="btn-delete-box" onclick="deleteBoxConfig(${index})" title="Hapus Config"><i data-lucide="trash-2" style="width:14px;"></i></button>
+        <div class="box-card-title">${labelText}</div>
+        <div class="box-card-desc" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+          <div style="display:flex; align-items:center; gap:6px; color:#475569"><i data-lucide="user" style="width:14px; height:14px; color:var(--primary);"></i> ${config.petugas}</div>
+          <div style="display:flex; align-items:center; gap:6px; color:#475569"><i data-lucide="thermometer" style="width:14px; height:14px; color:var(--primary);"></i> ${config.temp}</div>
+          <div style="display:flex; align-items:center; gap:6px; color:#475569"><i data-lucide="package" style="width:14px; height:14px; color:var(--primary);"></i> ${config.products.length} Items</div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    const btnAdd = document.createElement('button');
+    btnAdd.type = "button";
+    btnAdd.className = "box-add-btn";
+    btnAdd.onclick = openAddBoxModal;
+    btnAdd.innerHTML = `<i data-lucide="plus" style="width: 24px; color: var(--primary);"></i><span>Tambah Config Box</span>`;
+    container.appendChild(btnAdd);
+
+    lucide.createIcons();
+  }
+
+  function deleteBoxConfig(index) {
+    boxConfigs.splice(index, 1);
+    recalculateBoxNumbering();
+    renderBoxGrid();
+  }
+
+  function recalculateBoxNumbering() {
+    let currentStart = 1;
+    boxConfigs.forEach(config => {
+      config.start = currentStart;
+      config.end = currentStart + config.count - 1;
+      currentStart = config.end + 1;
+    });
+  }
+
+  function openAddBoxModal() {
+    document.getElementById('inputJmlBox').value = 1;
+    document.getElementById('productRowsContainer').innerHTML = '';
+    addProductRow(); 
+    
+    const nextBoxNum = boxConfigs.length > 0 ? boxConfigs[boxConfigs.length-1].end + 1 : 1;
+    document.getElementById('modalBoxTitle').innerText = `Tambah Config (Mulai Box ${nextBoxNum})`;
+    
+    openModal('modalBoxConfig');
+  }
+
+  function addProductRow() {
+    const container = document.getElementById('productRowsContainer');
+    const row = document.createElement('div');
+    row.className = 'product-row';
+    row.innerHTML = `
+      <input type="text" class="prod-name" placeholder="Nama Produk" style="flex:2;">
+      <input type="number" class="prod-qty" placeholder="Qty" value="1" style="flex:1;">
+      <button type="button" class="btn-close-icon" onclick="this.parentElement.remove()" style="color:#ef4444;"><i data-lucide="minus-circle" style="width:18px;"></i></button>
+    `;
+    container.appendChild(row);
+    lucide.createIcons();
+  }
+
+  function saveBoxConfig() {
+    const count = parseInt(document.getElementById('inputJmlBox').value) || 1;
+    const petugas = document.getElementById('inputBoxPetugas').value;
+    const temp = document.getElementById('inputBoxSuhu').value;
+
+    const products = [];
+    document.querySelectorAll('.product-row').forEach(row => {
+      const name = row.querySelector('.prod-name').value.trim();
+      const qty = row.querySelector('.prod-qty').value;
+      if (name) products.push({ name: name, qty: qty });
+    });
+
+    if (products.length === 0) {
+      UI.toast("Minimal masukkan 1 produk!", "warning");
+      return;
+    }
+
+    boxConfigs.push({ count: count, petugas: petugas, temp: temp, products: products });
+    recalculateBoxNumbering();
+    renderBoxGrid();
+    closeModal('modalBoxConfig');
+  }
+
+  // ====================================================================
+  // 5. FLOW REVIEW, KONFIRMASI, DAN SUBMIT
+  // ====================================================================
+  
+  // Nangkep klik tombol Review dari HTML
+  const btnShowConfirm = document.getElementById('btnShowConfirm');
+  if(btnShowConfirm) {
+    btnShowConfirm.addEventListener('click', function(e) {
+      e.preventDefault(); // Jaga-jaga kalau dia ada di dalem tag <form>
+      if (!selectedCustomerPayload) {
+        UI.toast("Pilih Customer dulu di atas!", "warning"); return;
+      }
+      if (boxConfigs.length === 0) {
+        UI.toast("Belum ada Konfigurasi Box yang ditambahkan!", "warning"); return;
+      }
+
+      document.getElementById('confCustomer').innerText = selectedCustomerPayload.namaKonsumen;
+      document.getElementById('confBranch').innerText = selectedCustomerPayload.kotaCabang || '-';
+      document.getElementById('confTotalBox').innerText = `${totalCalculatedBoxes} Box Fisik`;
+
+      const ulBox = document.getElementById('confBoxList');
+      ulBox.innerHTML = '';
+      boxConfigs.forEach(c => {
+        const labelText = c.count > 1 ? `Box ${c.start}-${c.end}` : `Box ${c.start}`;
+        const prodText = c.products.map(p => `${p.name} (Qty: ${p.qty})`).join(', ');
+        ulBox.innerHTML += `<li style="margin-bottom:6px;"><b>${labelText}</b>: Petugas ${c.petugas}, Suhu ${c.temp} <br> <i style="color:#64748b">Isi: ${prodText}</i></li>`;
+      });
+
+      openModal('modalConfirm');
+    });
+  }
+
+  // Dieksekusi dari dalam Modal Konfirmasi
+  async function executeSubmitPayload() {
+    UI.setBtnLoading('btnFinalSubmit', true);
+
+    const alamatLengkap = `${selectedCustomerPayload.alamat || ''}, ${selectedCustomerPayload.kota || ''}`;
+    const finalAlamat = splitAddress15(alamatLengkap);
+    const recipient = {
+      customer: selectedCustomerPayload.namaKonsumen,
+      branch: selectedCustomerPayload.kotaCabang || '',
+      address_line_1: finalAlamat.line1,
+      address_line_2: finalAlamat.line2,
+      contact: `${selectedCustomerPayload.pic || ''} - ${selectedCustomerPayload.kontak || ''}`
+    };
+
+    // Expand Config Grup menjadi Array Box Fisik untuk Backend
+    const expandedBoxesPayload = [];
+    boxConfigs.forEach(config => {
+      for (let i = config.start; i <= config.end; i++) {
+        expandedBoxesPayload.push({
+          current_box: i,
+          petugas: config.petugas,
+          temperature: config.temp,
+          products: JSON.parse(JSON.stringify(config.products)) 
+        });
+      }
+    });
+
+    const finalPayload = {
+      customerId: selectedCustomerPayload.id || "CUST-DUMMY", 
+      namaCustomer: selectedCustomerPayload.namaKonsumen,     // <--- FIX MASUK SPREADSHEET
+      cabangCustomer: selectedCustomerPayload.kotaCabang || '', // <--- FIX MASUK SPREADSHEET
+      noDokumen: "DOC-" + Date.now(),
+      payloadRecipient: recipient,
+      payloadTotalBox: totalCalculatedBoxes, 
+      payloadBoxes: expandedBoxesPayload,    
+      payloadQr: {}
+    };
+
+    try {
+      const responseData = await GasApi.post("createShippingLabel", finalPayload);
+      
+      UI.toast("Mantap! Data sukses masuk ke Spreadsheet!", "success");
+      closeModal('modalConfirm');
+      
+      // Reset Form UI setelah sukses
+      boxConfigs = [];
+      renderBoxGrid();
+      document.getElementById('custSearch').value = '';
+      document.getElementById('customerCard').classList.remove('show');
+      selectedCustomerPayload = null;
+
+      addToQueueTable(responseData); 
+      
+    } catch (error) {
+      UI.toast("Waduh Gagal: " + error.message, "error");
+    } finally {
+      UI.setBtnLoading('btnFinalSubmit', false, "Generate & Simpan ke Sheet");
+    }
+  }
+
+  // ====================================================================
+  // 6. PRINTER & TABEL ANTRIAN (MISI B)
+  // ====================================================================
+  async function loadPrintQueue() {
+    UI.renderTableLoading('print-queue-body', 5, 'Menarik data antrian cetak...');
+    try {
+      const data = await GasApi.get('getShippingLabels', 1, 100); // Tarik agak banyakan
+      const tableBody = document.getElementById('print-queue-body');
+      tableBody.innerHTML = ''; 
+
+      // LOGIC FILTER: Hari Ini & BELUM_CETAK
+      const today = new Date();
+      const filteredData = data.filter(item => {
+        if (!item || !item.tanggal) return false;
+        
+        const itemDate = new Date(item.tanggal);
+        const isToday = itemDate.getDate() === today.getDate() && 
+                        itemDate.getMonth() === today.getMonth() && 
+                        itemDate.getFullYear() === today.getFullYear();
+        
+        // Asumsi kalau kosong = belum cetak
+        const isBelumCetak = (item.printStatus === 'BELUM_CETAK' || !item.printStatus);
+        
+        return isToday && isBelumCetak;
+      });
+
+      // Update Angka di Summary Card
+      document.getElementById('summaryCount').innerText = filteredData.length;
+
+      if (filteredData && filteredData.length > 0) {
+        filteredData.forEach(label => addToQueueTable(label));
+      } else {
+        UI.renderTableEmpty('print-queue-body', 5, 'Semua dokumen hari ini sudah dicetak! ');
+      }
+    } catch (error) {
+      document.getElementById('print-queue-body').innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--secondary);">Error: ${error.message}</td></tr>`;
+    }
+  }
+  async function sendToPrinter(labelData) {
+    const LOCAL_PRINTER_URL = 'http://localhost:8080/print/shipping'; 
+    const payloadGo = {
+      recipient: labelData.payloadRecipient,
+      total_box: labelData.payloadTotalBox,
+      boxes: labelData.payloadBoxes
+    };
+
+    try {
+      const response = await fetch(LOCAL_PRINTER_URL, {
+        method: 'POST',
+        mode: 'cors', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payloadGo)
+      });
+
+  if (response.ok) {
+        UI.toast("Printer Zebra sedang memproses label!", "success");
+        try {
+          UI.toast("Mengupdate status ke Spreadsheet...", "warning");
+          
+          // --- UPDATE PAYLOAD GAS API DI SINI ---
+          await GasApi.post('updatePrintStatus', {
+            id: labelData.id, // <-- PASTIKAN NGELEMPAR ID, BUKAN noDokumen LAGI!
+            status: 'SUDAH_CETAK'
+          });
+          
+          UI.toast("Status berhasil diupdate!", "success");
+          loadPrintQueue(); // Refresh tabel
+        } catch (gasError) {
+          UI.toast("Gagal update status ke Sheet: " + gasError.message, "error");
+        }
+      }
+    } catch (error) {
+      console.error("Koneksi gagal:", error);
+      UI.toast("Gagal konek ke Go-lang Server Lokal (Port 8080)!", "error");
+    }
+  }
+
+  function addToQueueTable(data) {
+    const tableBody = document.getElementById('print-queue-body');
+    
+    if (tableBody.rows.length > 0 && tableBody.rows[0].cells.length === 1) {
+      tableBody.innerHTML = '';
+    }
+
+    const row = document.createElement('tr');
+    const custName = (data.payloadRecipient && data.payloadRecipient.customer) ? data.payloadRecipient.customer : 'Unknown';
+
+    row.innerHTML = `
+      <td>
+        <strong style="color: var(--primary);">${data.noDokumen}</strong><br>
+        <small style="color:#64748b">${Formatter.date(data.tanggal)}</small>
+      </td>
+      <td>${custName}</td>
+      <td>${data.payloadTotalBox} Box</td>
+      <td>${Formatter.statusBadge(data.printStatus || 'BELUM_CETAK')}</td>
+      <td>
+        <button class="btn btn-secondary" onclick='sendToPrinter(${JSON.stringify(data)})'>
+          <i data-lucide="${ClientConfig.ICONS.PRINT}" style="width:16px; height:16px;"></i> Cetak
+        </button>
+      </td>
+    `;
+    tableBody.prepend(row); 
+    lucide.createIcons(); 
+  }
+</script>

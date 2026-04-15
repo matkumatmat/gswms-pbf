@@ -1,0 +1,44 @@
+<script>
+/**
+ * Formatter: Utility class untuk merapihkan data mentah dari backend.
+ * Menggunakan pendekatan Config-Driven untuk skalabilitas UI.
+ */
+class Formatter {
+  /**
+   * Mengubah string status menjadi elemen HTML Badge.
+   * Auto-mapping ke BADGE_CONFIG.
+   */
+    static statusBadge(statusKey) {
+        const key = (statusKey || '').toUpperCase().trim();
+        const config = ClientConfig.BADGE_STATUS[key] || ClientConfig.BADGE_STATUS['DEFAULT'];
+        
+        return `<span class="badge ${config.css}">${config.label}</span>`;
+    }
+
+    static date(dateString) {
+        if (!dateString) return '-';
+        try {
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return dateString; 
+        const options = { 
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        };
+        return d.toLocaleDateString('id-ID', options).replace(/\./g, ':');
+        } catch (e) { return dateString; }
+    }
+    /**
+     * Mengubah angka menjadi format Rupiah
+     */
+    static currency(amount) {
+        if (amount === null || amount === undefined) return '-';
+        const number = Number(amount);
+        if (isNaN(number)) return amount;
+
+        return new Intl.NumberFormat('id-ID', {
+        style: 'currency', currency: 'IDR',
+        minimumFractionDigits: 0, maximumFractionDigits: 0
+        }).format(number);
+    }
+    }
+</script>
