@@ -18,4 +18,17 @@ class BatchLookupService {
         ]
 
     }
+
+    getAllBatchLookup() {
+        const rawData = this.repo.getAllBatchLookupRaw();
+        const batchLookups = AppUtils.mapArrayToObject(rawData, this.tableKeys);
+        return batchLookups.filter(e => e.batch !== null && e.batch !== '');
+    }
+    
+    getPaginatedData(page = 1, requestedLimit = null) {
+    const limit = requestedLimit ? parseInt(requestedLimit) : this.defaultLimit;
+    const rawData = this.repo.getPaginatedRawData(page, limit);
+    const batchLookups = AppUtils.mapArrayToObject(rawData, this.tableKeys);
+    return batchLookups.filter(e => e.batch !== null && e.batch !== '');
+    }
 }

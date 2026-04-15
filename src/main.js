@@ -28,6 +28,12 @@ const DomainRegistry = {
     cacheGroup: AppConfig.DB_SHIPPING_LABEL_SHEET_NAME
   },
 
+  // Domain Batch Lookup
+  'getBatchLookup': {
+    factory: () => new BatchLookupService(new BatchLookupRepo()),
+    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME
+  },
+
   'updatePrintStatus': { factory: () => new ShippingLabelService(new ShippingLabelRepo()) }
 
 
