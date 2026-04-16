@@ -1,0 +1,150 @@
+<?!= include('src/client/pages/product_detail/ProductDetailStyle'); ?>
+
+<div id="pdLoading" style="text-align: center; padding: 40px; color: var(--primary);">
+  <i data-lucide="loader-2" class="lucide-spin" style="width: 32px; height: 32px; margin-bottom: 10px;"></i>
+  <div>Menarik Data Produk...</div>
+</div>
+
+<div id="pdError" class="card" style="display: none; text-align: center; border-color: #ef4444;">
+  <i data-lucide="alert-triangle" style="width: 48px; height: 48px; color: #ef4444; margin-bottom: 10px;"></i>
+  <h3 style="color: #ef4444; margin-bottom: 10px;">Produk Tidak Ditemukan</h3>
+  <p id="pdErrorMsg" style="color: #64748b; margin-bottom: 20px;"></p>
+  <button class="btn btn-secondary" onclick="window.location.href='?page=home'">Kembali ke Dashboard</button>
+</div>
+
+<div id="pdContent" class="pd-layout" style="display: none;">
+  
+  <div class="pd-left">
+    
+    <div class="card">
+      <div class="tags-area" id="detTags"></div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+        <div>
+          <div class="pd-title" id="detNamaDagang">-</div>
+          <div class="pd-subtitle" id="detNamaErp">-</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="kv-label" style="justify-content: flex-end;">Kode Barang</div>
+          <div class="kv-val" id="detKode" style="font-size: 1.2rem; color: var(--primary); font-weight: bold;">-</div>
+        </div>
+      </div>
+
+      <div class="inner-grid-3" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+        <div class="kv-group">
+          <div class="kv-label"><i data-lucide="shield-check"></i> NIE</div>
+          <div class="kv-val" id="detNie">-</div>
+        </div>
+        <div class="kv-group">
+          <div class="kv-label"><i data-lucide="file-text"></i> No. Penerimaan</div>
+          <div class="kv-val" id="detNoDok">-</div>
+        </div>
+        <div class="kv-group">
+          <div class="kv-label"><i data-lucide="hash"></i> System ID</div>
+          <div class="kv-val" id="detId" style="font-family: monospace; font-size: 0.75rem;">-</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i data-lucide="box"></i> Atribut Fisik & Kemasan</div>
+      <div class="inner-grid-3">
+        <div class="kv-group">
+          <div class="kv-label"><i data-lucide="move-3d"></i> Dimensi (P x L x T)</div>
+          <div class="kv-val" id="detDimensi">-</div>
+        </div>
+        <div class="kv-group">
+          <div class="kv-label"><i data-lucide="weight"></i> Berat</div>
+          <div class="kv-val" id="detBerat">-</div>
+        </div>
+        <div class="kv-group">
+          <div class="kv-label"><i data-lucide="layers"></i> Per Bucket</div>
+          <div class="kv-val" id="detPerBucket">-</div>
+        </div>
+      </div>
+      <div class="kv-group" style="margin-top: 10px;">
+        <div class="kv-label"><i data-lucide="eye"></i> Catatan Fisik</div>
+        <div class="kv-val" id="detCatatanFisik" style="font-style: italic; color: #475569;">-</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><i data-lucide="image"></i> Dokumentasi Foto</div>
+      <div id="detPhotos" class="gallery-container"></div>
+    </div>
+
+  </div>
+
+  <div class="pd-right">
+    
+    <div class="card" style="border-top: 4px solid var(--primary);">
+      <div class="kv-group">
+        <div class="kv-label" style="color: var(--primary);"><i data-lucide="tag"></i> Batch Number</div>
+        <div class="kv-val" id="detBatch" style="font-size: 1.5rem; font-weight: 700;">-</div>
+      </div>
+      
+      <div class="inner-grid-2">
+        <div class="kv-group">
+          <div class="kv-label"><i data-lucide="calendar"></i> Mfg. Date</div>
+          <div class="kv-val" id="detMfg">-</div>
+        </div>
+        <div class="kv-group">
+          <div class="kv-label"><i data-lucide="calendar-off"></i> Expiry Date</div>
+          <div class="kv-val" id="detExp" style="color: #ef4444; font-weight: bold;">-</div>
+        </div>
+      </div>
+
+      <div class="inner-grid-2" style="margin-top: 10px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
+        <div class="kv-group">
+          <div class="kv-label"><i data-lucide="clock"></i> RSL (Bulan)</div>
+          <div class="kv-val" id="detRslBln">-</div>
+        </div>
+        <div class="kv-group">
+          <div class="kv-label"><i data-lucide="calendar-days"></i> RSL (Hari)</div>
+          <div class="kv-val" id="detRslHari">-</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <a id="btnLinkInfo" href="#" target="_blank" class="btn btn-secondary btn-icon" style="margin-bottom: 10px;">
+        <i data-lucide="external-link" style="width: 18px;"></i> Buka Info Eksternal / AppSheet
+      </a>
+      <button class="btn btn-primary btn-icon" disabled title="Coming Soon">
+        <i data-lucide="printer" style="width: 18px;"></i> Cetak Label Produk
+      </button>
+    </div>
+
+    <div class="meta-section">
+      <div class="kv-group" style="margin-bottom: 10px;">
+        <div class="kv-label"><i data-lucide="activity"></i> System Notes</div>
+        <div class="kv-val" id="detNotes">-</div>
+      </div>
+      <div class="inner-grid-2" style="margin-bottom: 10px;">
+        <div class="kv-group" style="margin-bottom:0;">
+          <div class="kv-label">Dibuat</div>
+          <div class="kv-val" id="detCreatedAt">-</div>
+        </div>
+        <div class="kv-group" style="margin-bottom:0;">
+          <div class="kv-label">Diupdate</div>
+          <div class="kv-val" id="detUpdatedAt">-</div>
+        </div>
+      </div>
+      <div class="kv-group" style="margin-bottom: 0; border-top: 1px solid #e2e8f0; padding-top: 8px;">
+        <div class="kv-label">Terakhir diubah oleh</div>
+        <div class="kv-val" id="detUpdatedBy" style="font-family: monospace;">-</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="imageModal" class="modal-overlay" style="background: rgba(15, 23, 42, 0.95); z-index: 10000; position: fixed;">
+  <span style="position:absolute; top:20px; right:30px; color:white; font-size:40px; cursor:pointer;" onclick="closeModalImg()">&times;</span>
+  <div id="modalLoading" style="color:white; display:none; align-items: center; gap: 10px;">
+    <i data-lucide="loader-2" class="lucide-spin"></i> Menarik resolusi HD...
+  </div>
+  <img id="modalImg" style="max-width:90vw; max-height:90vh; border-radius:8px; display:none; object-fit: contain;">
+</div>
+
+<?!= include('src/client/pages/product_detail/ProductDetailScript'); ?>

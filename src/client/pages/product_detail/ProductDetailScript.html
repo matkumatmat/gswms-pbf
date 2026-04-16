@@ -1,0 +1,156 @@
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+    
+    // TANGKAP URL PARAMETER LANGSUNG DARI BROWSER
+    google.script.url.getLocation(function(location) {
+      const params = location.parameter;
+      const directId = params.id;
+
+      if (!directId) {
+        showError("ID Produk tidak valid atau tidak dikirim melalui URL.");
+        return;
+      }
+
+      // Lempar ID-nya ke fungsi penarik data
+      initProductDetail(directId);
+    });
+  });
+
+  async function initProductDetail(directId) {
+    try {
+      const detail = await GasApi.post('getBatchDetail', { id: directId });
+      
+      if (!detail) {
+        showError("Data tidak ditemukan di database. Coba cek kembali ID/Batch Anda.");
+        return;
+      }
+
+      renderDetailData(detail);
+      
+      document.getElementById('pdLoading').style.display = 'none';
+      document.getElementById('pdContent').style.display = '';
+      
+      lucide.createIcons(); 
+
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  function showError(msg) {
+    document.getElementById('pdLoading').style.display = 'none';
+    document.getElementById('pdError').style.display = 'block';
+    document.getElementById('pdErrorMsg').innerText = msg;
+    lucide.createIcons();
+  }
+
+  // ... (fungsi renderDetailData dan closeModalImg tetep persis sama kayak sebelumnya) ...
+
+  function renderDetailData(data) {
+    // Helper function untuk handle null/kosong
+    const val = (v, postfix = '') => (v !== null && v !== '') ? `${v} ${postfix}` : '-';
+
+    // 1. HEADER (Kiri Atas)
+    document.getElementById('detNamaDagang').innerText = val(data.namaBarangDagang);
+    document.getElementById('detNamaErp').innerText = val(data.namaBarangErp);
+    document.getElementById('detKode').innerText = val(data.kodeBarang);
+    document.getElementById('detNie').innerText = val(data.nie);
+    document.getElementById('detNoDok').innerText = val(data.noDokPenerimaan);
+    document.getElementById('detId').innerText = data.id;
+
+    // Render Badges (Kategori, Alokasi, Sektor, Status)
+    const tagsContainer = document.getElementById('detTags');
+    tagsContainer.innerHTML = '';
+    
+    if(data.status) tagsContainer.innerHTML += Formatter.statusBadge(data.status); // Pake formatter lu
+    if(data.sysStatus) tagsContainer.innerHTML += `<span class="badge badge-info"><i data-lucide="cpu" style="width:12px; margin-right:4px; vertical-align:-2px;"></i>${data.sysStatus}</span>`;
+    if(data.kategori) tagsContainer.innerHTML += `<span class="badge badge-default">${data.kategori}</span>`;
+    if(data.alokasi) tagsContainer.innerHTML += `<span class="badge badge-default">${data.alokasi}</span>`;
+    if(data.sektor) tagsContainer.innerHTML += `<span class="badge badge-default">${data.sektor}</span>`;
+
+    // 2. FISIK (Kiri Bawah)
+    document.getElementById('detBerat').innerText = val(data.berat);
+    document.getElementById('detPerBucket').innerText = val(data.perBucket);
+    document.getElementById('detCatatanFisik').innerText = val(data.catatanFisik);
+    
+    // Parse Dimensi JSON (p, l, t)
+    let dimText = '-';
+    if (data.dimensionPLT && typeof data.dimensionPLT === 'object') {
+      dimText = `${data.dimensionPLT.p || 0} x ${data.dimensionPLT.l || 0} x ${data.dimensionPLT.t || 0} cm`;
+    } else if (typeof data.dimensionPLT === 'string') {
+       dimText = data.dimensionPLT; // fallback kalau string mentah
+    }
+    document.getElementById('detDimensi').innerText = dimText;
+
+    // 3. BATCH & DATES (Kanan Atas)
+    document.getElementById('detBatch').innerText = val(data.batch);
+    document.getElementById('detMfg').innerText = Formatter.date(data.manufacturingDate);
+    document.getElementById('detExp').innerText = Formatter.date(data.expiryDate);
+    
+    // Math pembulatan angka RSL biar cantik
+    let rslBln = typeof data.rslBulan === 'number' ? data.rslBulan.toFixed(1) : data.rslBulan;
+    document.getElementById('detRslBln').innerText = val(rslBln);
+    document.getElementById('detRslHari').innerText = val(data.rslHari);
+
+    // 4. META SYSTEM (Kanan Bawah)
+    document.getElementById('detNotes').innerText = val(data.notes);
+    document.getElementById('detCreatedAt').innerText = Formatter.date(data.createdAt);
+    document.getElementById('detUpdatedAt').innerText = Formatter.date(data.updatedAt);
+    document.getElementById('detUpdatedBy').innerText = val(data.updatedBy);
+
+    // Link Action Eksternal
+    const btnLink = document.getElementById('btnLinkInfo');
+    if (data.infoUrl && data.infoUrl.startsWith('http')) {
+      btnLink.href = data.infoUrl;
+    } else {
+      btnLink.style.display = 'none'; // Sembunyiin kalau ga ada link
+    }
+
+    // 5. RENDER GALLERY (Zero Cost HD Trick)
+    const photoContainer = document.getElementById('detPhotos');
+    photoContainer.innerHTML = '';
+    
+    if (data.fotoUrl && Array.isArray(data.fotoUrl) && data.fotoUrl.length > 0) {
+      data.fotoUrl.forEach(photo => {
+        const img = document.createElement('img');
+        img.className = 'gallery-img';
+        
+        // Trik Bypass Ukuran
+        const baseThumbUrl = photo.url.split('&sz=')[0]; 
+        img.src = `${baseThumbUrl}&sz=w300`; // Thumbnail ringan
+        
+        img.onclick = () => openModalImg(`${baseThumbUrl}&sz=w2500`);
+        photoContainer.appendChild(img);
+      });
+    } else {
+      photoContainer.innerHTML = '<span style="color:#94a3b8; font-style:italic; font-size: 0.9rem;">Dokumentasi tidak tersedia.</span>';
+    }
+  }
+
+  // --- LOGIC MODAL GAMBAR HD ---
+  function openModalImg(hdUrl) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImg');
+    const modalLoading = document.getElementById('modalLoading');
+    
+    modal.style.display = 'flex';
+    modal.style.opacity = '1';
+    modal.style.visibility = 'visible'; // Bypass style css dasar lu kalau ada
+    
+    modalImg.style.display = 'none';
+    modalLoading.style.display = 'flex';
+    modalImg.src = hdUrl;
+
+    modalImg.onload = () => {
+      modalLoading.style.display = 'none';
+      modalImg.style.display = 'block';
+    };
+  }
+
+  function closeModalImg() {
+    const modal = document.getElementById('imageModal');
+    modal.style.display = 'none';
+    document.getElementById('modalImg').src = ''; 
+  }
+</script>

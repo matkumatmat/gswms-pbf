@@ -40,7 +40,13 @@ const DomainRegistry = {
     method: 'getShortBatchLookup'
   },
 
-  'updatePrintStatus': { factory: () => new ShippingLabelService(new ShippingLabelRepo()) }
+  'updatePrintStatus': { factory: () => new ShippingLabelService(new ShippingLabelRepo()) },
+
+'getBatchDetail': {
+    factory: () => new BatchLookupService(new BatchLookupRepo()),
+    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
+    method: 'getDetail'
+  }
 
 
   // Nanti product begini juga:
@@ -306,7 +312,6 @@ function include(filename) {
 function doGet(e) {
   try {
     const params = e ? e.parameter : {};
-    // Default method adalah 'client' untuk nampilin UI jika tidak ada parameter method
     const method = params.method || 'client';
     
     // ==========================================
@@ -321,10 +326,10 @@ function doGet(e) {
 
       const route = DomainRegistry[action];
       if (!route) {
-        throw new Error(`Endpoint action '${action}' tidak valid atau belum terdaftar!`);
+        throw new Error(`Endpoint action '${action}' tidak valid atau belum terdaftar di DomainRegistry!`);
       }
 
-      // Cek Versi Global
+      // Cek Versi Global untuk Cache
       const props = PropertiesService.getScriptProperties();
       const versionKey = `VERSION_${route.cacheGroup}`;
       let currentVersion = props.getProperty(versionKey);
@@ -335,43 +340,67 @@ function doGet(e) {
       }
 
       const service = route.factory();
-      // Pagination parameter (karena page untuk fetch adalah angka)
-      const pageNum = parseInt(params.page) || 1; 
-      const limit = params.limit || null; 
+      // DEKLARASI DI ATAS BIAR GAK ERROR INITIALIZATION
+      const methodName = route.method || 'getPaginatedData'; 
 
-      // Cache Layer
-      const cacheKey = `CACHE_${action}_V${currentVersion}_P${pageNum}_L${limit || 'default'}`;
+      // Setup Variabel Cache & Parameter
+      let cacheKey = '';
+      let pageNum = 1;
+      let limit = null;
+
+      if (methodName === 'getDetail') {
+        // Kalau narik detail, Cache dipisah berdasarkan ID barang
+        cacheKey = `CACHE_DETAIL_${action}_V${currentVersion}_ID_${params.id || params.batch}`;
+      } else {
+        // Kalau narik list, Cache berdasarkan Pagination
+        pageNum = parseInt(params.page) || 1; 
+        limit = params.limit || null; 
+        cacheKey = `CACHE_${action}_V${currentVersion}_P${pageNum}_L${limit || 'default'}`;
+      }
+
+      // Cek apakah data ada di Cache
       const cache = CacheService.getScriptCache();
       const cachedString = cache.get(cacheKey);
 
       if (cachedString) {
         const cachedData = JSON.parse(cachedString);
+        // Hitung count (kalau array pakai length, kalau object detail berarti 1)
+        const dataCount = Array.isArray(cachedData) ? cachedData.length : (cachedData ? 1 : 0);
+        
         return responseHelper({ 
           status: "success", 
           source: `cache (v.${currentVersion})`, 
-          count: cachedData.length, 
+          count: dataCount, 
           data: cachedData 
         });
       }
 
-      // Eksekusi jika tidak ada di cache
-      const methodName = route.method || 'getPaginatedData';
-      const data = service[methodName](pageNum, limit);
+      // EKSEKUSI DATA KE SPREADSHEET (Jika Cache Kosong)
+      let data;
+      if (methodName === 'getDetail') {
+        // Oper seluruh parameter URL (termasuk id/batch) ke dalam getDetail()
+        data = service[methodName](params); 
+      } else {
+        // Oper parameter pagination ke getPaginatedData()
+        data = service[methodName](pageNum, limit);
+      }
 
-      // Simpan ke Cache dengan validasi size
+      // Simpan hasil ke Cache
       try {
         const jsonString = JSON.stringify(data);
         if (jsonString.length < 90000) {
           cache.put(cacheKey, jsonString, 600); // 10 menit
         }
       } catch (cacheError) {
-        console.warn("Bypass cache, payload melebihi limit batas ukuran GAS.");
+        console.warn("Bypass cache, payload melebihi limit.");
       }
+
+      const finalCount = Array.isArray(data) ? data.length : (data ? 1 : 0);
 
       return responseHelper({ 
         status: "success", 
         source: `spreadsheet (v.${currentVersion})`, 
-        count: data.length, 
+        count: finalCount, 
         data: data 
       });    
     }
@@ -383,13 +412,13 @@ function doGet(e) {
       const reqPage = params.page || 'home';
       const template = HtmlService.createTemplateFromFile('src/client/ui/Layout');
       
-      // Mapping halaman
+      // Mapping halaman UI
       if (reqPage === 'shipping_label') {
         template.pageContent = 'src/client/pages/shipping_label/ShippingLabel';
       } else if (reqPage === 'detail' || reqPage === 'product') {
-        template.pageContent = 'src/client/pages/main/Product';
+        template.pageContent = 'src/client/pages/product_detail/ProductDetail';
         
-        // Injeksi parameter URL ke scriptlet HTML
+        // Injeksi parameter ke scriptlet HTML
         template.urlParamId = params.id || null;
         template.urlParamBatch = params.batch || null;
       } else {
@@ -405,7 +434,6 @@ function doGet(e) {
   } catch (error) {
     const method = (e && e.parameter && e.parameter.method) ? e.parameter.method : 'client';
     
-    // Error handler terpisah berdasarkan tipe pemanggil
     if (method === 'fetch') {
       return responseHelper({ 
         status: "error", 
