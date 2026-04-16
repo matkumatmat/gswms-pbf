@@ -73,6 +73,23 @@ class SystemTrigger {
       sheet.getRange(rowNumber, config.updatedByCol).setValue(audit.updatedBy);
     }
 
+    // // 4. INTERCEPTOR: Konversi AppSheet EnumList Image ke JSON Array
+    // if (config.fotoUrlByCol) {
+    //   const fotoCell = sheet.getRange(rowNumber, config.fotoUrlByCol);
+    //   const rawValue = fotoCell.getValue();
+      
+    //   if (rawValue && typeof rawValue === 'string') {
+    //     const processedJson = AppSheetImageHelper.processEnumListImages(rawValue);
+    //     // Jika hasil proses berbeda dari nilai awal, timpa sel tersebut
+    //     if (processedJson !== rawValue) {
+    //       fotoCell.setValue(processedJson);
+    //     }
+    //   }
+    // }
+
+    // 5. Invalidate Global Cache Versioning
+    AppUtils.invalidateCache(sheetName);
+
     // 4. Invalidate Global Cache Versioning
     AppUtils.invalidateCache(sheetName);
   }
@@ -93,19 +110,35 @@ function onEdit(e) {
 // =====================================================================
 // ENTRY POINT 2: APPSHEET SYNC / BACKGROUND INSERT
 // =====================================================================
+// Tambahkan/Update fungsi onChange di src/core/Triggers.js
+
 function onChange(e) {
   if (!e) return;
+  
   try {
-    // Menangkap baris baru yang di-insert oleh sistem pihak ketiga (AppSheet)
-    if (e.changeType === 'INSERT_ROW' || e.changeType === 'EDIT') {
-      const sheet = e.source.getActiveSheet();
+    const sheet = e.source.getActiveSheet();
+    const sheetName = sheet.getName();
+    
+    // Jika ada penambahan baris di tabel FOTO
+    if (sheetName === AppConfig.DB_BATCH_FOTO_SHEET_NAME && (e.changeType === 'INSERT_ROW' || e.changeType === 'EDIT')) {
       const activeRange = SpreadsheetApp.getActiveRange();
-      if (activeRange) {
-        SystemTrigger.runAudit(sheet, activeRange.getRow());
+      const row = activeRange.getRow();
+      
+      // Ambil batchId dari baris yang baru masuk
+      const batchId = sheet.getRange(row, AppConfig.DB_BATCH_FOTO_PARENT_ID_COL).getValue();
+      
+      if (batchId) {
+        // Jalankan sinkronisasi ke parent
+        BatchPhotoSync.syncToParent(batchId);
       }
     }
+    
+    // Tetap jalankan audit normal untuk sheet lain
+    if (e.changeType === 'INSERT_ROW' || e.changeType === 'EDIT') {
+       SystemTrigger.runAudit(sheet, SpreadsheetApp.getActiveRange().getRow());
+    }
   } catch (err) {
-    console.error("onChange Trigger Error: " + err.toString());
+    console.error("onChange Error: " + err.toString());
   }
 }
 

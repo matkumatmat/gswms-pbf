@@ -53,6 +53,12 @@ const AppConfig = {
   DB_BATCH_LOOKUP_FOTO_URL_BY_COL: 15, // Kolom O untuk dict foto url
   DB_BATCH_LOOKUP_INFO_URL_BY_COL: 16, // Kolom P untuk url website later
   DB_BATCH_LOOKUP_PER_BUCKET_BY_COL: 22, // Kolom V untuk per bucket (jumlah item per bucket)
+  // Tambahkan ini di dalam AppConfig.js
+  DB_BATCH_FOTO_SHEET_NAME: 'PM_BATCH_FOTO',
+  DB_BATCH_FOTO_START_ROW: 2,
+  DB_BATCH_FOTO_ID_COL: 1,      // idFoto
+  DB_BATCH_FOTO_PARENT_ID_COL: 2, // batchId (Foreign Key ke PM_BATCH)
+  DB_BATCH_FOTO_UPLOAD_COL: 3,    // fotoUpload (Kolom Image AppSheet)
 
   DB_DISTRIBUSI_CURRENT : {
     DB_DISTRIBUSI_ID: 'not_set_yet',
