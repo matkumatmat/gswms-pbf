@@ -14,129 +14,153 @@
 
 <div id="pdContent" class="pd-layout" style="display: none;">
   
-  <div class="pd-left">
+<div class="card c-identitas">
     
-    <div class="card">
-      <div class="tags-area" id="detTags"></div>
-      
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
-        <div>
-          <div class="pd-title" id="detNamaDagang">-</div>
-          <div class="pd-subtitle" id="detNamaErp">-</div>
-        </div>
-        <div style="text-align: right;">
-          <div class="kv-label" style="justify-content: flex-end;">Kode Barang</div>
-          <div class="kv-val" id="detKode" style="font-size: 1.2rem; color: var(--primary); font-weight: bold;">-</div>
-        </div>
+    <div class="id-header">
+      <div>
+        <div class="pd-title" id="detNamaDagang">-</div>
+        <div class="pd-subtitle" id="detNamaErp">-</div>
       </div>
-
-      <div class="inner-grid-3" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-        <div class="kv-group">
-          <div class="kv-label"><i data-lucide="shield-check"></i> NIE</div>
-          <div class="kv-val" id="detNie">-</div>
-        </div>
-        <div class="kv-group">
-          <div class="kv-label"><i data-lucide="file-text"></i> No. Penerimaan</div>
-          <div class="kv-val" id="detNoDok">-</div>
-        </div>
-        <div class="kv-group">
-          <div class="kv-label"><i data-lucide="hash"></i> System ID</div>
-          <div class="kv-val" id="detId" style="font-family: monospace; font-size: 0.75rem;">-</div>
-        </div>
+      <div class="id-kode">
+        <div class="kv-label">Kode Barang</div>
+        <div class="kv-val" id="detKode" style="font-size: 1.2rem; color: var(--primary); font-weight: bold;">-</div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header"><i data-lucide="box"></i> Atribut Fisik & Kemasan</div>
-      <div class="inner-grid-3">
-        <div class="kv-group">
-          <div class="kv-label"><i data-lucide="move-3d"></i> Dimensi (P x L x T)</div>
-          <div class="kv-val" id="detDimensi">-</div>
-        </div>
-        <div class="kv-group">
-          <div class="kv-label"><i data-lucide="weight"></i> Berat</div>
-          <div class="kv-val" id="detBerat">-</div>
-        </div>
-        <div class="kv-group">
-          <div class="kv-label"><i data-lucide="layers"></i> Per Bucket</div>
-          <div class="kv-val" id="detPerBucket">-</div>
-        </div>
-      </div>
-      <div class="kv-group" style="margin-top: 10px;">
-        <div class="kv-label"><i data-lucide="eye"></i> Catatan Fisik</div>
-        <div class="kv-val" id="detCatatanFisik" style="font-style: italic; color: #475569;">-</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header"><i data-lucide="image"></i> Dokumentasi Foto</div>
-      <div id="detPhotos" class="gallery-container"></div>
-    </div>
-
-  </div>
-
-  <div class="pd-right">
-    
-    <div class="card" style="border-top: 4px solid var(--primary);">
+    <div class="inner-grid-2" style="margin-bottom: 15px;">
       <div class="kv-group">
-        <div class="kv-label" style="color: var(--primary);"><i data-lucide="tag"></i> Batch Number</div>
-        <div class="kv-val" id="detBatch" style="font-size: 1.5rem; font-weight: 700;">-</div>
+        <div class="kv-label"><i data-lucide="tag"></i> Kategori</div>
+        <div class="kv-val" id="detKategori">-</div>
       </div>
-      
-      <div class="inner-grid-2">
-        <div class="kv-group">
-          <div class="kv-label"><i data-lucide="calendar"></i> Mfg. Date</div>
-          <div class="kv-val" id="detMfg">-</div>
-        </div>
-        <div class="kv-group">
-          <div class="kv-label"><i data-lucide="calendar-off"></i> Expiry Date</div>
-          <div class="kv-val" id="detExp" style="color: #ef4444; font-weight: bold;">-</div>
-        </div>
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="layers"></i> Sektor</div>
+        <div class="kv-val" id="detSektor">-</div>
       </div>
-
-      <div class="inner-grid-2" style="margin-top: 10px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
-        <div class="kv-group">
-          <div class="kv-label"><i data-lucide="clock"></i> RSL (Bulan)</div>
-          <div class="kv-val" id="detRslBln">-</div>
-        </div>
-        <div class="kv-group">
-          <div class="kv-label"><i data-lucide="calendar-days"></i> RSL (Hari)</div>
-          <div class="kv-val" id="detRslHari">-</div>
-        </div>
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="map-pin"></i> Alokasi</div>
+        <div class="kv-val" id="detAlokasi">-</div>
       </div>
-    </div>
-
-    <div class="card">
-      <a id="btnLinkInfo" href="#" target="_blank" class="btn btn-secondary btn-icon" style="margin-bottom: 10px;">
-        <i data-lucide="external-link" style="width: 18px;"></i> Buka Info Eksternal / AppSheet
-      </a>
-      <button class="btn btn-primary btn-icon" disabled title="Coming Soon">
-        <i data-lucide="printer" style="width: 18px;"></i> Cetak Label Produk
-      </button>
-    </div>
-
-    <div class="meta-section">
-      <div class="kv-group" style="margin-bottom: 10px;">
-        <div class="kv-label"><i data-lucide="activity"></i> System Notes</div>
-        <div class="kv-val" id="detNotes">-</div>
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="info"></i> Status</div>
+        <div class="kv-val" id="detStatus">-</div>
       </div>
-      <div class="inner-grid-2" style="margin-bottom: 10px;">
-        <div class="kv-group" style="margin-bottom:0;">
-          <div class="kv-label">Dibuat</div>
-          <div class="kv-val" id="detCreatedAt">-</div>
-        </div>
-        <div class="kv-group" style="margin-bottom:0;">
-          <div class="kv-label">Diupdate</div>
-          <div class="kv-val" id="detUpdatedAt">-</div>
-        </div>
+    </div> <div class="inner-grid-2" style="padding-top: 15px; border-top: 1px solid var(--border-color);">
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="shield-check"></i> NIE</div>
+        <div class="kv-val" id="detNie">-</div>
       </div>
-      <div class="kv-group" style="margin-bottom: 0; border-top: 1px solid #e2e8f0; padding-top: 8px;">
-        <div class="kv-label">Terakhir diubah oleh</div>
-        <div class="kv-val" id="detUpdatedBy" style="font-family: monospace;">-</div>
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="file-text"></i> No. Penerimaan</div>
+        <div class="kv-val" id="detNoDok">-</div>
       </div>
     </div>
 
   </div>
+
+  <div class="card c-batch" style="border-top: 4px solid var(--primary);">
+    <div class="kv-group">
+      <div class="kv-label" style="color: var(--primary);"><i data-lucide="hash"></i> Batch Number</div>
+      <div class="kv-val" id="detBatch" style="font-size: 1.5rem; font-weight: 700;">-</div>
+    </div>
+    
+    <div class="inner-grid-2">
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="calendar"></i> Mfg. Date</div>
+        <div class="kv-val" id="detMfg">-</div>
+      </div>
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="calendar-off"></i> Expiry Date</div>
+        <div class="kv-val" id="detExp" style="color: #ef4444; font-weight: bold;">-</div>
+      </div>
+    </div>
+
+    <div class="inner-grid-2" style="margin-top: 10px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="clock"></i> RSL (Bulan)</div>
+        <div class="kv-val" id="detRslBln">-</div>
+      </div>
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="calendar-days"></i> RSL (Hari)</div>
+        <div class="kv-val" id="detRslHari">-</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card c-stok">
+    <div class="card-header"><i data-lucide="database"></i> Informasi Stok & Mutasi</div>
+    <div class="inner-grid-3">
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="arrow-down-to-line"></i> Total In (Penerimaan)</div>
+        <div class="kv-val" id="detStokIn" style="color: #10b981; font-weight: bold;">[TBA Master]</div>
+      </div>
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="arrow-up-from-line"></i> Total Out (Distribusi)</div>
+        <div class="kv-val" id="detStokOut" style="color: #ef4444; font-weight: bold;">[TBA Master]</div>
+      </div>
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="package-check"></i> Stok Tersedia</div>
+        <div class="kv-val" id="detStokCurrent" style="color: var(--primary); font-size: 1.2rem; font-weight: bold;">[TBA Master]</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card c-fisik">
+    <div class="card-header"><i data-lucide="box"></i> Atribut Fisik & Kemasan</div>
+    <div class="inner-grid-3">
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="move-3d"></i> Dimensi (P x L x T)</div>
+        <div class="kv-val" id="detDimensi">-</div>
+      </div>
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="weight"></i> Berat</div>
+        <div class="kv-val" id="detBerat">-</div>
+      </div>
+      <div class="kv-group">
+        <div class="kv-label"><i data-lucide="layers"></i> Per Bucket</div>
+        <div class="kv-val" id="detPerBucket">-</div>
+      </div>
+    </div>
+    <div class="kv-group" style="margin-top: 10px;">
+      <div class="kv-label"><i data-lucide="eye"></i> Catatan Fisik</div>
+      <div class="kv-val" id="detCatatanFisik" style="font-style: italic; color: #475569;">-</div>
+    </div>
+  </div>
+
+  <div class="card c-foto">
+    <div class="card-header"><i data-lucide="image"></i> Dokumentasi Foto</div>
+    <div id="detPhotos" class="gallery-container"></div>
+  </div>
+
+  <div class="card c-action">
+    <a id="btnLinkInfo" href="#" target="_blank" class="btn btn-secondary btn-icon" style="margin-bottom: 10px;">
+      <i data-lucide="external-link" style="width: 18px;"></i> Buka Info Eksternal
+    </a>
+    <button class="btn btn-primary btn-icon" disabled title="Coming Soon">
+      <i data-lucide="printer" style="width: 18px;"></i> Cetak Label Produk
+    </button>
+  </div>
+
+  <div class="meta-section c-meta">
+    <div class="kv-group" style="margin-bottom: 10px;">
+      <div class="kv-label"><i data-lucide="activity"></i> System Notes</div>
+      <div class="kv-val" id="detNotes">-</div>
+    </div>
+    <div class="inner-grid-2" style="margin-bottom: 10px;">
+      <div class="kv-group" style="margin-bottom:0;">
+        <div class="kv-label">Dibuat</div>
+        <div class="kv-val" id="detCreatedAt">-</div>
+      </div>
+      <div class="kv-group" style="margin-bottom:0;">
+        <div class="kv-label">Diupdate</div>
+        <div class="kv-val" id="detUpdatedAt">-</div>
+      </div>
+    </div>
+    <div class="kv-group" style="margin-bottom: 0; border-top: 1px solid #e2e8f0; padding-top: 8px;">
+      <div class="kv-label">Terakhir diubah oleh</div>
+      <div class="kv-val" id="detUpdatedBy" style="font-family: monospace;">-</div>
+    </div>
+  </div>
+
 </div>
 
 <div id="imageModal" class="modal-overlay" style="background: rgba(15, 23, 42, 0.95); z-index: 10000; position: fixed;">

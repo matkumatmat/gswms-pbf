@@ -12,7 +12,6 @@
         return;
       }
 
-      // Lempar ID-nya ke fungsi penarik data
       initProductDetail(directId);
     });
   });
@@ -45,41 +44,49 @@
     lucide.createIcons();
   }
 
-  // ... (fungsi renderDetailData dan closeModalImg tetep persis sama kayak sebelumnya) ...
-
   function renderDetailData(data) {
-    // Helper function untuk handle null/kosong
-    const val = (v, postfix = '') => (v !== null && v !== '') ? `${v} ${postfix}` : '-';
+    // Helper function buat fallback "-" kalau null/kosong
+    const val = (v, postfix = '') => (v !== null && v !== undefined && v !== '') ? `${v} ${postfix}` : '-';
 
-    // 1. HEADER (Kiri Atas)
+    // 1. IDENTITAS (Kiri Atas)
     document.getElementById('detNamaDagang').innerText = val(data.namaBarangDagang);
     document.getElementById('detNamaErp').innerText = val(data.namaBarangErp);
     document.getElementById('detKode').innerText = val(data.kodeBarang);
     document.getElementById('detNie').innerText = val(data.nie);
     document.getElementById('detNoDok').innerText = val(data.noDokPenerimaan);
-    document.getElementById('detId').innerText = data.id;
 
-    // Render Badges (Kategori, Alokasi, Sektor, Status)
-    const tagsContainer = document.getElementById('detTags');
-    tagsContainer.innerHTML = '';
-    
-    if(data.status) tagsContainer.innerHTML += Formatter.statusBadge(data.status); // Pake formatter lu
-    if(data.sysStatus) tagsContainer.innerHTML += `<span class="badge badge-info"><i data-lucide="cpu" style="width:12px; margin-right:4px; vertical-align:-2px;"></i>${data.sysStatus}</span>`;
-    if(data.kategori) tagsContainer.innerHTML += `<span class="badge badge-default">${data.kategori}</span>`;
-    if(data.alokasi) tagsContainer.innerHTML += `<span class="badge badge-default">${data.alokasi}</span>`;
-    if(data.sektor) tagsContainer.innerHTML += `<span class="badge badge-default">${data.sektor}</span>`;
+    document.getElementById('detKategori').innerText = val(data.kategori);
+    document.getElementById('detAlokasi').innerText = val(data.alokasi);
+    document.getElementById('detSektor').innerText = val(data.sektor);
+
+    // Render Status Dynamic
+    let statusHtml = '';
+    if (data.status) {
+        const s = data.status.toUpperCase();
+        let bg = '#e2e8f0', col = '#475569'; // Default abu-abu
+        
+        if (s === 'RECEIVED') { bg = '#bbf7d0'; col = '#166534'; } // Hijau
+        else if (s === 'NOT RECEIVED') { bg = '#fecaca'; col = '#991b1b'; } // Merah
+        else if (s === 'OTHER') { bg = '#fef08a'; col = '#854d0e'; } // Kuning
+
+        statusHtml += `<span class="badge" style="background-color:${bg}; color:${col};">${s}</span>`;
+    }
+    if (data.sysStatus) {
+        statusHtml += ` <span class="badge badge-info"><i data-lucide="cpu" style="width:12px; margin-right:4px; vertical-align:-2px;"></i>${data.sysStatus}</span>`;
+    }
+    document.getElementById('detStatus').innerHTML = statusHtml || '-';
+
 
     // 2. FISIK (Kiri Bawah)
     document.getElementById('detBerat').innerText = val(data.berat);
     document.getElementById('detPerBucket').innerText = val(data.perBucket);
     document.getElementById('detCatatanFisik').innerText = val(data.catatanFisik);
     
-    // Parse Dimensi JSON (p, l, t)
     let dimText = '-';
     if (data.dimensionPLT && typeof data.dimensionPLT === 'object') {
       dimText = `${data.dimensionPLT.p || 0} x ${data.dimensionPLT.l || 0} x ${data.dimensionPLT.t || 0} cm`;
     } else if (typeof data.dimensionPLT === 'string') {
-       dimText = data.dimensionPLT; // fallback kalau string mentah
+       dimText = data.dimensionPLT; 
     }
     document.getElementById('detDimensi').innerText = dimText;
 
@@ -88,7 +95,6 @@
     document.getElementById('detMfg').innerText = Formatter.date(data.manufacturingDate);
     document.getElementById('detExp').innerText = Formatter.date(data.expiryDate);
     
-    // Math pembulatan angka RSL biar cantik
     let rslBln = typeof data.rslBulan === 'number' ? data.rslBulan.toFixed(1) : data.rslBulan;
     document.getElementById('detRslBln').innerText = val(rslBln);
     document.getElementById('detRslHari').innerText = val(data.rslHari);
@@ -104,10 +110,10 @@
     if (data.infoUrl && data.infoUrl.startsWith('http')) {
       btnLink.href = data.infoUrl;
     } else {
-      btnLink.style.display = 'none'; // Sembunyiin kalau ga ada link
+      btnLink.style.display = 'none';
     }
 
-    // 5. RENDER GALLERY (Zero Cost HD Trick)
+    // 5. RENDER GALLERY 
     const photoContainer = document.getElementById('detPhotos');
     photoContainer.innerHTML = '';
     
@@ -116,15 +122,14 @@
         const img = document.createElement('img');
         img.className = 'gallery-img';
         
-        // Trik Bypass Ukuran
         const baseThumbUrl = photo.url.split('&sz=')[0]; 
-        img.src = `${baseThumbUrl}&sz=w300`; // Thumbnail ringan
+        img.src = `${baseThumbUrl}&sz=w300`; 
         
         img.onclick = () => openModalImg(`${baseThumbUrl}&sz=w2500`);
         photoContainer.appendChild(img);
       });
     } else {
-      photoContainer.innerHTML = '<span style="color:#94a3b8; font-style:italic; font-size: 0.9rem;">Dokumentasi tidak tersedia.</span>';
+      photoContainer.innerHTML = '<span style="color:#94a3b8; font-style:italic; font-size: 0.9rem;">Dokumentasi foto tidak tersedia.</span>';
     }
   }
 
@@ -136,7 +141,7 @@
     
     modal.style.display = 'flex';
     modal.style.opacity = '1';
-    modal.style.visibility = 'visible'; // Bypass style css dasar lu kalau ada
+    modal.style.visibility = 'visible'; 
     
     modalImg.style.display = 'none';
     modalLoading.style.display = 'flex';
