@@ -183,121 +183,242 @@ function include(filename) {
   return HtmlService.createTemplateFromFile(filename).evaluate().getContent();
 }
 
+// function doGet(e) {
+//   try {
+//     const params = e ? e.parameter : {};
+//     const action = params.action;
+//     const reqPage = params.page || 'home'; // Default ke home kalau kosong
+
+//     // 1. ROUTER HALAMAN UI
+//     if (!action) {
+//       const template = HtmlService.createTemplateFromFile('src/client/ui/Layout');
+      
+//       // Mapping nama parameter page ke lokasi file HTML-nya
+//       if (reqPage === 'shipping_label') {
+//         template.pageContent = 'src/client/pages/shipping_label/ShippingLabel';
+//       } else {
+//         template.pageContent = 'src/client/pages/main/Home'; // Nanti lo bikin Home.html di sini
+//       }
+
+//       return template.evaluate()
+//         .setTitle('PBF Manage')
+//         .addMetaTag('viewport', 'width=device-width, initial-scale=1') // WAJIB BUAT MOBILE
+//         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+//     }
+
+//     if (action === 'ping') {
+//       return responseHelper({ status: "success", message: "API V2 is running & Scalable!" });
+//     }
+
+//     // 1. DYNAMIC ROUTER: Cari action di Registry
+//     const route = DomainRegistry[action];
+//     if (!route) {
+//       throw new Error(`Endpoint action '${action}' tidak valid atau belum terdaftar!`);
+//     }
+
+//     // 2. CEK VERSI GLOBAL TERBARU DARI PROPERTIES
+//     const props = PropertiesService.getScriptProperties();
+//     const versionKey = `VERSION_${route.cacheGroup}`;
+//     let currentVersion = props.getProperty(versionKey);
+    
+//     // Kalau belum pernah ada yang ngedit (belum ada versi), set versi 1
+//     if (!currentVersion) {
+//       currentVersion = Date.now().toString();
+//       props.setProperty(versionKey, currentVersion);
+//     }
+
+//     // 3. Inisialisasi Service secara on-demand
+//     const service = route.factory();
+
+//     // 4. Tangkap Parameter Pagination
+//     // 2. Ganti nama variabelnya jadi pageNumber
+//     const pageNumber = parseInt(reqPage) || 1; 
+//     const limit = params.limit || null; 
+
+//     // 5. CACHE LAYER (DENGAN VERSIONING)
+//     // Pastikan di sini panggilnya pageNumber
+//     const cacheKey = `CACHE_${action}_V${currentVersion}_P${pageNumber}_L${limit || 'default'}`;
+//     const cache = CacheService.getScriptCache();
+//     const cachedString = cache.get(cacheKey);
+
+//     if (cachedString) {
+//       const cachedData = JSON.parse(cachedString);
+//       return responseHelper({ 
+//         status: "success", 
+//         source: `cache (v.${currentVersion})`, 
+//         count: cachedData.length, 
+//         data: cachedData 
+//       });
+//     }
+
+//     // // 6. Eksekusi Data Layer jika Cache kosong atau versi basi
+//     // // Pastikan di sini juga panggilnya pageNumber
+//     // const data = service.getPaginatedData(pageNumber, limit);
+
+//     // // 7. Simpan ke Cache selama 6 jam (21600 detik)
+//     // cache.put(cacheKey, JSON.stringify(data), 21600);
+
+//     // return responseHelper({ 
+//     //   status: "success", 
+//     //   source: `spreadsheet (v.${currentVersion})`, 
+//     //   count: data.length, 
+//     //   data: data 
+//     // });
+
+// // 6. Eksekusi Data Layer jika Cache kosong atau versi basi
+//     // Pastikan di sini juga panggilnya pageNumber
+//     // const data = service.getPaginatedData(pageNumber, limit);
+//     // 6. Eksekusi Data Layer jika Cache kosong atau versi basi
+//     const methodName = route.method || 'getPaginatedData';
+//     const data = service[methodName](pageNumber, limit);
+
+//     // 7. Simpan ke Cache selama 6 jam (21600 detik)
+//     // Penanganan khusus jika ukuran data melebihi batas maksimal CacheService (100 KB)
+//     try {
+//       const jsonString = JSON.stringify(data);
+//       // Pengecekan kasar panjang string (1 karakter kira-kira 1-2 bytes).
+//       // Batas aman diset di sekitar 90.000 karakter sebelum dilempar ke cache.
+//       if (jsonString.length < 90000) {
+//         cache.put(cacheKey, jsonString, 600); // 600 detik = 10 menit
+//       }
+//     } catch (cacheError) {
+//       // Abaikan error cache (misal argumen terlalu besar), lanjutkan untuk me-return data
+//       console.warn("Bypass cache, payload melebihi limit batas ukuran GAS.");
+//     }
+
+//     return responseHelper({ 
+//       status: "success", 
+//       source: `spreadsheet (v.${currentVersion})`, 
+//       count: data.length, 
+//       data: data 
+//     });    
+
+//   } catch (error) {
+//     return responseHelper({ 
+//       status: "error", 
+//       message: error.toString(),
+//       stack: error.stack
+//     });
+//   }
+// }
+
+
 function doGet(e) {
   try {
     const params = e ? e.parameter : {};
-    const action = params.action;
-    const reqPage = params.page || 'home'; // Default ke home kalau kosong
+    // Default method adalah 'client' untuk nampilin UI jika tidak ada parameter method
+    const method = params.method || 'client';
+    
+    // ==========================================
+    // ROUTER A: API BACKEND (method=fetch)
+    // ==========================================
+    if (method === 'fetch') {
+      const action = params.action;
+      
+      if (action === 'ping') {
+        return responseHelper({ status: "success", message: "API V2 is running & Scalable!" });
+      }
 
-    // 1. ROUTER HALAMAN UI
-    if (!action) {
+      const route = DomainRegistry[action];
+      if (!route) {
+        throw new Error(`Endpoint action '${action}' tidak valid atau belum terdaftar!`);
+      }
+
+      // Cek Versi Global
+      const props = PropertiesService.getScriptProperties();
+      const versionKey = `VERSION_${route.cacheGroup}`;
+      let currentVersion = props.getProperty(versionKey);
+      
+      if (!currentVersion) {
+        currentVersion = Date.now().toString();
+        props.setProperty(versionKey, currentVersion);
+      }
+
+      const service = route.factory();
+      // Pagination parameter (karena page untuk fetch adalah angka)
+      const pageNum = parseInt(params.page) || 1; 
+      const limit = params.limit || null; 
+
+      // Cache Layer
+      const cacheKey = `CACHE_${action}_V${currentVersion}_P${pageNum}_L${limit || 'default'}`;
+      const cache = CacheService.getScriptCache();
+      const cachedString = cache.get(cacheKey);
+
+      if (cachedString) {
+        const cachedData = JSON.parse(cachedString);
+        return responseHelper({ 
+          status: "success", 
+          source: `cache (v.${currentVersion})`, 
+          count: cachedData.length, 
+          data: cachedData 
+        });
+      }
+
+      // Eksekusi jika tidak ada di cache
+      const methodName = route.method || 'getPaginatedData';
+      const data = service[methodName](pageNum, limit);
+
+      // Simpan ke Cache dengan validasi size
+      try {
+        const jsonString = JSON.stringify(data);
+        if (jsonString.length < 90000) {
+          cache.put(cacheKey, jsonString, 600); // 10 menit
+        }
+      } catch (cacheError) {
+        console.warn("Bypass cache, payload melebihi limit batas ukuran GAS.");
+      }
+
+      return responseHelper({ 
+        status: "success", 
+        source: `spreadsheet (v.${currentVersion})`, 
+        count: data.length, 
+        data: data 
+      });    
+    }
+
+    // ==========================================
+    // ROUTER B: FRONTEND WEB APP (method=client)
+    // ==========================================
+    if (method === 'client') {
+      const reqPage = params.page || 'home';
       const template = HtmlService.createTemplateFromFile('src/client/ui/Layout');
       
-      // Mapping nama parameter page ke lokasi file HTML-nya
+      // Mapping halaman
       if (reqPage === 'shipping_label') {
         template.pageContent = 'src/client/pages/shipping_label/ShippingLabel';
+      } else if (reqPage === 'detail' || reqPage === 'product') {
+        template.pageContent = 'src/client/pages/main/Product';
+        
+        // Injeksi parameter URL ke scriptlet HTML
+        template.urlParamId = params.id || null;
+        template.urlParamBatch = params.batch || null;
       } else {
-        template.pageContent = 'src/client/pages/main/Home'; // Nanti lo bikin Home.html di sini
+        template.pageContent = 'src/client/pages/main/Home'; 
       }
 
       return template.evaluate()
         .setTitle('PBF Manage')
-        .addMetaTag('viewport', 'width=device-width, initial-scale=1') // WAJIB BUAT MOBILE
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
 
-    if (action === 'ping') {
-      return responseHelper({ status: "success", message: "API V2 is running & Scalable!" });
-    }
-
-    // 1. DYNAMIC ROUTER: Cari action di Registry
-    const route = DomainRegistry[action];
-    if (!route) {
-      throw new Error(`Endpoint action '${action}' tidak valid atau belum terdaftar!`);
-    }
-
-    // 2. CEK VERSI GLOBAL TERBARU DARI PROPERTIES
-    const props = PropertiesService.getScriptProperties();
-    const versionKey = `VERSION_${route.cacheGroup}`;
-    let currentVersion = props.getProperty(versionKey);
-    
-    // Kalau belum pernah ada yang ngedit (belum ada versi), set versi 1
-    if (!currentVersion) {
-      currentVersion = Date.now().toString();
-      props.setProperty(versionKey, currentVersion);
-    }
-
-    // 3. Inisialisasi Service secara on-demand
-    const service = route.factory();
-
-    // 4. Tangkap Parameter Pagination
-    // 2. Ganti nama variabelnya jadi pageNumber
-    const pageNumber = parseInt(reqPage) || 1; 
-    const limit = params.limit || null; 
-
-    // 5. CACHE LAYER (DENGAN VERSIONING)
-    // Pastikan di sini panggilnya pageNumber
-    const cacheKey = `CACHE_${action}_V${currentVersion}_P${pageNumber}_L${limit || 'default'}`;
-    const cache = CacheService.getScriptCache();
-    const cachedString = cache.get(cacheKey);
-
-    if (cachedString) {
-      const cachedData = JSON.parse(cachedString);
-      return responseHelper({ 
-        status: "success", 
-        source: `cache (v.${currentVersion})`, 
-        count: cachedData.length, 
-        data: cachedData 
-      });
-    }
-
-    // // 6. Eksekusi Data Layer jika Cache kosong atau versi basi
-    // // Pastikan di sini juga panggilnya pageNumber
-    // const data = service.getPaginatedData(pageNumber, limit);
-
-    // // 7. Simpan ke Cache selama 6 jam (21600 detik)
-    // cache.put(cacheKey, JSON.stringify(data), 21600);
-
-    // return responseHelper({ 
-    //   status: "success", 
-    //   source: `spreadsheet (v.${currentVersion})`, 
-    //   count: data.length, 
-    //   data: data 
-    // });
-
-// 6. Eksekusi Data Layer jika Cache kosong atau versi basi
-    // Pastikan di sini juga panggilnya pageNumber
-    // const data = service.getPaginatedData(pageNumber, limit);
-    // 6. Eksekusi Data Layer jika Cache kosong atau versi basi
-    const methodName = route.method || 'getPaginatedData';
-    const data = service[methodName](pageNumber, limit);
-
-    // 7. Simpan ke Cache selama 6 jam (21600 detik)
-    // Penanganan khusus jika ukuran data melebihi batas maksimal CacheService (100 KB)
-    try {
-      const jsonString = JSON.stringify(data);
-      // Pengecekan kasar panjang string (1 karakter kira-kira 1-2 bytes).
-      // Batas aman diset di sekitar 90.000 karakter sebelum dilempar ke cache.
-      if (jsonString.length < 90000) {
-        cache.put(cacheKey, jsonString, 600); // 600 detik = 10 menit
-      }
-    } catch (cacheError) {
-      // Abaikan error cache (misal argumen terlalu besar), lanjutkan untuk me-return data
-      console.warn("Bypass cache, payload melebihi limit batas ukuran GAS.");
-    }
-
-    return responseHelper({ 
-      status: "success", 
-      source: `spreadsheet (v.${currentVersion})`, 
-      count: data.length, 
-      data: data 
-    });    
-
   } catch (error) {
-    return responseHelper({ 
-      status: "error", 
-      message: error.toString(),
-      stack: error.stack
-    });
+    const method = (e && e.parameter && e.parameter.method) ? e.parameter.method : 'client';
+    
+    // Error handler terpisah berdasarkan tipe pemanggil
+    if (method === 'fetch') {
+      return responseHelper({ 
+        status: "error", 
+        message: error.toString(),
+        stack: error.stack
+      });
+    } else {
+      return HtmlService.createHtmlOutput(`
+        <div style="font-family:sans-serif; padding: 20px; color: red;">
+          <h2>System Error</h2>
+          <p>${error.toString()}</p>
+        </div>
+      `);
+    }
   }
 }
