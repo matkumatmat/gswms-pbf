@@ -2,6 +2,8 @@
 
 const AppConfig = {
   WEB_APP_URL: "https://script.google.com/macros/s/AKfycbxsJ6_3ajDsLjYKFKqwG_nuZxHAXzVi0-iwYUXKwTs/dev",
+  DRIVE_ARCHIEVE_FOLDER_ID: '1wHjMQYXS12VA7WyMfhqFlz06Aj6asbWh',
+  DRIVE_ARCHIEVE_BATCH_RECORD_ID: '1tXAjYIVX7qldupfvXnZh4zpZRvHL3c9m',
   // MANAGEMENT CUSTOMER LOOKUP DATA
   DB_CUSTOMER_LOOKUP_ID: '1_f130ciiAMSsE7E2GO2dQqdU__HDrfhN9o5rAqlfxTU',
   DB_CUSTOMER_SHEET_NAME: 'CUSTOMER',
@@ -10,6 +12,16 @@ const AppConfig = {
   DB_CUSTOMER_ID_COL: 1, 
   DB_CUSTOMER_UPDATED_AT_COL: 13, // Kolom M untuk updatedAt
   DB_CUSTOMER_UPDATED_BY_COL: 14, // Kolom N untuk updatedBy
+
+  // MANAGEMENT CUSTOMER LOOKUP DATA
+  DB_LIBRARY_ARCHIEVE_LOOKUP_ID: '1aNeQJpsrXqLWAFKdbnR6ohT-SU1dbWtsf1m6wcaXYkI',
+  DB_LIBRARY_ARCHIEVE_SHEET_NAME: 'LIBRARY_MASTER',
+  DB_LIBRARY_ARCHIEVE_TABLE_NAME: 'LIBRARY',
+  DB_LIBRARY_ARCHIEVE_START_ROW: 2, 
+  DB_LIBRARY_ARCHIEVE_ID_COL: 1, 
+  DB_LIBRARY_ARCHIEVE_GENERATED_AT_COL: 8, // Kolom H untuk updatedAt
+  DB_LIBRARY_ARCHIEVE_UPDATED_AT_COL: 9, // Kolom I untuk updatedAt
+  DB_LIBRARY_ARCHIEVE_UPDATED_BY_COL: 10, // Kolom J untuk updatedBy
 
   // MANAGEMENT PENUNJANG PENGIRIMAN LOOKUP DATA
   DB_SHIPPING_EMBALAGE_LOOKUP_ID: '1Bt-LGX1F1ZjRmWG0u_Bm0nUtcylDR4xBVLN_GxmuEG8',
@@ -61,54 +73,90 @@ const AppConfig = {
   DB_BATCH_FOTO_PARENT_ID_COL: 2, // batchId (Foreign Key ke PM_BATCH)
   DB_BATCH_FOTO_UPLOAD_COL: 3,    // fotoUpload (Kolom Image AppSheet)
 
-  DB_DISTRIBUSI_CURRENT : {
-    DB_DISTRIBUSI_ID: 'not_set_yet',
-    DB_DISTRIBUSI_SHEET_NAME: 'not_set_yet',
-    DB_DISTRIBUSI_TABLE_NAME: 'not_set_yet',
-    DB_DISTRIBUSI_YEAR : 'not_set_yet',
-    DB_DISTRIBUSI_START_ROW: 2, // NOT SET YET
-    DB_DISTRIBUSI_ID_COL: 1,  //NOT SET YET
-    DB_DISTRIBUSI_UPDATED_AT_COL: 10, // Kolom J untuk updatedAt NOT SET YET
-    DB_DISTRIBUSI_UPDATED_BY_COL: 11, // Kolom K untuk updatedBy NOT SET YET
-  },
-
-  DB_DISTRIBUSI_HISTORY : [
-  {
-    DB_DISTRIBUSI_ID: 'not_set_yet',
-    DB_DISTRIBUSI_SHEET_NAME: 'not_set_yet',
-    DB_DISTRIBUSI_TABLE_NAME: 'not_set_yet',
-    DB_DISTRIBUSI_YEAR : 'not_set_yet',
-    DB_DISTRIBUSI_START_ROW: 2, // NOT SET YET
-    DB_DISTRIBUSI_ID_COL: 1,  //NOT SET YET
-    DB_DISTRIBUSI_UPDATED_AT_COL: 10, // Kolom J untuk updatedAt NOT SET YET
-    DB_DISTRIBUSI_UPDATED_BY_COL: 11, // Kolom K untuk updatedBy NOT SET YET
-  },
-  {
-    DB_DISTRIBUSI_ID: 'not_set_yet',
-    DB_DISTRIBUSI_SHEET_NAME: 'not_set_yet',
-    DB_DISTRIBUSI_TABLE_NAME: 'not_set_yet',
-    DB_DISTRIBUSI_YEAR : 'not_set_yet',
-    DB_DISTRIBUSI_START_ROW: 2, // NOT SET YET
-    DB_DISTRIBUSI_ID_COL: 1,  //NOT SET YET
-    DB_DISTRIBUSI_UPDATED_AT_COL: 10, // Kolom J untuk updatedAt NOT SET YET
-    DB_DISTRIBUSI_UPDATED_BY_COL: 11, // Kolom K untuk updatedBy NOT SET YET
-  }
-
-  ]
-
-
-// // MANAGEMENT PRODUCT LOOKUP DATA
-//   DB_PRODUCT_LOOKUP_ID: 'NOT_SET_YET',
-//   DB_PRODUCT_SHEET_NAME: 'PRODUCT',
-//   DB_PRODUCT_TABLE_NAME: 'LOOKUP',
-
-// // MANAGEMENT BATCH MASTER LOOKUP DATA
-//   DB_BATCH_MASTER_LOOKUP_ID: 'NOT_SET_YET',
-//   DB_BATCH_MASTER_SHEET_NAME: 'BATCH_MASTER',
-//   DB_BATCH_MASTER_TABLE_NAME: 'LOOKUP',
-
-// // MANAGEMENT DISTRIBUSI LOOKUP DATA
-//   DB_DISTRIBUSI_LOOKUP_ID: 'NOT_SET_YET',
-//   DB_DISTRIBUSI_SHEET_NAME: 'DISTRIBUSI',
-//   DB_DISTRIBUSI_TABLE_NAME: 'LOOKUP',
+    DB_CURRENT_DISTRIBUSI_CURRENT:{
+        DB_DISTRIBUSI_ID: '13DaFlA6zbFstUvwMpj2UARqlzDqYUI-xLw41Ii9ksXI',
+        DB_DISTRIBUSI_SHEET_NAME: 'STOK-PBF',
+        DB_DISTRIBUSI_TABLE_NAME: 'MASTER DISTRIBUSI',
+        DB_DISTRIBUSI_YEAR : '2026',
+        DB_DISTRIBUSI_START_ROW: 2,
+        DB_DISTRIBUSI_ID_COL: 20,  // KOLOM T untuk idDistribusi
+        DB_DISTRIBUSI_UPDATED_AT_COL: 21, // Kolom U untuk updatedAt 
+        DB_DISTRIBUSI_UPDATED_BY_COL: 22, // Kolom V untuk updatedBy
+        DB_DISTRIBUSI_CURRENT_COLUMN_MAPPER:{
+            'tanggal' : 1,
+            'namaKonsumen' : 5,
+            'kotaCabang': 6,
+            'kodeBarang': 7,
+            'batch': 11,
+            'penerimaan': 16,
+            'distribusi': 17,
+            'keterangan': 18,
+            'catatan':19
+        }
+    },
+    DB_CURRENT_DISTRIBUSI_COLD:[
+        {
+        DB_DISTRIBUSI_ID: '1JywVff65IRXuKcobbLIvcaufTMHCDcWHU8zx16-Eu-s',
+        DB_DISTRIBUSI_SHEET_NAME: '2025',
+        DB_DISTRIBUSI_TABLE_NAME: 'MASTER DISTRIBUSI',
+        DB_DISTRIBUSI_YEAR : '2025',
+        DB_DISTRIBUSI_START_ROW: 2,
+        DB_DISTRIBUSI_ID_COL: 18,  // kolom Q untuk idDistribusi
+        DB_DISTRIBUSI_UPDATED_AT_COL: 19, // Kolom R untuk updatedAt
+        DB_DISTRIBUSI_UPDATED_BY_COL: 20, // Kolom S untuk updatedBy
+        DB_DISTRIBUSI_CURRENT_COLUMN_MAPPER:{
+            'tanggal' : 1,
+            'namaKonsumen' : 5,
+            'kotaCabang': 6,
+            'kodeBarang': 9,
+            'batch': 11,
+            'penerimaan': 14,
+            'distribusi': 15,
+            'keterangan': 16,
+            'catatan':17
+        }
+    },
+        {
+        DB_DISTRIBUSI_ID: 'NOT_SET_YET',
+        DB_DISTRIBUSI_SHEET_NAME: 'NOT_SET_YET',
+        DB_DISTRIBUSI_TABLE_NAME: 'NOT_SET_YET',
+        DB_DISTRIBUSI_YEAR : '2024',
+        DB_DISTRIBUSI_START_ROW: 2,
+        DB_DISTRIBUSI_ID_COL: 18,  // kolom Q untuk idDistribusi
+        DB_DISTRIBUSI_UPDATED_AT_COL: 19, // Kolom R untuk updatedAt
+        DB_DISTRIBUSI_UPDATED_BY_COL: 20, // Kolom S untuk updatedBy
+        DB_DISTRIBUSI_CURRENT_COLUMN_MAPPER:{
+            'tanggal' : 1,
+            'namaKonsumen' : 5,
+            'kotaCabang': 6,
+            'kodeBarang': 9,
+            'batch': 11,
+            'penerimaan': 14,
+            'distribusi': 15,
+            'keterangan': 16,
+            'catatan':17
+        }
+    },
+        {
+        DB_DISTRIBUSI_ID: 'NOT_SET_YET',
+        DB_DISTRIBUSI_SHEET_NAME: 'NOT_SET_YET',
+        DB_DISTRIBUSI_TABLE_NAME: 'NOT_SET_YET',
+        DB_DISTRIBUSI_YEAR : '2023',
+        DB_DISTRIBUSI_START_ROW: 2,
+        DB_DISTRIBUSI_ID_COL: 18,  // kolom Q untuk idDistribusi
+        DB_DISTRIBUSI_UPDATED_AT_COL: 19, // Kolom R untuk updatedAt
+        DB_DISTRIBUSI_UPDATED_BY_COL: 20, // Kolom S untuk updatedBy
+        DB_DISTRIBUSI_CURRENT_COLUMN_MAPPER:{
+            'tanggal' : 1,
+            'namaKonsumen' : 5,
+            'kotaCabang': 6,
+            'kodeBarang': 9,
+            'batch': 11,
+            'penerimaan': 14,
+            'distribusi': 15,
+            'keterangan': 16,
+            'catatan':17
+        }
+    },
+    ],
 };
