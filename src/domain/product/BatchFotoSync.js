@@ -49,7 +49,7 @@ class BatchPhotoSync {
         folderPath: rawPath,
         fileName: fileName,
         type: file.getMimeType(),
-        url: `https://drive.google.com/uc?export=view&id=${fileId}`,
+        url: `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`,
         base64: null
       };
     }

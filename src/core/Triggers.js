@@ -73,27 +73,42 @@ class SystemTrigger {
       sheet.getRange(rowNumber, config.updatedByCol).setValue(audit.updatedBy);
     }
 
-    // // 4. INTERCEPTOR: Konversi AppSheet EnumList Image ke JSON Array
-    // if (config.fotoUrlByCol) {
-    //   const fotoCell = sheet.getRange(rowNumber, config.fotoUrlByCol);
-    //   const rawValue = fotoCell.getValue();
+// ... (Langkah 1, 2, 3 audit yang sudah ada) ...
+
+    // 4 & 5. INTERCEPTOR: Auto Format PLT & Smart URL
+    // Pastikan ini HANYA mengeksekusi sheet PM_BATCH
+    if (sheetName === AppConfig.DB_BATCH_LOOKUP_SHEET_NAME) {
+      // Index kolom berdasarkan susunan tabel lu
+      const batchCol = 8; // Kolom H (batch)
+      const urlCol = 16;  // Kolom P (infoUrl)
+      const pltCol = 17;  // Kolom Q (dimensionPLT)
+
+      // Auto format PLT (p;l;t -> JSON)
+      const pltCell = sheet.getRange(rowNumber, pltCol);
+      const currentPlt = pltCell.getValue();
+      const formattedPlt = ProductDataHelper.formatPltToJson(currentPlt);
+      if (formattedPlt !== currentPlt) {
+        pltCell.setValue(formattedPlt);
+      }
+
+      // Auto URL Info with Params
+      const urlCell = sheet.getRange(rowNumber, urlCol);
+      const currentUrl = urlCell.getValue();
       
-    //   if (rawValue && typeof rawValue === 'string') {
-    //     const processedJson = AppSheetImageHelper.processEnumListImages(rawValue);
-    //     // Jika hasil proses berbeda dari nilai awal, timpa sel tersebut
-    //     if (processedJson !== rawValue) {
-    //       fotoCell.setValue(processedJson);
-    //     }
-    //   }
-    // }
+      const rowData = {
+        id: sheet.getRange(rowNumber, config.idCol).getValue(),
+        batch: sheet.getRange(rowNumber, batchCol).getValue()
+      };
 
-    // 5. Invalidate Global Cache Versioning
-    AppUtils.invalidateCache(sheetName);
+      const smartUrl = ProductDataHelper.generateInfoUrl(currentUrl, rowData);
+      if (smartUrl !== currentUrl) {
+        urlCell.setValue(smartUrl);
+      }
+    }
 
-    // 4. Invalidate Global Cache Versioning
+    // 6. Invalidate Global Cache Versioning
     AppUtils.invalidateCache(sheetName);
-  }
-}
+  }}
 
 // =====================================================================
 // ENTRY POINT 1: MANUAL EDIT DI SPREADSHEET

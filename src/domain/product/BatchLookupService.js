@@ -50,5 +50,50 @@ class BatchLookupService {
         });
     }
 
+    /**
+     * HELPER INTERNAL: Mem-parsing field yang berupa string JSON menjadi Object
+     */
+    _processJsonFields(items) {
+        return items.map(item => {
+            ['fotoUrl', 'infoUrl', 'dimensionPLT'].forEach(key => {
+                if (item[key]) {
+                    item[key] = AppUtils.safeParseJson(item[key]);
+                }
+            });
+            return item;
+        });
+    }
+
+    /**
+     * FUNGSI BARU: Pencarian spesifik 1 baris berdasarkan parameter (id, batch, dll)
+     */
+    getDetail(payload) {
+        if (!payload) throw new Error("Payload pencarian tidak ditemukan.");
+        
+        const { id, batch, kodeBarang } = payload;
+        if (!id && !batch && !kodeBarang) {
+            throw new Error("Kriteria pencarian kosong. Masukkan id, batch, atau kodeBarang.");
+        }
+
+        // Tarik semua raw data. (getValues sekali jalan itu sangat cepat di GAS)
+        const rawData = this.repo.getAllBatchLookupRaw();
+        const allData = AppUtils.mapArrayToObject(rawData, this.tableKeys);
+
+        let found = null;
+
+        // Prioritas pencarian
+        if (id) {
+            found = allData.find(e => e.id === id);
+        } else if (batch) {
+            found = allData.find(e => e.batch === batch);
+        } else if (kodeBarang) {
+            found = allData.find(e => e.kodeBarang === kodeBarang);
+        }
+
+        if (!found) return null;
+
+        // Proses field JSON (foto, dimensi) sebelum dilempar ke frontend
+        return this._processJsonFields([found])[0];
+    }
 
 }

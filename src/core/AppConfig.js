@@ -1,6 +1,7 @@
 // src/core/AppConfig.js
 
 const AppConfig = {
+  WEB_APP_URL: "https://script.google.com/macros/s/AKfycbxsJ6_3ajDsLjYKFKqwG_nuZxHAXzVi0-iwYUXKwTs/dev",
   // MANAGEMENT CUSTOMER LOOKUP DATA
   DB_CUSTOMER_LOOKUP_ID: '1_f130ciiAMSsE7E2GO2dQqdU__HDrfhN9o5rAqlfxTU',
   DB_CUSTOMER_SHEET_NAME: 'CUSTOMER',

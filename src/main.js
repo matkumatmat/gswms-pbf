@@ -63,6 +63,11 @@ const PostRegistry = {
   'updatePrintStatus': {
     factory: () => new ShippingLabelService(new ShippingLabelRepo()),
     method: 'updatePrintStatus'
+  },
+  // --- ENDPOINT BARU UNTUK PENCARIAN SPESIFIK ---
+  'getBatchDetail': {
+    factory: () => new BatchLookupService(new BatchLookupRepo()),
+    method: 'getDetail'
   }
 
   // Nanti tambah: 'createProduct': { ... }
@@ -108,9 +113,16 @@ function processUiRequest(action, payload) {
     const service = route.factory();
     const result = service[route.method](payload);
 
-    return { status: "success", data: result };
+    // Bungkus dalam satu variabel biar bisa disanitasi
+    const responsePayload = { status: "success", data: result };
+
+    // ================================================================
+    // WAJIB: Sanitasi untuk membunuh Objek Date agar tidak null di UI
+    // ================================================================
+    return JSON.parse(JSON.stringify(responsePayload));
+
   } catch (error) {
-    // Balikin error ke frontend biar bisa di-alert
+    console.error("UI Request Error: " + error.toString());
     throw new Error(error.toString()); 
   }
 }

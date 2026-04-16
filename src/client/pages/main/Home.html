@@ -1,0 +1,156 @@
+<div class="card">
+  <div class="card-header">
+    <i data-lucide="search" style="width: 18px; vertical-align: middle;"></i> Test Flow: Product Lookup
+  </div>
+  
+  <div class="form-group">
+    <label>Pilih Batch (Lite Data)</label>
+    <select id="testBatchDropdown">
+      <option value="">-- Memuat Daftar Barang... --</option>
+    </select>
+  </div>
+
+  <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+
+  <div id="detailLoading" style="display:none; text-align:center; padding: 20px;">
+    <div style="color: var(--primary);">Menarik Detail Lengkap...</div>
+  </div>
+
+  <div id="detailContainer" style="display:none;">
+    <h3 id="detNama" style="color: var(--primary); margin-bottom: 10px;"></h3>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 13px;">
+      <div class="box-component">
+        <strong>Info Batch</strong><br>
+        Kode: <span id="detKode"></span><br>
+        Batch: <span id="detBatch"></span><br>
+        Expired: <span id="detExp"></span>
+      </div>
+      <div class="box-component" style="border-left-color: var(--secondary);">
+        <strong>Dimensi (JSON)</strong><br>
+        <pre id="detDimensi" style="padding: 5px; font-size: 11px;"></pre>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <strong>Gallery Foto (Multiple)</strong>
+      <div id="detPhotos" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;"></div>
+    </div>
+  </div>
+</div>
+<div id="imageModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
+  <span style="position:absolute; top:20px; right:30px; color:white; font-size:40px; font-weight:bold; cursor:pointer;" onclick="closeModal()">&times;</span>
+  <div id="modalLoading" style="position:absolute; color:white; display:none;">Memuat gambar HD...</div>
+  <img id="modalImg" style="max-width:90%; max-height:90%; border-radius:8px; display:none;">
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initTestPage();
+  });
+
+  async function initTestPage() {
+    const dropdown = document.getElementById('testBatchDropdown');
+    
+    try {
+      // 1. Ambil data Short/Lite (7 Kolom, Limit 5000)
+      const liteData = await GasApi.get('getShortBatchLookup', 1, 5000);
+      
+      dropdown.innerHTML = '<option value="">-- Pilih Batch Barang --</option>';
+      
+      liteData.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.text = `${item.namaBarangDagang} [${item.batch}]`;
+        dropdown.appendChild(option);
+      });
+
+      // 2. Listener saat pilih barang
+      dropdown.addEventListener('change', async (e) => {
+        const selectedId = e.target.value;
+        if (!selectedId) return;
+
+        showDetailLoading(true);
+
+        try {
+          // 3. Ambil Detail Lengkap via POST (Kirim ID)
+          const detail = await GasApi.post('getBatchDetail', { id: selectedId });
+          renderDetail(detail);
+        } catch (err) {
+          UI.toast("Gagal ambil detail: " + err.message, "error");
+        } finally {
+          showDetailLoading(false);
+        }
+      });
+
+    } catch (error) {
+      UI.toast("Gagal muat daftar: " + error.message, "error");
+    }
+    
+    lucide.createIcons();
+  }
+
+  function showDetailLoading(isLoading) {
+    document.getElementById('detailLoading').style.display = isLoading ? 'block' : 'none';
+    document.getElementById('detailContainer').style.display = isLoading ? 'none' : 'block';
+  }
+
+  function renderDetail(data) {
+    if (!data) return;
+
+    document.getElementById('detNama').innerText = data.namaBarangDagang;
+    document.getElementById('detKode').innerText = data.kodeBarang;
+    document.getElementById('detBatch').innerText = data.batch;
+    document.getElementById('detExp').innerText = Formatter.date(data.expiryDate);
+    
+    // Tampilkan Dimensi (Udah di-parse jadi Object oleh Service)
+    document.getElementById('detDimensi').innerText = JSON.stringify(data.dimensionPLT, null, 2);
+
+    // Render Foto-foto
+    const photoContainer = document.getElementById('detPhotos');
+    photoContainer.innerHTML = '';
+    
+    if (data.fotoUrl && Array.isArray(data.fotoUrl)) {
+      data.fotoUrl.forEach(photo => {
+        const img = document.createElement('img');
+        
+        // JURUS SAKTI: Kita belah URL-nya biar bersih dari parameter size bawaan (kalau ada)
+        const baseThumbUrl = photo.url.split('&sz=')[0]; 
+        
+        // Paksa ukuran w300 buat di galeri biar ringan
+        img.src = `${baseThumbUrl}&sz=w300`; 
+        
+        img.style.width = '100px';
+        img.style.height = '100px';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '8px';
+        img.style.border = '1px solid var(--border-color)';
+        img.style.cursor = 'zoom-in';
+
+        img.onclick = () => {
+          const modal = document.getElementById('imageModal');
+          const modalImg = document.getElementById('modalImg');
+          const modalLoading = document.getElementById('modalLoading');
+          
+          modal.style.display = 'flex';
+          modalImg.style.display = 'none';
+          modalLoading.style.display = 'block';
+
+          // Paksa ukuran resolusi HD (2500px) buat di dalam modal!
+          modalImg.src = `${baseThumbUrl}&sz=w2500`;
+
+          modalImg.onload = () => {
+            modalLoading.style.display = 'none';
+            modalImg.style.display = 'block';
+          };
+        };
+
+        photoContainer.appendChild(img);
+      });
+    }}
+  function closeModal() {
+    document.getElementById('imageModal').style.display = 'none';
+    document.getElementById('modalImg').src = ''; // Clear source biar gak nyangkut
+  }
+  
+</script>
