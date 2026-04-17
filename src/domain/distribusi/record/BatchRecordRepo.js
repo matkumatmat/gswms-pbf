@@ -2,8 +2,9 @@
 
 class BatchRecordRepo {
   constructor() {
-    this.hotConfig = AppConfig.DB_CURRENT_DISTRIBUSI_CURRENT;
-    this.coldConfigs = AppConfig.DB_CURRENT_DISTRIBUSI_COLD;
+    // THE FIX: Panggil nama variabel yang BENAR sesuai AppConfig lu
+    this.hotConfig = AppConfig.DB_DISTRIBUSI_CURRENT;
+    this.coldConfigs = AppConfig.DB_DISTRIBUSI_COLD;
   }
 
   getHistoryByBatch(batchNo) {
@@ -37,30 +38,28 @@ class BatchRecordRepo {
   }
 
   _findInSheet(config, batchNo) {
-    const ssId = config.DB_DISTRIBUSI_ID;
-    const primaryName = config.DB_DISTRIBUSI_SHEET_NAME;
-    const fallbackName = config.DB_DISTRIBUSI_TABLE_NAME; // Juru selamat kalau admin ganti nama sheet
+    // Kalau isHot (Tahun berjalan), property id-nya namanya beda di config lu
+    const isHot = config.DB_DISTRIBUSI_CURRENT_ID !== undefined;
     
-    const startRow = config.DB_DISTRIBUSI_START_ROW;
+    const ssId = isHot ? config.DB_DISTRIBUSI_CURRENT_ID : config.DB_DISTRIBUSI_ID;
+    const primaryName = isHot ? config.DB_DISTRIBUSI_CURRENT_SHEET_NAME : config.DB_DISTRIBUSI_SHEET_NAME;
+    const fallbackName = isHot ? config.DB_DISTRIBUSI_CURRENT_TABLE_NAME : config.DB_DISTRIBUSI_TABLE_NAME;
+    const startRow = isHot ? config.DB_DISTRIBUSI_CURRENT_START_ROW : config.DB_DISTRIBUSI_START_ROW;
     const map = config.DB_DISTRIBUSI_CURRENT_COLUMN_MAPPER;
     
     try {
       const ss = SpreadsheetApp.openById(ssId);
       
-      // THE FIX: Pintar nyari nama Sheet
+      // Pintar nyari nama Sheet
       let sheet = ss.getSheetByName(primaryName);
       if (!sheet) {
-        sheet = ss.getSheetByName(fallbackName); // Coba nama cadangan
-        if (!sheet) {
-          console.error(`Sheet '${primaryName}' atau '${fallbackName}' ga ketemu di ID: ${ssId}`);
-          return []; // Skip file ini, lanjut file lain
-        }
+        sheet = ss.getSheetByName(fallbackName); 
+        if (!sheet) return []; 
       }
 
       const lastRow = sheet.getLastRow();
       if (lastRow < startRow) return [];
 
-      // THE FIX: Sedot data ke RAM, jangan pakai TextFinder biar nggak manja sama spasi
       const rawData = sheet.getRange(startRow, 1, lastRow - startRow + 1, sheet.getLastColumn()).getValues();
       const results = [];
       
@@ -71,7 +70,6 @@ class BatchRecordRepo {
         const row = rawData[i];
         const currentBatch = String(row[batchColIndex] || '').trim().toLowerCase();
 
-        // Kalau batch-nya klop (mengabaikan huruf besar/kecil & spasi berlebih)
         if (currentBatch === targetBatch) {
           results.push({
             tanggal: row[map.tanggal - 1],
@@ -80,14 +78,14 @@ class BatchRecordRepo {
             penerimaan: parseFloat(row[map.penerimaan - 1]) || 0,
             distribusi: parseFloat(row[map.distribusi - 1]) || 0,
             keterangan: String(row[map.keterangan - 1] || ''),
-            sumber: config.DB_DISTRIBUSI_YEAR || 'CURRENT'
+            sumber: isHot ? config.DB_DISTRIBUSI_CURRENT_YEAR : config.DB_DISTRIBUSI_YEAR
           });
         }
       }
 
       return results;
     } catch (error) {
-      console.error(`Error membaca sheet ${config.DB_DISTRIBUSI_YEAR}: ${error.toString()}`);
+      console.error(`Error membaca sheet ${primaryName}: ${error.toString()}`);
       return [];
     }
   }
