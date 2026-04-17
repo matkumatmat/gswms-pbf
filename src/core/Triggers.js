@@ -10,6 +10,12 @@ class SystemTrigger {
     // Konfigurasi CCTV per tabel. 
     // Sangat modular, tinggal tambah key baru jika ada sheet baru.
     const tableWatchers = {
+      [AppConfig.DB_DISTRIBUSI_CURRENT.DB_DISTRIBUSI_CURRENT_SHEET_NAME]: {
+        startRow: AppConfig.DB_DISTRIBUSI_CURRENT.DB_DISTRIBUSI_CURRENT_START_ROW,
+        idCol: AppConfig.DB_DISTRIBUSI_CURRENT.DB_DISTRIBUSI_CURRENT_ID_COL,
+        updatedAtCol: AppConfig.DB_DISTRIBUSI_CURRENT.DB_DISTRIBUSI_CURRENT_UPDATED_AT_COL,
+        updatedByCol: AppConfig.DB_DISTRIBUSI_CURRENT.DB_DISTRIBUSI_CURRENT_UPDATED_BY_COL
+      },
       [AppConfig.DB_BATCH_LOOKUP_SHEET_NAME]: {
         startRow: AppConfig.DB_BATCH_LOOKUP_START_ROW,
         idCol: AppConfig.DB_BATCH_LOOKUP_ID_COL,
@@ -165,7 +171,8 @@ function setupLayananTrigger() {
     AppConfig.DB_CUSTOMER_LOOKUP_ID,
     AppConfig.DB_SHIPPING_EMBALAGE_LOOKUP_ID,
     AppConfig.DB_SHIPPING_LABEL_ID,
-    AppConfig.DB_BATCH_LOOKUP_ID
+    AppConfig.DB_BATCH_LOOKUP_ID,
+    AppConfig.DB_DISTRIBUSI_CURRENT.DB_DISTRIBUSI_CURRENT_ID
   ];
 
   // Bersihkan trigger lama agar tidak duplikat
@@ -184,4 +191,20 @@ function setupLayananTrigger() {
       Logger.log("Gagal memasang CCTV di ID: " + ssId + " | Error: " + error.toString());
     }
   });
+}
+
+// src/core/CronJobs.js
+
+/**
+ * Fungsi ini yang akan dikaitkan ke Time-driven Trigger Google Apps Script.
+ * Disarankan berjalan setiap hari pukul 01:00 AM - 02:00 AM.
+ */
+function scheduledDailyStockSync() {
+  try {
+    const aggregatorService = new StockAggregatorService();
+    aggregatorService.executeDailySync();
+  } catch (error) {
+    console.error("Cron Job Failed: " + error.toString());
+    // Di sini Anda bisa mengimplementasikan notifikasi email ke Admin jika cron job gagal
+  }
 }

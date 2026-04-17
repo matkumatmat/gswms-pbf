@@ -1,6 +1,7 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
+    let currentBatchForRecord = null; // Menyimpan batch aktif
     
     // TANGKAP URL PARAMETER LANGSUNG DARI BROWSER
     google.script.url.getLocation(function(location) {
@@ -45,6 +46,7 @@
   }
 
   function renderDetailData(data) {
+    currentBatchForRecord = data.batch;
     // Helper function buat fallback "-" kalau null/kosong
     const val = (v, postfix = '') => (v !== null && v !== undefined && v !== '') ? `${v} ${postfix}` : '-';
 
@@ -157,5 +159,30 @@
     const modal = document.getElementById('imageModal');
     modal.style.display = 'none';
     document.getElementById('modalImg').src = ''; 
+  }
+  // --- LOGIC CETAK BUKU TABUNGAN ---
+  async function handlePrintBukuTabungan() {
+    if (!currentBatchForRecord || currentBatchForRecord === '-') {
+      UI.toast("Nomor batch tidak valid untuk dicetak!", "warning");
+      return;
+    }
+
+    const originalBtnText = `<i data-lucide="file-spreadsheet" style="width: 18px;"></i> Cetak Buku Tabungan`;
+    UI.setBtnLoading('btnCetakBukuTabungan', true, "Menyusun Spreadsheet...");
+
+    try {
+      const result = await GasApi.post('generateBatchRecordSheet', { batchNo: currentBatchForRecord });
+      
+      UI.toast("Buku Tabungan berhasil dibuat!", "success");
+      
+      // Otomatis buka file GSheet di tab baru
+      window.open(result.fileUrl, '_blank');
+      
+    } catch (error) {
+      UI.toast("Gagal membuat Buku Tabungan: " + error.message, "error");
+    } finally {
+      UI.setBtnLoading('btnCetakBukuTabungan', false, originalBtnText);
+      lucide.createIcons(); // Render ulang icon lucide setelah innerHTML ditimpa
+    }
   }
 </script>

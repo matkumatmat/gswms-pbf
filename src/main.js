@@ -74,6 +74,10 @@ const PostRegistry = {
   'getBatchDetail': {
     factory: () => new BatchLookupService(new BatchLookupRepo()),
     method: 'getDetail'
+  },
+  'generateBatchRecordSheet': {
+    factory: () => new BatchRecordService(new BatchRecordRepo()),
+    method: 'generateSheet' // Mengarah ke fungsi pembuat GSheet
   }
 
   // Nanti tambah: 'createProduct': { ... }
