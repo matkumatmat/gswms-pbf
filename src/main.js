@@ -436,7 +436,8 @@ function doGet(e) {
         'product': 'src/clients/pages/product/Product', // <--- ARAHIN KE FILE BARU LU
         'home': 'src/clients/pages/Home',
         'master_customer': 'src/client/pages/customer/CustomerList',
-        'add_customer': 'src/client/pages/customer/CustomerForm'
+        'add_customer': 'src/client/pages/customer/CustomerForm',
+        'fefo_center': 'src/client/pages/fefo/FefoCenter'
       };
 
       // Kalo page-nya kedaftar, panggil file-nya. Kalo nggak ada? Lempar ke Void 404!
