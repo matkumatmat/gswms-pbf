@@ -1,3 +1,33 @@
+<style>
+  /* KITA TIMPA GRIDNYA BIAR TABEL MAKIN LEGA DI DESKTOP */
+  .layout-customer { display: flex; flex-direction: column; gap: 20px; }
+  @media (min-width: 1024px) {
+    .layout-customer { 
+      display: grid; 
+      grid-template-columns: 3.5fr 1fr; /* Tabel dapet porsi 75% lebih */
+      align-items: start; 
+    }
+  }
+
+  /* CUSTOM STYLING BUAT DATATABLE BIAR LEBIH ENTERPRISE */
+  #table-customer-container table { width: 100%; border-collapse: collapse; }
+  #table-customer-container th { 
+    background: #f8fafc; 
+    padding: 12px 16px; 
+    text-align: left; 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+    color: var(--text-light); 
+    border-bottom: 2px solid var(--border);
+  }
+  #table-customer-container td { 
+    padding: 16px; 
+    vertical-align: top; /* WAJIB TOP BIAR RAPI KALO ADA KOLOM YANG PANJANG */
+    border-bottom: 1px solid var(--border);
+  }
+  #table-customer-container tr:hover td { background: #f8fafc; }
+</style>
+
 <div class="ui-subheader">
   <div class="ui-subheader-icon"><i data-lucide="users"></i></div>
   <div class="ui-subheader-text">
@@ -6,62 +36,92 @@
   </div>
 </div>
 
-<div class="ui-card">
-  <div class="ui-card-body">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
-      
-      <div class="ui-dropdown-wrapper" style="width: 100%; max-width: 350px;">
-        <i data-lucide="search" style="position:absolute; left:12px; top:10px; color:var(--text-light); width:18px;"></i>
-        <input type="text" id="custSearch" placeholder="Cari nama atau kota..." autocomplete="off" 
-               style="width:100%; padding:10px 14px 10px 38px; border:1px solid var(--border); border-radius:8px; outline:none; font-size: 0.9rem;">
+<div class="layout-customer">
+  
+  <div class="ui-card">
+    <div class="ui-card-body">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
+        
+        <div class="ui-dropdown-wrapper" style="flex: 1; min-width: 250px; max-width: 400px;">
+          <i data-lucide="search" style="position:absolute; left:14px; top:12px; color:var(--text-light); width:18px;"></i>
+          <input type="text" id="custSearch" placeholder="Cari nama atau kota..." autocomplete="off" 
+                 style="width:100%; padding:10px 14px 10px 42px; border:1px solid var(--border); border-radius:8px; outline:none; font-size: 0.9rem; background:#f8fafc; transition:0.2s;">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-secondary" onclick="exportToCSV()" style="padding: 8px 16px;">
+            <i data-lucide="download" style="width:16px;"></i> Ekspor CSV
+          </button>
+          <a href="?page=add_customer" class="btn btn-primary" style="text-decoration: none; padding: 8px 16px;">
+            <i data-lucide="user-plus" style="width:16px;"></i> Tambah Konsumen
+          </a>
+        </div>
+
       </div>
 
-      <div style="display: flex; gap: 8px;">
-        <button class="btn btn-secondary" onclick="exportToCSV()">
-          <i data-lucide="download"></i> Ekspor CSV
-        </button>
-        <a href="?page=add_customer" class="btn btn-primary" style="text-decoration: none;">
-          <i data-lucide="user-plus"></i> Tambah Konsumen
-        </a>
-      </div>
-
+      <div id="table-customer-container"></div>
     </div>
-
-    <div id="table-customer-container"></div>
   </div>
+
+  <div class="ui-card" style="position: sticky; top: 90px;">
+    <div class="ui-card-header" style="background:#f0fdfa; color:var(--primary); font-weight:800; border-bottom:none;">
+      <i data-lucide="bar-chart-2" style="margin-right:8px;"></i> Ringkasan
+    </div>
+    <div class="ui-card-body" style="display:flex; flex-direction:column; gap:16px;">
+      <div style="text-align:center; padding: 20px 10px; background:#f8fafc; border-radius:12px; border:1px solid var(--border);">
+        <div style="font-size:2.5rem; font-weight:900; color:var(--text-main); line-height:1;" id="totalCustSummary">-</div>
+        <div style="font-size:0.8rem; color:var(--text-light); font-weight:600; text-transform:uppercase; margin-top:8px;">Total Konsumen</div>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-light); line-height:1.5; padding:10px; background:#fffbdd; border-radius:8px; border:1px solid #fef08a;">
+        <i data-lucide="info" style="width:14px; vertical-align:text-bottom; color:#ca8a04;"></i> Database ini terhubung langsung dengan relasi ID pengiriman barang.
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-  let globalCustomers = []; // Simpan data di memori buat Modal & CSV
+  let globalCustomers = []; 
 
   document.addEventListener('DOMContentLoaded', () => {
     loadCustomers();
     lucide.createIcons();
 
     // Fungsi Search Lokal
-    document.getElementById('custSearch').addEventListener('input', (e) => {
-      const keyword = e.target.value.toLowerCase().trim();
-      if(keyword === '') {
-        renderTable(globalCustomers);
-      } else {
-        const filtered = globalCustomers.filter(c => 
-          (c.namaKonsumen && c.namaKonsumen.toLowerCase().includes(keyword)) ||
-          (c.kotaCabang && c.kotaCabang.toLowerCase().includes(keyword)) ||
-          (c.namaSingkat && c.namaSingkat.toLowerCase().includes(keyword))
-        );
-        renderTable(filtered);
-      }
-    });
+    const searchInput = document.getElementById('custSearch');
+    if(searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const keyword = e.target.value.toLowerCase().trim();
+        if(keyword === '') {
+          renderTable(globalCustomers);
+        } else {
+          const filtered = globalCustomers.filter(c => 
+            (c.namaKonsumen && c.namaKonsumen.toLowerCase().includes(keyword)) ||
+            (c.kotaCabang && c.kotaCabang.toLowerCase().includes(keyword)) ||
+            (c.namaSingkat && c.namaSingkat.toLowerCase().includes(keyword))
+          );
+          renderTable(filtered);
+        }
+      });
+      // Efek focus input
+      searchInput.addEventListener('focus', () => searchInput.style.background = '#fff');
+      searchInput.addEventListener('blur', () => searchInput.style.background = '#f8fafc');
+    }
   });
 
   async function loadCustomers() {
     const container = document.getElementById('table-customer-container');
-    container.innerHTML = '<div style="padding:40px 20px; text-align:center; color:var(--primary);"><i data-lucide="loader-2" class="lucide-spin" style="width:32px; height:32px;"></i><br><br>Memuat Data Customer...</div>';
+    container.innerHTML = '<div style="padding:60px 20px; text-align:center; color:var(--primary);"><i data-lucide="loader-2" class="lucide-spin" style="width:36px; height:36px;"></i><br><br>Memuat Data Customer...</div>';
     lucide.createIcons();
 
     try {
       const data = await GasApi.get('getCustomers', 1, 2000); 
       globalCustomers = data;
+      
+      // Update widget summary
+      const sumEl = document.getElementById('totalCustSummary');
+      if(sumEl) sumEl.innerText = data.length.toLocaleString('id-ID');
+
       renderTable(globalCustomers);
     } catch (e) {
       container.innerHTML = `<div style="padding:20px; text-align:center; color:#ef4444;">Gagal memuat data: ${e.message}</div>`;
@@ -76,20 +136,29 @@
       return;
     }
 
-    const tableData = data.map((c, index) => ({
+    const tableData = data.map((c) => ({
       konsumen: `<div style="line-height:1.4;">
-                   <strong style="color:var(--text-main);">${c.namaKonsumen}</strong><br>
-                   <span style="font-size:0.75rem; color:var(--text-light);">${c.kotaCabang || '-'} | ${c.namaSingkat || '-'}</span>
+                   <strong style="color:var(--text-main); font-size:0.95rem;">${c.namaKonsumen}</strong><br>
+                   <span style="display:inline-block; margin-top:4px; font-size:0.75rem; color:var(--text-light); background:#f1f5f9; padding:2px 6px; border-radius:4px;">${c.kotaCabang || '-'} &bull; ${c.namaSingkat || '-'}</span>
                  </div>`,
-      info: `<div style="font-size:0.8rem; line-height:1.5;">
-               <i data-lucide="map-pin" style="width:12px; display:inline-block; color:var(--text-light);"></i> ${c.kota || '-'}<br>
-               <i data-lucide="user" style="width:12px; display:inline-block; color:var(--text-light);"></i> ${c.pic || '-'} <br>
-               <i data-lucide="phone" style="width:12px; display:inline-block; color:var(--text-light);"></i> ${c.kontak || '-'}
+      info: `<div style="font-size:0.8rem; line-height:1.6; color:var(--text-main);">
+               <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:4px;">
+                 <i data-lucide="map-pin" style="width:14px; color:var(--text-light); margin-top:2px;"></i> 
+                 <span>${c.kota || '-'}</span>
+               </div>
+               <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                 <i data-lucide="user" style="width:14px; color:var(--text-light);"></i> 
+                 <span>${c.pic || '-'}</span>
+               </div>
+               <div style="display:flex; align-items:center; gap:8px;">
+                 <i data-lucide="phone" style="width:14px; color:var(--text-light);"></i> 
+                 <span>${c.kontak || '-'}</span>
+               </div>
              </div>`,
-      tipe: `<span class="ui-badge ui-badge-neutral">${c.tipe || 'REGULER'}</span>`,
-      aksi: `<div style="display:flex; gap:6px; justify-content:flex-end;">
-               ${c.maps && c.maps.startsWith('http') ? `<a href="${c.maps}" target="_blank" class="btn btn-secondary" style="padding:4px 8px;" title="Buka Maps"><i data-lucide="map"></i></a>` : ''}
-               <button class="btn btn-primary" style="padding:4px 8px;" onclick="showCustomerDetail('${c.id}')"><i data-lucide="eye"></i></button>
+      tipe: `<span class="ui-badge ui-badge-neutral" style="font-size:0.7rem;">${c.tipe || 'REGULER'}</span>`,
+      aksi: `<div style="display:flex; gap:8px; justify-content:flex-end;">
+               ${c.maps && c.maps.startsWith('http') ? `<a href="${c.maps}" target="_blank" class="btn btn-secondary" style="padding:6px; background:#fff;" title="Buka Maps"><i data-lucide="map" style="width:16px; color:#3b82f6;"></i></a>` : ''}
+               <button class="btn btn-primary" style="padding:6px; background:#f0fdfa; color:var(--primary); border:1px solid #ccfbf1;" onclick="showCustomerDetail('${c.id}')" title="Detail"><i data-lucide="eye" style="width:16px;"></i></button>
              </div>`
     }));
 
@@ -97,7 +166,7 @@
       containerId: 'table-customer-container',
       headers: [
         { label: 'Konsumen / Cabang', key: 'konsumen' },
-        { label: 'Lokasi & Kontak', key: 'info' },
+        { label: 'Lokasi & PIC', key: 'info' },
         { label: 'Tipe', key: 'tipe' },
         { label: '', key: 'aksi' }
       ],
@@ -106,7 +175,6 @@
     lucide.createIcons();
   }
 
-  // THE FIX: Nampilin Modal Detail Customer!
   function showCustomerDetail(id) {
     const c = globalCustomers.find(x => x.id === id);
     if(!c) return;
@@ -144,7 +212,6 @@
     });
   }
 
-  // THE FIX: Export CSV Beneran!
   function exportToCSV() {
     if(globalCustomers.length === 0) {
       ToastSystem.show("Tidak ada data untuk diekspor!", "warning");
@@ -155,7 +222,6 @@
     csvContent += "ID,Nama Konsumen,Cabang,Singkatan,Tipe,Provinsi,Kota,Alamat,PIC,Kontak,Maps,Status\\n";
     
     globalCustomers.forEach(c => {
-      // Escape tanda kutip biar CSV ga rusak kalau ada koma di alamat
       const row = [
         c.id, c.namaKonsumen, c.kotaCabang, c.namaSingkat, c.tipe, 
         c.provinsi, c.kota, c.alamat, c.pic, c.kontak, c.maps, c.status
