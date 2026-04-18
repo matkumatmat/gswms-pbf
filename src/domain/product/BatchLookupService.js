@@ -17,36 +17,43 @@ class BatchLookupService {
             'rslHari', 'perBucket', 'createdAt', 'updatedAt', 'updatedBy', 'notes'
         ];
         
-        this.shortKeys = ['id', 'kodeBarang', 'namaBarangDagang', 'batch', 'expiryDate', 'perBucket'];
+        this.shortKeys = ['id', 'productId', 'kodeBarangOld', 'kodeBarangNew', 'namaBarangDagang', 'batch', 'expiryDate', 'perBucket'];
     }
 
-    /**
-     * ENGINE PENGGABUNG (JOIN) BATCH + PRODUCT
-     */
     _joinBatchWithProduct(rawBatchData) {
-        // 1. Tarik Data Master Produk
         const rawProducts = this.productRepo.getAllProductRaw();
-        const productKeys = ['id', 'kodeBarang', 'namaDagang', 'namaBarangNew', 'kategori', 'jenis', 'tahun', 'hjphet', 'updatedAt', 'updatedBy'];
-        const products = AppUtils.mapArrayToObject(rawProducts, productKeys);
-        
-        // 2. Bikin Dictionary biar nyarinya ngebut! (O(1) complexity)
         const productMap = new Map();
-        products.forEach(p => productMap.set(p.id, p));
+        
+        rawProducts.forEach(row => {
+            const pId = String(row[AppConfig.DB_PRODUCT_LOOKUP_ID_COL - 1] || '').trim();
+            if (pId) {
+                productMap.set(pId, {
+                    kodeBarangOld: String(row[AppConfig.DB_PRODUCT_LOOKUP_KODE_BARANG_OLD_COL - 1] || '-'),
+                    kodeBarangNew: String(row[AppConfig.DB_PRODUCT_LOOKUP_KODE_BARANG_NEW_COL - 1] || '-'),
+                    namaDagang: String(row[AppConfig.DB_PRODUCT_LOOKUP_NAMA_DAGANG_COL - 1] || ''),
+                    namaBarangErp: String(row[AppConfig.DB_PRODUCT_LOOKUP_NAMA_BARANG_ERP_COL - 1] || ''),
+                    // THE FIX: TARIK JUGA DATA KATEGORI DLL KE DALAM MAP
+                    kategori: String(row[AppConfig.DB_PRODUCT_LOOKUP_NAMA_DAGANG_COL] || ''), // Sesuai index kategori di AppConfig lu
+                    jenis: String(row[AppConfig.DB_PRODUCT_LOOKUP_NAMA_DAGANG_COL + 1] || ''), // Index jenis
+                    hjphet: AppUtils.safeParseJson(row[AppConfig.DB_PRODUCT_LOOKUP_TAHUN_COL - 1]) // Index HJP HET
+                });
+            }
+        });
 
-        // 3. Map Batch Data & Kawinin
         const batches = AppUtils.mapArrayToObject(rawBatchData, this.batchTableKeys);
         
         return batches.map(batch => {
             const master = productMap.get(batch.productId) || {};
-            // Inject data dari master ke batch biar Frontend gak nyadar ada perubahan DB!
             return {
                 ...batch,
-                kodeBarang: master.kodeBarang || '-',
+                kodeBarangOld: master.kodeBarangOld || '-',
+                kodeBarangNew: master.kodeBarangNew || '-',
                 namaBarangDagang: master.namaDagang || '-',
-                namaBarangErp: master.namaBarangNew || '-',
+                namaBarangErp: master.namaBarangErp || '-',
+                // Inject the missing data!
                 kategori: master.kategori || '-',
                 jenis: master.jenis || '-',
-                hjphet: AppUtils.safeParseJson(master.hjphet) || {}
+                hjphet: master.hjphet || {}
             };
         });
     }
@@ -80,14 +87,12 @@ class BatchLookupService {
     }
 
     getDetail(payload) {
-        // Logikanya sama, tarik semua, JOIN, terus FIND 1 data
         const rawData = this.repo.getAllBatchLookupRaw();
         const joinedData = this._joinBatchWithProduct(rawData);
         
         let found = null;
         if (payload.id) found = joinedData.find(e => e.id === payload.id);
         else if (payload.batch) found = joinedData.find(e => e.batch === payload.batch);
-        else if (payload.kodeBarang) found = joinedData.find(e => e.kodeBarang === payload.kodeBarang);
 
         if (!found) return null;
         return this._processJsonFields([found])[0];

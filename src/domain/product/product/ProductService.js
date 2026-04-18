@@ -7,8 +7,8 @@ class ProductService {
         
         // Sesuaikan sama urutan 10 Kolom yang lu kasih!
         this.tableKeys = [
-            'id', 'kodeBarang', 'namaDagang', 'namaBarangNew', 
-            'kategori', 'jenis', 'tahun', 'hjphet', 
+            'id', 'kodeBarang', 'kodeBarangNew','namaDagang', 'namaBarangNew', 
+            'kategori', 'jenis', 'tahun', 'hjp,','het', 
             'updatedAt', 'updatedBy'
         ];
     }

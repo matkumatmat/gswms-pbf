@@ -4,7 +4,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
     
-    // THE FIX: Balik ke cara GAS halal buat nangkep URL Parameter yang ada di address bar
     google.script.url.getLocation(function(location) {
       const params = location.parameter;
       const directId = params.id;
@@ -18,10 +17,9 @@
     });
   });
 
-async function initProductDetail(directId) {
+  async function initProductDetail(directId) {
     Loader.show('Memindai Struktur Data Produk...'); 
     try {
-      // 1. Tarik Data Master
       const detail = await GasApi.post('getBatchDetail', { id: directId });
       
       if (!detail) {
@@ -31,7 +29,6 @@ async function initProductDetail(directId) {
 
       renderDetailData(detail);
 
-      // THE FIX: 2. Tarik History Mutasi buat ngitung "[TBA Master]"
       try {
         const history = await GasApi.post('getBatchHistory', { batchNo: detail.batch });
         let totalIn = 0, totalOut = 0;
@@ -39,14 +36,12 @@ async function initProductDetail(directId) {
         history.forEach(h => {
           const ket = String(h.keterangan || '').toUpperCase();
           const kons = String(h.namaKonsumen || '').toUpperCase();
-          // Filter validasi mutasi
           if (!ket.includes('REVISI') && !kons.includes('SALDO AWAL')) {
             totalIn += (h.penerimaan || 0);
             totalOut += (h.distribusi || 0);
           }
         });
 
-        // Render Angkanya!
         document.getElementById('detStokIn').innerText = totalIn.toLocaleString('id-ID');
         document.getElementById('detStokOut').innerText = totalOut.toLocaleString('id-ID');
         document.getElementById('detStokCurrent').innerText = (totalIn - totalOut).toLocaleString('id-ID');
@@ -64,6 +59,7 @@ async function initProductDetail(directId) {
       Loader.hide(); 
     }
   }
+
   function showError(msg) {
     document.getElementById('pdError').style.display = 'block';
     document.getElementById('pdErrorMsg').innerText = msg;
@@ -72,20 +68,33 @@ async function initProductDetail(directId) {
 
   function renderDetailData(data) {
     currentBatchForRecord = data.batch;
-    // Helper function buat fallback "-"
     const val = (v, postfix = '') => (v !== null && v !== undefined && v !== '') ? `${v} ${postfix}` : '-';
 
     document.getElementById('detNamaDagang').innerText = val(data.namaBarangDagang);
     document.getElementById('detNamaErp').innerText = val(data.namaBarangErp);
-    document.getElementById('detKode').innerText = val(data.kodeBarang);
+    
+    // THE FIX: Nampilin 2 Kode Sekaligus (Sesuai ID di HTML baru lu)
+    document.getElementById('detKodeOld').innerText = val(data.kodeBarangOld);
+    document.getElementById('detKodeNew').innerText = val(data.kodeBarangNew);
+    
     document.getElementById('detNie').innerText = val(data.nie);
     document.getElementById('detNoDok').innerText = val(data.noDokPenerimaan);
 
+    // THE FIX: Data dari master produk masuk sini
     document.getElementById('detKategori').innerText = val(data.kategori);
+    document.getElementById('detJenis').innerText = val(data.jenis);
     document.getElementById('detAlokasi').innerText = val(data.alokasi);
     document.getElementById('detSektor').innerText = val(data.sektor);
 
-    // RENDER GLOBAL CAPSULE BADGES
+    // THE FIX: Harga
+    let hetVal = '-', hjpVal = '-';
+    if (data.hjphet && typeof data.hjphet === 'object') {
+       hetVal = Formatter.currency(data.hjphet.het || 0);
+       hjpVal = Formatter.currency(data.hjphet.hjp || 0);
+    }
+    document.getElementById('detHet').innerText = hetVal;
+    document.getElementById('detHjp').innerText = hjpVal;
+
     let statusHtml = '';
     if (data.status) {
         const s = data.status.toUpperCase();
@@ -98,12 +107,10 @@ async function initProductDetail(directId) {
         statusHtml += `<span class="ui-badge ${css}">${s}</span>`;
     }
     if (data.sysStatus) {
-        // Gabung sama icon biar makin mantep
-        statusHtml += ` <span class="ui-badge ui-badge-primary"><i data-lucide="cpu"></i>${data.sysStatus}</span>`;
+        statusHtml += `<span class="ui-badge ui-badge-primary"><i data-lucide="cpu"></i>${data.sysStatus}</span>`;
     }
     document.getElementById('detStatus').innerHTML = statusHtml || '-';
 
-    // FISIK
     document.getElementById('detBerat').innerText = val(data.berat);
     document.getElementById('detPerBucket').innerText = val(data.perBucket);
     document.getElementById('detCatatanFisik').innerText = val(data.catatanFisik);
@@ -116,7 +123,6 @@ async function initProductDetail(directId) {
     }
     document.getElementById('detDimensi').innerText = dimText;
 
-    // BATCH & DATES 
     document.getElementById('detBatch').innerText = val(data.batch);
     document.getElementById('detMfg').innerText = Formatter.date(data.manufacturingDate);
     document.getElementById('detExp').innerText = Formatter.date(data.expiryDate);
@@ -125,13 +131,11 @@ async function initProductDetail(directId) {
     document.getElementById('detRslBln').innerText = val(rslBln);
     document.getElementById('detRslHari').innerText = val(data.rslHari);
 
-    // META SYSTEM 
     document.getElementById('detNotes').innerText = val(data.notes);
     document.getElementById('detCreatedAt').innerText = Formatter.date(data.createdAt);
     document.getElementById('detUpdatedAt').innerText = Formatter.date(data.updatedAt);
     document.getElementById('detUpdatedBy').innerText = val(data.updatedBy);
 
-    // Link Action Eksternal
     const btnLink = document.getElementById('btnLinkInfo');
     if (data.infoUrl && data.infoUrl.startsWith('http')) {
       btnLink.href = data.infoUrl;
@@ -139,7 +143,6 @@ async function initProductDetail(directId) {
       btnLink.style.display = 'none';
     }
 
-    // RENDER GALLERY (Klik nembak ke ModalSystem)
     const photoContainer = document.getElementById('detPhotos');
     photoContainer.innerHTML = '';
     
@@ -147,10 +150,8 @@ async function initProductDetail(directId) {
       data.fotoUrl.forEach(photo => {
         const img = document.createElement('img');
         img.className = 'gallery-img';
-        
         const baseThumbUrl = photo.url.split('&sz=')[0]; 
         img.src = `${baseThumbUrl}&sz=w300`; 
-        
         img.onclick = () => openModalImg(`${baseThumbUrl}&sz=w2500`);
         photoContainer.appendChild(img);
       });
@@ -159,7 +160,6 @@ async function initProductDetail(directId) {
     }
   }
 
-  // --- LOGIC MODAL GAMBAR HD PAKE GLOBAL MODAL ---
   function openModalImg(hdUrl) {
     ModalSystem.show({
       title: 'Preview Foto Fisik',
@@ -172,14 +172,12 @@ async function initProductDetail(directId) {
     });
   }
 
-  // --- LOGIC CETAK BUKU TABUNGAN ---
   async function handlePrintBukuTabungan(btn) {
     if (!currentBatchForRecord || currentBatchForRecord === '-') {
       ToastSystem.show("Nomor batch tidak valid untuk dicetak!", "warning");
       return;
     }
 
-    // Trigger Efek Loading di Button Global
     btn.classList.add('loading');
 
     try {

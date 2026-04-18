@@ -2,9 +2,8 @@
 
 class ProductRepo extends BaseRepository {
     constructor() {
-        // Asumsi PM_PRODUCT ada di Spreadsheet yang sama dengan PM_BATCH
-        super(AppConfig.DB_BATCH_LOOKUP_ID, AppConfig.DB_PRODUCT_SHEET_NAME);
-        this.startRow = AppConfig.DB_PRODUCT_START_ROW || 2;
+        super(AppConfig.DB_PRODUCT_LOOKUP_ID, AppConfig.DB_PRODUCT_LOOKUP_SHEET_NAME);
+        this.startRow = AppConfig.DB_PRODUCT_LOOKUP_START_ROW || 2;
     }
 
     getAllProductRaw() {

@@ -25,8 +25,10 @@
           <div class="pd-subtitle" id="detNamaErp">-</div>
         </div>
         <div class="id-kode">
-          <div class="kv-label" style="justify-content: flex-end;">Kode Barang</div>
-          <div class="kv-val" id="detKode" style="font-size: 1.3rem; color: var(--primary); font-weight: 900;">-</div>
+          <div class="kv-label" style="justify-content: flex-end;">Kode Barang (Lama / Baru)</div>
+          <div class="kv-val" style="font-size: 1.1rem; color: var(--primary); font-weight: 900;">
+            <span id="detKodeOld" style="color:var(--text-main);"></span> / <span id="detKodeNew"></span>
+          </div>
         </div>
       </div>
 
@@ -34,11 +36,18 @@
         <div class="kv-group"><div class="kv-label"><i data-lucide="tag"></i> Kategori</div><div class="kv-val" id="detKategori">-</div></div>
         <div class="kv-group"><div class="kv-label"><i data-lucide="layers"></i> Sektor</div><div class="kv-val" id="detSektor">-</div></div>
         <div class="kv-group"><div class="kv-label"><i data-lucide="map-pin"></i> Alokasi</div><div class="kv-val" id="detAlokasi">-</div></div>
-        <div class="kv-group"><div class="kv-label"><i data-lucide="info"></i> Status</div><div class="kv-val" id="detStatus">-</div></div>
+        
+        <div class="kv-group">
+            <div class="kv-label"><i data-lucide="info"></i> Status</div>
+            <div class="kv-val" id="detStatus" style="display:flex; flex-wrap:wrap; gap:6px;">-</div>
+        </div>
       </div> 
+
       <div class="inner-grid-2" style="padding-top: 16px; border-top: 1px dashed var(--border);">
-        <div class="kv-group"><div class="kv-label"><i data-lucide="shield-check"></i> NIE</div><div class="kv-val" id="detNie">-</div></div>
-        <div class="kv-group"><div class="kv-label"><i data-lucide="file-text"></i> No. Penerimaan</div><div class="kv-val" id="detNoDok">-</div></div>
+        <div class="kv-group"><div class="kv-label"><i data-lucide="shield-check"></i> NIE / Izin Edar</div><div class="kv-val" id="detNie">-</div></div>
+        <div class="kv-group"><div class="kv-label"><i data-lucide="file-text"></i> Jenis Produk</div><div class="kv-val" id="detJenis">-</div></div>
+        <div class="kv-group"><div class="kv-label"><i data-lucide="circle-dollar-sign"></i> HET (Eceran)</div><div class="kv-val" id="detHet">-</div></div>
+        <div class="kv-group"><div class="kv-label"><i data-lucide="badge-dollar-sign"></i> HJP (Jual Pabrik)</div><div class="kv-val" id="detHjp">-</div></div>
       </div>
     </div>
   </div>
@@ -64,9 +73,9 @@
     <div class="ui-card-header"><i data-lucide="database"></i> Informasi Stok & Mutasi</div>
     <div class="ui-card-body">
       <div class="inner-grid-3">
-        <div class="kv-group"><div class="kv-label"><i data-lucide="arrow-down-to-line"></i> Total In</div><div class="kv-val" id="detStokIn" style="color: #10b981; font-weight: 800;">[TBA Master]</div></div>
-        <div class="kv-group"><div class="kv-label"><i data-lucide="arrow-up-from-line"></i> Total Out</div><div class="kv-val" id="detStokOut" style="color: #ef4444; font-weight: 800;">[TBA Master]</div></div>
-        <div class="kv-group"><div class="kv-label"><i data-lucide="package-check"></i> Stok Tersedia</div><div class="kv-val" id="detStokCurrent" style="color: var(--primary); font-size: 1.3rem; font-weight: 900;">[TBA Master]</div></div>
+        <div class="kv-group"><div class="kv-label"><i data-lucide="arrow-down-to-line"></i> Total In</div><div class="kv-val" id="detStokIn" style="color: #10b981; font-weight: 800;">[TBA]</div></div>
+        <div class="kv-group"><div class="kv-label"><i data-lucide="arrow-up-from-line"></i> Total Out</div><div class="kv-val" id="detStokOut" style="color: #ef4444; font-weight: 800;">[TBA]</div></div>
+        <div class="kv-group"><div class="kv-label"><i data-lucide="package-check"></i> Stok Tersedia</div><div class="kv-val" id="detStokCurrent" style="color: var(--primary); font-size: 1.3rem; font-weight: 900;">[TBA]</div></div>
       </div>
     </div>
   </div>
