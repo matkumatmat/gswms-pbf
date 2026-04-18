@@ -23,6 +23,12 @@ class SystemTrigger {
         updatedAtCol: AppConfig.DB_BATCH_LOOKUP_UPDATED_AT_COL,
         updatedByCol: AppConfig.DB_BATCH_LOOKUP_UPDATED_BY_COL
       },
+      [AppConfig.DB_PRODUCT_LOOKUP_SHEET_NAME]: {
+        startRow: AppConfig.DB_PRODUCT_LOOKUP_START_ROW,
+        idCol: AppConfig.DB_PRODUCT_LOOKUP_ID_COL,
+        updatedAtCol: AppConfig.DB_PRODUCT_LOOKUP_UPDATED_AT_COL,
+        updatedByCol: AppConfig.DB_PRODUCT_LOOKUP_UPDATED_BY_COL
+      },
       [AppConfig.DB_CUSTOMER_SHEET_NAME]: {
         startRow: AppConfig.DB_CUSTOMER_START_ROW,
         idCol: AppConfig.DB_CUSTOMER_ID_COL,
@@ -85,9 +91,9 @@ class SystemTrigger {
     // Pastikan ini HANYA mengeksekusi sheet PM_BATCH
     if (sheetName === AppConfig.DB_BATCH_LOOKUP_SHEET_NAME) {
       // Index kolom berdasarkan susunan tabel lu
-      const batchCol = 8; // Kolom H (batch)
-      const urlCol = 16;  // Kolom P (infoUrl)
-      const pltCol = 17;  // Kolom Q (dimensionPLT)
+      const batchCol = AppConfig.DB_BATCH_LOOKUP_FOTO_URL_BY_COL; // Kolom H (batch)
+      const urlCol = AppConfig.DB_BATCH_LOOKUP_INFO_URL_BY_COL;  // Kolom P (infoUrl)
+      const pltCol = AppConfig.DB_BATCH_LOOKUP_DIMENSION_PLT_COL;  // Kolom Q (dimensionPLT)
 
       // Auto format PLT (p;l;t -> JSON)
       const pltCell = sheet.getRange(rowNumber, pltCol);
@@ -172,7 +178,8 @@ function setupLayananTrigger() {
     AppConfig.DB_SHIPPING_EMBALAGE_LOOKUP_ID,
     AppConfig.DB_SHIPPING_LABEL_ID,
     AppConfig.DB_BATCH_LOOKUP_ID,
-    AppConfig.DB_DISTRIBUSI_CURRENT.DB_DISTRIBUSI_CURRENT_ID
+    AppConfig.DB_DISTRIBUSI_CURRENT.DB_DISTRIBUSI_CURRENT_ID,
+    AppConfig.DB_PRODUCT_LOOKUP_ID
   ];
 
   // Bersihkan trigger lama agar tidak duplikat

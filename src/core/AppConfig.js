@@ -57,25 +57,42 @@ const AppConfig = {
   DB_SHIPPING_LABEL_CUSTOMER_ID_COL: 4, // Kolom D untuk customerId (relasi ke CUSTOMER)
   DB_SHIPPING_LABEL_URL_COL: 11, // Kolom K untuk URL label yang di-generate
   DB_SHIPPING_LABEL_PRINT_STATUS_COL: 12, // Kolom L untuk status cetak (Belum Cetak / Sudah Cetak)
-  DB_SHIPPING_LABEL_SHIP_STATUS_COL: 13, // Kolom M untuk status pengiriman (Belum Kirim / Sudah Kirim)
+  DB_SHIPPING_LABEL_SHIP_STATUS_COL: 13, // Kolom M untuk status pengiriman (Belum Kirim / Sudah Kirim) 
+
+  DB_PRODUCT_LOOKUP_ID: '1hbmlZYMlCaeUvUVPe7sdj41PBK1oiGX75oF4-jCF71o',
+  DB_PRODUCT_LOOKUP_SHEET_NAME: 'PM_PRODUCT',
+  DB_PRODUCT_LOOKUP_TABLE_NAME: 'P_LOOKUP',
+  DB_PRODUCT_LOOKUP_START_ROW: 2,
+  DB_PRODUCT_LOOKUP_ID_COL: 1,
+  DB_PRODUCT_LOOKUP_UPDATED_AT_COL: 11, // Kolom L untuk updatedAt
+  DB_PRODUCT_LOOKUP_UPDATED_BY_COL: 12, // Kolom M untuk updatedBy
+  DB_PRODUCT_LOOKUP_KODE_BARANG_OLD_COL: 2, // Kolom B untuk kodeBarang
+  DB_PRODUCT_LOOKUP_KODE_BARANG_NEW_COL: 3, // Kolom B untuk kodeBarang
+  DB_PRODUCT_LOOKUP_NAMA_BARANG_ERP_COL: 5, // Kolom D untuk namaBarang
+  DB_PRODUCT_LOOKUP_NAMA_DAGANG_COL: 4, // Kolom E untuk kategori
+  DB_PRODUCT_LOOKUP_TAHUN_COL: 8, // Kolom F untuk subKategori
+  // Struktur: 1:ID | 2:KODE BARANG | 3:NAMA DAGANG | 4:NAMA BARANG (NEW) | 5:KATEGORI | 6:JENIS | 7:TAHUN | 8:HJPHET | 9:UPDATED AT | 10:UPDATED BY
 
   DB_BATCH_LOOKUP_ID: '1hbmlZYMlCaeUvUVPe7sdj41PBK1oiGX75oF4-jCF71o',
   DB_BATCH_LOOKUP_SHEET_NAME: 'PM_BATCH',
   DB_BATCH_LOOKUP_TABLE_NAME: 'LOOKUP',
   DB_BATCH_LOOKUP_START_ROW: 2, 
   DB_BATCH_LOOKUP_ID_COL: 1, 
+  DB_BATCH_LOOKUP_PRODUCT_ID_COL: 2, // Kolom B untuk productId (relasi ke PM_PRODUCT)
 
-  DB_BATCH_LOOKUP_BATCH_COL: 8, // Ganti dengan nomor kolom No Batch
-  DB_BATCH_LOOKUP_EXPIRY_DATE_COL: 10, // Ganti dengan nomor kolom Expiry Date
-  DB_BATCH_LOOKUP_SYS_STATUS_COL: 13, // Ganti dengan nomor kolom sysStatus
+  DB_BATCH_LOOKUP_BATCH_COL: 7, // Ganti dengan nomor kolom No Batch
+  DB_BATCH_LOOKUP_EXPIRY_DATE_COL:9, // Ganti dengan nomor kolom Expiry Date
+  DB_BATCH_LOOKUP_SYS_STATUS_COL: 12, // Ganti dengan nomor kolom sysStatus
 
-  DB_BATCH_LOOKUP_CREATED_AT_COL: 23, // Kolom W untuk created at
-  DB_BATCH_LOOKUP_UPDATED_AT_COL: 24, // Kolom X untuk updated at
-  DB_BATCH_LOOKUP_UPDATED_BY_COL: 25, // Kolom Y untuk updated by
-  DB_BATCH_LOOKUP_NOTES_BY_COL: 26, // Kolom Z untuk first system notes (hanya 1 kali)
-  DB_BATCH_LOOKUP_FOTO_URL_BY_COL: 15, // Kolom O untuk dict foto url
-  DB_BATCH_LOOKUP_INFO_URL_BY_COL: 16, // Kolom P untuk url website later
-  DB_BATCH_LOOKUP_PER_BUCKET_BY_COL: 22, // Kolom V untuk per bucket (jumlah item per bucket)
+  DB_BATCH_LOOKUP_CREATED_AT_COL: 22, // Kolom W untuk created at
+  DB_BATCH_LOOKUP_UPDATED_AT_COL: 23, // Kolom X untuk updated at
+  DB_BATCH_LOOKUP_UPDATED_BY_COL: 24, // Kolom Y untuk updated by
+  DB_BATCH_LOOKUP_NOTES_BY_COL: 25, // Kolom Z untuk first system notes (hanya 1 kali)
+  DB_BATCH_LOOKUP_FOTO_URL_BY_COL: 14, // Kolom O untuk dict foto url
+  DB_BATCH_LOOKUP_INFO_URL_BY_COL: 15, // Kolom P untuk url website later
+  DB_BATCH_LOOKUP_PER_BUCKET_BY_COL: 21, // Kolom V untuk per bucket (jumlah item per bucket)
+  DB_BATCH_LOOKUP_DIMENSION_PLT_COL: 16,
+
   // Tambahkan ini di dalam AppConfig.js
   DB_BATCH_FOTO_SHEET_NAME: 'PM_BATCH_FOTO',
   DB_BATCH_FOTO_START_ROW: 2,

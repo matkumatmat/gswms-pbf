@@ -1,99 +1,104 @@
 // src/domain/product/BatchLookupService.js
 
 class BatchLookupService {
-    constructor(repo) {
+    // KITA INJECT PRODUCT REPO JUGA KE SINI!
+    constructor(repo, productRepo) {
         this.repo = repo;
+        this.productRepo = productRepo; 
         this.defaultLimit = 500;
-        this.tableKeys = [
-            'id', 'kategori', 'alokasi', 'sektor',
-            'kodeBarang', 'namaBarangErp', 'namaBarangDagang', 'batch',
-            'manufacturingDate', 'expiryDate', 'status', 'rslBulan',
-            'sysStatus', 'nie', 'fotoUrl', 'infoUrl', 'dimensionPLT',
-            'berat', 'catatanFisik', 'noDokPenerimaan', 'rslHari',
-            'perBucket', 'createdAt', 'updatedAt', 'updatedBy',
-            'notes'
+        
+        // !!! PERHATIAN BOS !!!
+        // LU WAJIB BIKIN URUTAN INI SESUAI SAMA KOLOM PM_BATCH LU YANG BARU!
+        // Asumsi gue: 1:id, 2:productId, 3:alokasi, 4:sektor, 5:nie, 6:noDokPenerimaan, 7:batch, dst...
+        this.batchTableKeys = [
+            'id', 'productId', 'alokasi', 'sektor','kodeBarang', 'namaDagang', 'batch',
+            'manufacturingDate', 'expiryDate', 'status', 'rslBulan', 'sysStatus','nie',
+            'fotoUrl', 'infoUrl', 'dimensionPLT', 'berat', 'catatanFisik','noDokPenerimaan',
+            'rslHari', 'perBucket', 'createdAt', 'updatedAt', 'updatedBy', 'notes'
         ];
-        this.shortKeys = ['id', 'kodeBarang', 'namaBarangDagang',
-            'batch','expiryDate', 'perBucket'
-        ];
+        
+        this.shortKeys = ['id', 'kodeBarang', 'namaBarangDagang', 'batch', 'expiryDate', 'perBucket'];
+    }
 
-        this.fotoUrlKeys = [
-            'idDrive', 'idUuid', 'folderPath', 'fileName', 'type', 'url', 'base64'
-        ]
+    /**
+     * ENGINE PENGGABUNG (JOIN) BATCH + PRODUCT
+     */
+    _joinBatchWithProduct(rawBatchData) {
+        // 1. Tarik Data Master Produk
+        const rawProducts = this.productRepo.getAllProductRaw();
+        const productKeys = ['id', 'kodeBarang', 'namaDagang', 'namaBarangNew', 'kategori', 'jenis', 'tahun', 'hjphet', 'updatedAt', 'updatedBy'];
+        const products = AppUtils.mapArrayToObject(rawProducts, productKeys);
+        
+        // 2. Bikin Dictionary biar nyarinya ngebut! (O(1) complexity)
+        const productMap = new Map();
+        products.forEach(p => productMap.set(p.id, p));
 
+        // 3. Map Batch Data & Kawinin
+        const batches = AppUtils.mapArrayToObject(rawBatchData, this.batchTableKeys);
+        
+        return batches.map(batch => {
+            const master = productMap.get(batch.productId) || {};
+            // Inject data dari master ke batch biar Frontend gak nyadar ada perubahan DB!
+            return {
+                ...batch,
+                kodeBarang: master.kodeBarang || '-',
+                namaBarangDagang: master.namaDagang || '-',
+                namaBarangErp: master.namaBarangNew || '-',
+                kategori: master.kategori || '-',
+                jenis: master.jenis || '-',
+                hjphet: AppUtils.safeParseJson(master.hjphet) || {}
+            };
+        });
     }
 
     getAllBatchLookup() {
         const rawData = this.repo.getAllBatchLookupRaw();
-        const batchLookups = AppUtils.mapArrayToObject(rawData, this.tableKeys);
-        return batchLookups.filter(e => e.batch !== null && e.batch !== '');
+        const joinedData = this._joinBatchWithProduct(rawData);
+        const processed = this._processJsonFields(joinedData);
+        return processed.filter(e => e.batch !== null && e.batch !== '');
     }
     
     getPaginatedData(page = 1, requestedLimit = null) {
-    const limit = requestedLimit ? parseInt(requestedLimit) : this.defaultLimit;
-    const rawData = this.repo.getPaginatedRawData(page, limit);
-    const batchLookups = AppUtils.mapArrayToObject(rawData, this.tableKeys);
-    return batchLookups.filter(e => e.batch !== null && e.batch !== '');
+        const limit = requestedLimit ? parseInt(requestedLimit) : this.defaultLimit;
+        const rawData = this.repo.getPaginatedRawData(page, limit);
+        const joinedData = this._joinBatchWithProduct(rawData);
+        const processed = this._processJsonFields(joinedData);
+        return processed.filter(e => e.batch !== null && e.batch !== '');
     }
 
-    getShortBatchLookup(page =1, requestedLimit = null) {
+    getShortBatchLookup(page = 1, requestedLimit = null) {
         const limit = requestedLimit ? parseInt(requestedLimit) : 5000;
         const rawData = this.repo.getPaginatedRawData(page, limit);
-        const fullBatchLookups = AppUtils.mapArrayToObject(rawData, this.tableKeys);
-        const validBatchLookups = fullBatchLookups.filter(e => e.batch !== null && e.batch !== '');        
+        const joinedData = this._joinBatchWithProduct(rawData);
+        const validBatchLookups = joinedData.filter(e => e.batch !== null && e.batch !== '');        
+        
         return validBatchLookups.map(fullObj => {
             let simpleObj = {};
-            this.shortKeys.forEach(key => {
-                simpleObj[key] = fullObj[key]
-            })
+            this.shortKeys.forEach(key => simpleObj[key] = fullObj[key]);
             return simpleObj;
         });
     }
 
-    /**
-     * HELPER INTERNAL: Mem-parsing field yang berupa string JSON menjadi Object
-     */
+    getDetail(payload) {
+        // Logikanya sama, tarik semua, JOIN, terus FIND 1 data
+        const rawData = this.repo.getAllBatchLookupRaw();
+        const joinedData = this._joinBatchWithProduct(rawData);
+        
+        let found = null;
+        if (payload.id) found = joinedData.find(e => e.id === payload.id);
+        else if (payload.batch) found = joinedData.find(e => e.batch === payload.batch);
+        else if (payload.kodeBarang) found = joinedData.find(e => e.kodeBarang === payload.kodeBarang);
+
+        if (!found) return null;
+        return this._processJsonFields([found])[0];
+    }
+
     _processJsonFields(items) {
         return items.map(item => {
             ['fotoUrl', 'infoUrl', 'dimensionPLT'].forEach(key => {
-                if (item[key]) {
-                    item[key] = AppUtils.safeParseJson(item[key]);
-                }
+                if (item[key]) item[key] = AppUtils.safeParseJson(item[key]);
             });
             return item;
         });
     }
-
-    /**
-     * FUNGSI BARU: Pencarian spesifik 1 baris berdasarkan parameter (id, batch, dll)
-     */
-    getDetail(payload) {
-        if (!payload) throw new Error("Payload pencarian tidak ditemukan.");
-        
-        const { id, batch, kodeBarang } = payload;
-        if (!id && !batch && !kodeBarang) {
-            throw new Error("Kriteria pencarian kosong. Masukkan id, batch, atau kodeBarang.");
-        }
-
-        // Tarik semua raw data. (getValues sekali jalan itu sangat cepat di GAS)
-        const rawData = this.repo.getAllBatchLookupRaw();
-        const allData = AppUtils.mapArrayToObject(rawData, this.tableKeys);
-
-        let found = null;
-
-        // Prioritas pencarian
-        if (id) {
-            found = allData.find(e => e.id === id);
-        } else if (batch) {
-            found = allData.find(e => e.batch === batch);
-        } else if (kodeBarang) {
-            found = allData.find(e => e.kodeBarang === kodeBarang);
-        }
-
-        if (!found) return null;
-
-        // Proses field JSON (foto, dimensi) sebelum dilempar ke frontend
-        return this._processJsonFields([found])[0];
-    }
-
 }

@@ -28,25 +28,25 @@ const DomainRegistry = {
     cacheGroup: AppConfig.DB_SHIPPING_LABEL_SHEET_NAME
   },
 
-  // Domain Batch Lookup
-  'getBatchLookup': {
-    factory: () => new BatchLookupService(new BatchLookupRepo()),
+'getBatchLookup': {
+    // THE FIX: Masukin new ProductRepo() di argumen kedua!
+    factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
     cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME
   },
 
   'getShortBatchLookup': {
-    factory: () => new BatchLookupService(new BatchLookupRepo()),
+    factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
     cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
     method: 'getShortBatchLookup'
   },
 
-  'updatePrintStatus': { factory: () => new ShippingLabelService(new ShippingLabelRepo()) },
-
-'getBatchDetail': {
-    factory: () => new BatchLookupService(new BatchLookupRepo()),
+  'getBatchDetail': {
+    factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
     cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
     method: 'getDetail'
-  }
+  },
+
+  'updatePrintStatus': { factory: () => new ShippingLabelService(new ShippingLabelRepo()) },
 
 
   // Nanti product begini juga:
@@ -61,6 +61,9 @@ const DomainRegistry = {
 /**
  * REGISTRY UNTUK WRITE OPERATIONS (doPost)
  */
+/**
+ * REGISTRY UNTUK WRITE OPERATIONS (doPost)
+ */
 const PostRegistry = {
   'createShippingLabel': {
     factory: () => new ShippingLabelService(new ShippingLabelRepo()),
@@ -70,22 +73,22 @@ const PostRegistry = {
     factory: () => new ShippingLabelService(new ShippingLabelRepo()),
     method: 'updatePrintStatus'
   },
+  
   // --- ENDPOINT BARU UNTUK PENCARIAN SPESIFIK ---
   'getBatchDetail': {
-    factory: () => new BatchLookupService(new BatchLookupRepo()),
+    // THE FIX: MASUKIN new ProductRepo() KE SINI JUGA BOS!
+    factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
     method: 'getDetail'
   },
+  
   'generateBatchRecordSheet': {
     factory: () => new BatchRecordService(new BatchRecordRepo()),
-    method: 'generateSheet' // Mengarah ke fungsi pembuat GSheet
+    method: 'generateSheet' 
   },
-  // THE FIX: Tambahin endpoint ini biar UI bisa narik JSON History
   'getBatchHistory': {
     factory: () => new BatchRecordService(new BatchRecordRepo()),
     method: 'getHistory'
   }
-
-  // Nanti tambah: 'createProduct': { ... }
 };
 
 function doPost(e) {
