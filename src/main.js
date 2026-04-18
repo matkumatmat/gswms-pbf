@@ -46,6 +46,7 @@ const DomainRegistry = {
     method: 'getDetail'
   },
 
+
   'updatePrintStatus': { factory: () => new ShippingLabelService(new ShippingLabelRepo()) },
 
 
@@ -88,7 +89,11 @@ const PostRegistry = {
   'getBatchHistory': {
     factory: () => new BatchRecordService(new BatchRecordRepo()),
     method: 'getHistory'
-  }
+  },
+  'createCustomer': {
+    factory: () => new CustomerService(new CustomerRepo()),
+    method: 'create'
+  },
 };
 
 function doPost(e) {
@@ -429,7 +434,9 @@ function doGet(e) {
         'shipping_label': 'src/client/pages/shipping_label/ShippingLabel',
         'detail': 'src/client/pages/product_detail/ProductDetail',
         'product': 'src/clients/pages/product/Product', // <--- ARAHIN KE FILE BARU LU
-        'home': 'src/clients/pages/Home'
+        'home': 'src/clients/pages/Home',
+        'master_customer': 'src/client/pages/customer/CustomerList',
+        'add_customer': 'src/client/pages/customer/CustomerForm'
       };
 
       // Kalo page-nya kedaftar, panggil file-nya. Kalo nggak ada? Lempar ke Void 404!

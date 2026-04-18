@@ -1,0 +1,175 @@
+<div class="ui-subheader">
+  <div class="ui-subheader-icon"><i data-lucide="users"></i></div>
+  <div class="ui-subheader-text">
+    <h2>Direktori Konsumen</h2>
+    <p>Daftar rumah sakit, apotek, instansi, dan distributor rekanan.</p>
+  </div>
+</div>
+
+<div class="ui-card">
+  <div class="ui-card-body">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+      
+      <div class="ui-dropdown-wrapper" style="width: 100%; max-width: 350px;">
+        <i data-lucide="search" style="position:absolute; left:12px; top:10px; color:var(--text-light); width:18px;"></i>
+        <input type="text" id="custSearch" placeholder="Cari nama atau kota..." autocomplete="off" 
+               style="width:100%; padding:10px 14px 10px 38px; border:1px solid var(--border); border-radius:8px; outline:none; font-size: 0.9rem;">
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" onclick="exportToCSV()">
+          <i data-lucide="download"></i> Ekspor CSV
+        </button>
+        <a href="?page=add_customer" class="btn btn-primary" style="text-decoration: none;">
+          <i data-lucide="user-plus"></i> Tambah Konsumen
+        </a>
+      </div>
+
+    </div>
+
+    <div id="table-customer-container"></div>
+  </div>
+</div>
+
+<script>
+  let globalCustomers = []; // Simpan data di memori buat Modal & CSV
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadCustomers();
+    lucide.createIcons();
+
+    // Fungsi Search Lokal
+    document.getElementById('custSearch').addEventListener('input', (e) => {
+      const keyword = e.target.value.toLowerCase().trim();
+      if(keyword === '') {
+        renderTable(globalCustomers);
+      } else {
+        const filtered = globalCustomers.filter(c => 
+          (c.namaKonsumen && c.namaKonsumen.toLowerCase().includes(keyword)) ||
+          (c.kotaCabang && c.kotaCabang.toLowerCase().includes(keyword)) ||
+          (c.namaSingkat && c.namaSingkat.toLowerCase().includes(keyword))
+        );
+        renderTable(filtered);
+      }
+    });
+  });
+
+  async function loadCustomers() {
+    const container = document.getElementById('table-customer-container');
+    container.innerHTML = '<div style="padding:40px 20px; text-align:center; color:var(--primary);"><i data-lucide="loader-2" class="lucide-spin" style="width:32px; height:32px;"></i><br><br>Memuat Data Customer...</div>';
+    lucide.createIcons();
+
+    try {
+      const data = await GasApi.get('getCustomers', 1, 2000); 
+      globalCustomers = data;
+      renderTable(globalCustomers);
+    } catch (e) {
+      container.innerHTML = `<div style="padding:20px; text-align:center; color:#ef4444;">Gagal memuat data: ${e.message}</div>`;
+    }
+  }
+
+  function renderTable(data) {
+    const container = document.getElementById('table-customer-container');
+    
+    if(data.length === 0){
+      container.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-light); background:#f8fafc; border-radius:8px; border:1px dashed var(--border);">Tidak ada data yang cocok.</div>';
+      return;
+    }
+
+    const tableData = data.map((c, index) => ({
+      konsumen: `<div style="line-height:1.4;">
+                   <strong style="color:var(--text-main);">${c.namaKonsumen}</strong><br>
+                   <span style="font-size:0.75rem; color:var(--text-light);">${c.kotaCabang || '-'} | ${c.namaSingkat || '-'}</span>
+                 </div>`,
+      info: `<div style="font-size:0.8rem; line-height:1.5;">
+               <i data-lucide="map-pin" style="width:12px; display:inline-block; color:var(--text-light);"></i> ${c.kota || '-'}<br>
+               <i data-lucide="user" style="width:12px; display:inline-block; color:var(--text-light);"></i> ${c.pic || '-'} <br>
+               <i data-lucide="phone" style="width:12px; display:inline-block; color:var(--text-light);"></i> ${c.kontak || '-'}
+             </div>`,
+      tipe: `<span class="ui-badge ui-badge-neutral">${c.tipe || 'REGULER'}</span>`,
+      aksi: `<div style="display:flex; gap:6px; justify-content:flex-end;">
+               ${c.maps && c.maps.startsWith('http') ? `<a href="${c.maps}" target="_blank" class="btn btn-secondary" style="padding:4px 8px;" title="Buka Maps"><i data-lucide="map"></i></a>` : ''}
+               <button class="btn btn-primary" style="padding:4px 8px;" onclick="showCustomerDetail('${c.id}')"><i data-lucide="eye"></i></button>
+             </div>`
+    }));
+
+    new DataTable({
+      containerId: 'table-customer-container',
+      headers: [
+        { label: 'Konsumen / Cabang', key: 'konsumen' },
+        { label: 'Lokasi & Kontak', key: 'info' },
+        { label: 'Tipe', key: 'tipe' },
+        { label: '', key: 'aksi' }
+      ],
+      data: tableData
+    });
+    lucide.createIcons();
+  }
+
+  // THE FIX: Nampilin Modal Detail Customer!
+  function showCustomerDetail(id) {
+    const c = globalCustomers.find(x => x.id === id);
+    if(!c) return;
+
+    ModalSystem.show({
+      title: 'Profil Konsumen',
+      body: `
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="background:#f8fafc; padding:16px; border-radius:8px; border:1px solid var(--border);">
+            <div style="font-size:1.1rem; font-weight:800; color:var(--primary); margin-bottom:4px;">${c.namaKonsumen}</div>
+            <div style="font-size:0.85rem; color:var(--text-light);"><span class="ui-badge ui-badge-neutral">${c.tipe}</span> • ${c.namaSingkat || '-'}</div>
+          </div>
+          
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:0.85rem;">
+            <div>
+              <div style="color:var(--text-light); font-weight:600; margin-bottom:4px; text-transform:uppercase; font-size:0.7rem;">PIC / Kontak</div>
+              <div style="font-weight:600; color:var(--text-main);">${c.pic || '-'}</div>
+              <div>${c.kontak || '-'}</div>
+            </div>
+            <div>
+              <div style="color:var(--text-light); font-weight:600; margin-bottom:4px; text-transform:uppercase; font-size:0.7rem;">Lokasi / Cabang</div>
+              <div style="font-weight:600; color:var(--text-main);">${c.kotaCabang || '-'}</div>
+              <div>${c.kota || '-'}, ${c.provinsi || '-'}</div>
+            </div>
+          </div>
+
+          <div style="font-size:0.85rem; padding-top:12px; border-top:1px dashed var(--border);">
+            <div style="color:var(--text-light); font-weight:600; margin-bottom:4px; text-transform:uppercase; font-size:0.7rem;">Alamat Lengkap</div>
+            <div style="color:var(--text-main); line-height:1.4;">${c.alamat || '-'}</div>
+            ${c.maps && c.maps.startsWith('http') ? `<a href="${c.maps}" target="_blank" style="display:inline-block; margin-top:8px; color:var(--primary); text-decoration:none; font-weight:600;">Lihat di Google Maps &rarr;</a>` : ''}
+          </div>
+        </div>
+      `,
+      footerButtons: [{ text: 'Tutup', type: 'secondary', action: () => ModalSystem.close() }]
+    });
+  }
+
+  // THE FIX: Export CSV Beneran!
+  function exportToCSV() {
+    if(globalCustomers.length === 0) {
+      ToastSystem.show("Tidak ada data untuk diekspor!", "warning");
+      return;
+    }
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "ID,Nama Konsumen,Cabang,Singkatan,Tipe,Provinsi,Kota,Alamat,PIC,Kontak,Maps,Status\\n";
+    
+    globalCustomers.forEach(c => {
+      // Escape tanda kutip biar CSV ga rusak kalau ada koma di alamat
+      const row = [
+        c.id, c.namaKonsumen, c.kotaCabang, c.namaSingkat, c.tipe, 
+        c.provinsi, c.kota, c.alamat, c.pic, c.kontak, c.maps, c.status
+      ].map(e => `"${String(e || '').replace(/"/g, '""')}"`).join(",");
+      
+      csvContent += row + "\\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Master_Customer_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+</script>

@@ -131,7 +131,7 @@
               <td style="font-family:monospace; font-weight:600;">${b.batch}</td>
               <td style="color:#ef4444; font-weight:600;">${cleanDate}</td>
               <td style="text-align:right;">
-                  <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.65rem;" onclick="loadAggregate('${b.batch}', '${prod.namaDagang.replace(/'/g, "\\'")}')">Analisis</button>
+                  <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.65rem;" onclick="loadAggregate('${b.batch}', '${prod.namaDagang.replace(/'/g, "\\'").replace(/\n/g, ' ')}')">Analisis</button>
                   <a href="?page=detail&id=${b.id}" class="btn btn-primary" style="padding:4px 8px; font-size:0.65rem; text-decoration:none;">Detail</a>
               </td>
           </tr>`;

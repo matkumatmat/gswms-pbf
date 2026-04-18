@@ -1,5 +1,6 @@
 <script>
   let currentBatchForRecord = null; 
+  let currentProductDetail = null;
 
   document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
@@ -9,7 +10,7 @@
       const directId = params.id;
 
       if (!directId) {
-        showError("ID Produk tidak valid atau tidak dikirim melalui URL.");
+        showError(`ID Produk tidak valid atau tidak dikirim melalui URL.`);
         return;
       }
 
@@ -18,15 +19,15 @@
   });
 
   async function initProductDetail(directId) {
-    Loader.show('Memindai Struktur Data Produk...'); 
+    Loader.show(`Memindai Struktur Data Produk...`); 
     try {
       const detail = await GasApi.post('getBatchDetail', { id: directId });
       
       if (!detail) {
-        showError("Data tidak ditemukan di database. Coba cek kembali ID/Batch Anda.");
+        showError(`Data tidak ditemukan di database. Coba cek kembali ID/Batch Anda.`);
         return;
       }
-
+      currentProductDetail = detail;
       renderDetailData(detail);
 
       try {
@@ -46,11 +47,11 @@
         document.getElementById('detStokOut').innerText = totalOut.toLocaleString('id-ID');
         document.getElementById('detStokCurrent').innerText = (totalIn - totalOut).toLocaleString('id-ID');
       } catch (histError) {
-        document.getElementById('detStokCurrent').innerText = 'ERROR';
-        console.error("Gagal narik history:", histError);
+        document.getElementById('detStokCurrent').innerText = `ERROR`;
+        console.error(`Gagal narik history:`, histError);
       }
       
-      document.getElementById('pdContent').style.display = '';
+      document.getElementById('pdContent').style.display = ``;
       lucide.createIcons(); 
 
     } catch (err) {
@@ -61,14 +62,14 @@
   }
 
   function showError(msg) {
-    document.getElementById('pdError').style.display = 'block';
+    document.getElementById('pdError').style.display = `block`;
     document.getElementById('pdErrorMsg').innerText = msg;
     lucide.createIcons();
   }
 
   function renderDetailData(data) {
     currentBatchForRecord = data.batch;
-    const val = (v, postfix = '') => (v !== null && v !== undefined && v !== '') ? `${v} ${postfix}` : '-';
+    const val = (v, postfix = '') => (v !== null && v !== undefined && v !== '') ? `${v} ${postfix}` : `-`;
 
     document.getElementById('detNamaDagang').innerText = val(data.namaBarangDagang);
     document.getElementById('detNamaErp').innerText = val(data.namaBarangErp);
@@ -87,27 +88,27 @@
     document.getElementById('detHet').innerText = Formatter.currency(data.het || 0);
     document.getElementById('detHjp').innerText = Formatter.currency(data.hjp || 0);
 
-    let statusHtml = '';
+    let statusHtml = ``;
     if (data.status) {
         const s = data.status.toUpperCase();
-        let css = 'ui-badge-neutral'; 
+        let css = `ui-badge-neutral`; 
         
-        if (s === 'RECEIVED') css = 'ui-badge-success'; 
-        else if (s === 'NOT RECEIVED') css = 'ui-badge-danger'; 
-        else if (s === 'OTHER') css = 'ui-badge-warning'; 
+        if (s === 'RECEIVED') css = `ui-badge-success`; 
+        else if (s === 'NOT RECEIVED') css = `ui-badge-danger`; 
+        else if (s === 'OTHER') css = `ui-badge-warning`; 
 
         statusHtml += `<span class="ui-badge ${css}">${s}</span>`;
     }
     if (data.sysStatus) {
         statusHtml += `<span class="ui-badge ui-badge-primary"><i data-lucide="cpu"></i>${data.sysStatus}</span>`;
     }
-    document.getElementById('detStatus').innerHTML = statusHtml || '-';
+    document.getElementById('detStatus').innerHTML = statusHtml || `-`;
 
     document.getElementById('detBerat').innerText = val(data.berat);
     document.getElementById('detPerBucket').innerText = val(data.perBucket);
     document.getElementById('detCatatanFisik').innerText = val(data.catatanFisik);
     
-    let dimText = '-';
+    let dimText = `-`;
     if (data.dimensionPLT && typeof data.dimensionPLT === 'object') {
       dimText = `${data.dimensionPLT.p || 0} x ${data.dimensionPLT.l || 0} x ${data.dimensionPLT.t || 0} cm`;
     } else if (typeof data.dimensionPLT === 'string') {
@@ -132,29 +133,30 @@
     if (data.infoUrl && data.infoUrl.startsWith('http')) {
       btnLink.href = data.infoUrl;
     } else {
-      btnLink.style.display = 'none';
+      btnLink.style.display = `none`;
     }
 
     const photoContainer = document.getElementById('detPhotos');
-    photoContainer.innerHTML = '';
+    photoContainer.innerHTML = ``;
     
     if (data.fotoUrl && Array.isArray(data.fotoUrl) && data.fotoUrl.length > 0) {
       data.fotoUrl.forEach(photo => {
         const img = document.createElement('img');
-        img.className = 'gallery-img';
+        img.className = `gallery-img`;
         const baseThumbUrl = photo.url.split('&sz=')[0]; 
         img.src = `${baseThumbUrl}&sz=w300`; 
         img.onclick = () => openModalImg(`${baseThumbUrl}&sz=w2500`);
         photoContainer.appendChild(img);
       });
     } else {
-      photoContainer.innerHTML = '<span style="color:var(--text-light); font-style:italic; font-size: 0.85rem;">Dokumentasi foto tidak tersedia.</span>';
+      // THE REAL FIX: Pake backtick biar anti error kalo editor lu ngasih enter otomatis
+      photoContainer.innerHTML = `<span style="color:var(--text-light); font-style:italic; font-size: 0.85rem;">Dokumentasi foto tidak tersedia.</span>`;
     }
   }
 
   function openModalImg(hdUrl) {
     ModalSystem.show({
-      title: 'Preview Foto Fisik',
+      title: `Preview Foto Fisik`,
       body: `
         <div style="text-align:center; min-height:200px; display:flex; align-items:center; justify-content:center; flex-direction:column; position:relative;">
           <i data-lucide="loader-2" class="lucide-spin" id="imgLoader" style="color:var(--primary); width:32px; height:32px; position:absolute;"></i>
@@ -166,22 +168,125 @@
 
   async function handlePrintBukuTabungan(btn) {
     if (!currentBatchForRecord || currentBatchForRecord === '-') {
-      ToastSystem.show("Nomor batch tidak valid untuk dicetak!", "warning");
+      ToastSystem.show(`Nomor batch tidak valid untuk dicetak!`, `warning`);
       return;
     }
 
-    btn.classList.add('loading');
+    btn.classList.add(`loading`);
 
     try {
       const result = await GasApi.post('generateBatchRecordSheet', { batchNo: currentBatchForRecord });
       
-      ToastSystem.show("Buku Tabungan berhasil dibuat!", "success");
+      ToastSystem.show(`Buku Tabungan berhasil dibuat!`, `success`);
       window.open(result.fileUrl, '_blank');
       
     } catch (error) {
-      ToastSystem.show("Gagal membuat Buku Tabungan: " + error.message, "error");
+      ToastSystem.show(`Gagal membuat Buku Tabungan: ${error.message}`, `error`);
     } finally {
-      btn.classList.remove('loading');
+      btn.classList.remove(`loading`);
     }
   }
+
+  function openPrintProductLabelModal() {
+    if (!currentProductDetail) return;
+    
+    ModalSystem.show({
+      title: `Cetak Label Identitas ZPL`,
+      body: `
+        <div style="margin-bottom: 15px;">
+          <p style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 10px;">
+            Berapa jumlah stiker label fisik yang ingin dicetak untuk <b>${currentProductDetail.namaBarangDagang}</b>?
+          </p>
+          <input type="number" id="printLabelQty" value="1" min="1" max="1000" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem;">
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-light); background: #f0fdfa; padding: 12px; border-radius: 8px; border: 1px solid #ccfbf1;">
+          <i data-lucide="info" style="width: 14px; vertical-align: middle;"></i> Pastikan aplikasi Printer Go-lang lokal berjalan di port <b>8080</b>.
+        </div>
+      `,
+      footerButtons: [
+        { text: `Batal`, type: `secondary`, action: () => ModalSystem.close() },
+        { text: `Kirim ke Printer`, type: `primary`, action: () => executeLocalPrintLabel() }
+      ]
+    });
+  }
+
+async function executeLocalPrintLabel() {
+    const qty = parseInt(document.getElementById('printLabelQty').value) || 1;
+    ModalSystem.close();
+    
+    const d = currentProductDetail;
+    
+    const fullName = (d.namaBarangDagang || '-').replace(/\n/g, ' ');
+    let name1 = fullName;
+    let name2 = '';
+    
+    if (fullName.length > 20) {
+        const splitIdx = fullName.lastIndexOf(' ', 20); 
+        if (splitIdx !== -1) {
+            name1 = fullName.substring(0, splitIdx);
+            name2 = fullName.substring(splitIdx + 1);
+        } else {
+            name1 = fullName.substring(0, 20); 
+            name2 = fullName.substring(20);
+        }
+    }
+
+    const formatToDDMMYYYY = (dateStr) => {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return '-';
+        const dd = String(date.getDate()).padStart(2, '0');
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const yyyy = date.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+    };
+
+    const mfgDate = formatToDDMMYYYY(d.manufacturingDate);
+    const expDate = formatToDDMMYYYY(d.expiryDate);
+    const rcvDate = formatToDDMMYYYY(d.createdAt); 
+    
+    const pCode = (d.kodeBarangNew && d.kodeBarangNew !== '-') ? d.kodeBarangNew : (d.kodeBarangOld || '-');
+
+    // THE FIX: QR_CODE ISINYA MURNI UUID DARI PM_BATCH SESUAI PERMINTAAN LU!
+    const qrCodeStr = d.id;
+
+    const singlePayload = {
+      product_code: pCode,
+      product_name_1: name1,
+      product_name_2: name2,
+      batch_number: d.batch,
+      allocation: d.alokasi || '-',
+      mfg_date: mfgDate,
+      exp_date: expDate,
+      receive_date: rcvDate,
+      qr_code: qrCodeStr
+    };
+
+    const identities = [];
+    for (let i = 0; i < qty; i++) {
+        identities.push(singlePayload);
+    }
+    const finalPayload = { identities };
+
+    Loader.show('Mengirim perintah ke Printer Lokal...');
+    try {
+        const response = await fetch('http://localhost:8080/print/identity', {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(finalPayload)
+        });
+
+        if (response.ok) {
+            ToastSystem.show(`Sukses mengirim ${qty} stiker label ke printer Zebra!`, "success");
+        } else {
+            ToastSystem.show("Printer menolak request. Cek console Go-Lang.", "error");
+        }
+    } catch (e) {
+        ToastSystem.show("Gagal koneksi! Pastikan service Go-Lang jalan di port 8080.", "error");
+    } finally {
+        Loader.hide();
+    }
+  }
+
 </script>

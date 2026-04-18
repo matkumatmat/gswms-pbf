@@ -1,0 +1,115 @@
+<div class="ui-subheader">
+  <div class="ui-subheader-icon"><i data-lucide="user-plus"></i></div>
+  <div class="ui-subheader-text">
+    <h2>Registrasi Konsumen Baru</h2>
+    <p>Lengkapi informasi identitas, PIC, dan alamat pengiriman.</p>
+  </div>
+</div>
+
+<div class="ui-card" style="max-width: 900px; margin: 0 auto;">
+  <div class="ui-card-body">
+    <form id="formCustomer">
+      
+      <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-light); padding-bottom: 8px;">
+        <i data-lucide="building-2" style="width: 18px; vertical-align: middle; margin-right: 6px;"></i> Identitas Utama
+      </h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 30px;">
+        <div class="form-group" style="margin: 0;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Nama Konsumen (RS/Apotek) <span style="color:#ef4444;">*</span></label>
+          <input type="text" name="namaKonsumen" required placeholder="Contoh: RSUD Sayang Ibu" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;">
+        </div>
+        
+        <div class="form-group" style="margin: 0;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Tipe Konsumen</label>
+          <select name="tipe" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff;">
+            <option value="REGULER">REGULER</option>
+            <option value="DISTRIBUTOR">DISTRIBUTOR</option>
+            <option value="INSTANSI">INSTANSI PEMERINTAH</option>
+            <option value="KLINIK">KLINIK</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin: 0;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Kota / Cabang</label>
+          <input type="text" name="kotaCabang" placeholder="Contoh: Bandung Tengah" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;">
+        </div>
+
+        <div class="form-group" style="margin: 0;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Nama Singkat</label>
+          <input type="text" name="namaSingkat" placeholder="Contoh: RSUD SI" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;">
+        </div>
+      </div>
+
+      <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 16px; border-bottom: 2px solid var(--primary-light); padding-bottom: 8px;">
+        <i data-lucide="map-pin" style="width: 18px; vertical-align: middle; margin-right: 6px;"></i> Kontak & Lokasi
+      </h3>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+        <div class="form-group" style="margin: 0;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">PIC / Penanggung Jawab</label>
+          <input type="text" name="pic" placeholder="Nama Apoteker / Purchasing" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;">
+        </div>
+
+        <div class="form-group" style="margin: 0;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">No. HP / Kontak</label>
+          <input type="text" name="kontak" placeholder="0812xxxx" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;">
+        </div>
+
+        <div class="form-group" style="margin: 0;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Provinsi</label>
+          <input type="text" name="provinsi" placeholder="Contoh: Jawa Barat" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;">
+        </div>
+
+        <div class="form-group" style="margin: 0;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Kota / Kabupaten</label>
+          <input type="text" name="kota" placeholder="Contoh: Kota Bandung" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;">
+        </div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Alamat Lengkap</label>
+          <textarea name="alamat" rows="2" placeholder="Jl. Raya Kemerdekaan No. 123, RT/RW..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; resize: vertical; font-family: inherit;"></textarea>
+        </div>
+
+        <div class="form-group" style="margin: 0;">
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Link Google Maps</label>
+          <input type="url" name="maps" placeholder="https://goo.gl/maps/..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;">
+        </div>
+      </div>
+
+      <div style="margin-top: 30px; display:flex; gap:12px; justify-content: flex-end; padding-top: 20px; border-top: 1px solid var(--border); background: #f8fafc; padding: 16px; border-radius: 8px;">
+        <a href="?page=master_customer" class="btn btn-secondary" style="text-decoration: none;">Batal</a>
+        <button type="submit" id="btnSave" class="btn btn-primary">
+          <i data-lucide="save"></i> Simpan Data Customer
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+  });
+
+  document.getElementById('formCustomer').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btnSave');
+    btn.classList.add('loading');
+
+    const formData = new FormData(e.target);
+    const payload = Object.fromEntries(formData.entries());
+
+    try {
+      await GasApi.post('createCustomer', payload);
+      ToastSystem.show("Customer berhasil ditambahkan!", "success");
+      setTimeout(() => { window.location.href = "?page=master_customer"; }, 1500);
+    } catch (err) {
+      ToastSystem.show("Gagal menyimpan data: " + err.message, "error");
+      btn.classList.remove('loading');
+    }
+  });
+</script>
