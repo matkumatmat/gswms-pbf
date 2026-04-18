@@ -73,27 +73,19 @@
     document.getElementById('detNamaDagang').innerText = val(data.namaBarangDagang);
     document.getElementById('detNamaErp').innerText = val(data.namaBarangErp);
     
-    // THE FIX: Nampilin 2 Kode Sekaligus (Sesuai ID di HTML baru lu)
     document.getElementById('detKodeOld').innerText = val(data.kodeBarangOld);
     document.getElementById('detKodeNew').innerText = val(data.kodeBarangNew);
     
     document.getElementById('detNie').innerText = val(data.nie);
     document.getElementById('detNoDok').innerText = val(data.noDokPenerimaan);
 
-    // THE FIX: Data dari master produk masuk sini
     document.getElementById('detKategori').innerText = val(data.kategori);
     document.getElementById('detJenis').innerText = val(data.jenis);
     document.getElementById('detAlokasi').innerText = val(data.alokasi);
     document.getElementById('detSektor').innerText = val(data.sektor);
 
-    // THE FIX: Harga
-    let hetVal = '-', hjpVal = '-';
-    if (data.hjphet && typeof data.hjphet === 'object') {
-       hetVal = Formatter.currency(data.hjphet.het || 0);
-       hjpVal = Formatter.currency(data.hjphet.hjp || 0);
-    }
-    document.getElementById('detHet').innerText = hetVal;
-    document.getElementById('detHjp').innerText = hjpVal;
+    document.getElementById('detHet').innerText = Formatter.currency(data.het || 0);
+    document.getElementById('detHjp').innerText = Formatter.currency(data.hjp || 0);
 
     let statusHtml = '';
     if (data.status) {

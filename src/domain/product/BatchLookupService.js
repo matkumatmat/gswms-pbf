@@ -1,15 +1,11 @@
 // src/domain/product/BatchLookupService.js
 
 class BatchLookupService {
-    // KITA INJECT PRODUCT REPO JUGA KE SINI!
     constructor(repo, productRepo) {
         this.repo = repo;
         this.productRepo = productRepo; 
         this.defaultLimit = 500;
         
-        // !!! PERHATIAN BOS !!!
-        // LU WAJIB BIKIN URUTAN INI SESUAI SAMA KOLOM PM_BATCH LU YANG BARU!
-        // Asumsi gue: 1:id, 2:productId, 3:alokasi, 4:sektor, 5:nie, 6:noDokPenerimaan, 7:batch, dst...
         this.batchTableKeys = [
             'id', 'productId', 'alokasi', 'sektor','kodeBarang', 'namaDagang', 'batch',
             'manufacturingDate', 'expiryDate', 'status', 'rslBulan', 'sysStatus','nie',
@@ -22,38 +18,40 @@ class BatchLookupService {
 
     _joinBatchWithProduct(rawBatchData) {
         const rawProducts = this.productRepo.getAllProductRaw();
-        const productMap = new Map();
         
-        rawProducts.forEach(row => {
-            const pId = String(row[AppConfig.DB_PRODUCT_LOOKUP_ID_COL - 1] || '').trim();
-            if (pId) {
-                productMap.set(pId, {
-                    kodeBarangOld: String(row[AppConfig.DB_PRODUCT_LOOKUP_KODE_BARANG_OLD_COL - 1] || '-'),
-                    kodeBarangNew: String(row[AppConfig.DB_PRODUCT_LOOKUP_KODE_BARANG_NEW_COL - 1] || '-'),
-                    namaDagang: String(row[AppConfig.DB_PRODUCT_LOOKUP_NAMA_DAGANG_COL - 1] || ''),
-                    namaBarangErp: String(row[AppConfig.DB_PRODUCT_LOOKUP_NAMA_BARANG_ERP_COL - 1] || ''),
-                    // THE FIX: TARIK JUGA DATA KATEGORI DLL KE DALAM MAP
-                    kategori: String(row[AppConfig.DB_PRODUCT_LOOKUP_NAMA_DAGANG_COL] || ''), // Sesuai index kategori di AppConfig lu
-                    jenis: String(row[AppConfig.DB_PRODUCT_LOOKUP_NAMA_DAGANG_COL + 1] || ''), // Index jenis
-                    hjphet: AppUtils.safeParseJson(row[AppConfig.DB_PRODUCT_LOOKUP_TAHUN_COL - 1]) // Index HJP HET
-                });
-            }
+        // THE FIX: Kembali ke jalan yang benar! Pake Table Keys yang elegan.
+        // Sesuai urutan 12 Kolom di PM_PRODUCT lu
+        const productKeys = [
+            'id', 'kodeBarangOld', 'kodeBarangNew', 'namaDagang', 'namaBarangErp', 
+            'kategori', 'jenis', 'tahun', 'hjp', 'het', 
+            'updatedAt', 'updatedBy'
+        ];
+        
+        // Parsing jadi Object pake utility andalan kita
+        const products = AppUtils.mapArrayToObject(rawProducts, productKeys);
+        
+        // Bikin Dictionary (O(1) Search)
+        const productMap = new Map();
+        products.forEach(p => {
+            if (p.id) productMap.set(p.id, p);
         });
 
+        // Parsing Batch Data
         const batches = AppUtils.mapArrayToObject(rawBatchData, this.batchTableKeys);
         
         return batches.map(batch => {
             const master = productMap.get(batch.productId) || {};
             return {
                 ...batch,
+                // Inject the joined data cleanly
                 kodeBarangOld: master.kodeBarangOld || '-',
                 kodeBarangNew: master.kodeBarangNew || '-',
                 namaBarangDagang: master.namaDagang || '-',
                 namaBarangErp: master.namaBarangErp || '-',
-                // Inject the missing data!
                 kategori: master.kategori || '-',
                 jenis: master.jenis || '-',
-                hjphet: master.hjphet || {}
+                hjp: parseFloat(master.hjp) || 0,
+                het: parseFloat(master.het) || 0
             };
         });
     }
