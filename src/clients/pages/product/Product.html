@@ -1,0 +1,239 @@
+<style>
+  /* Fix biar Panel Kanan cuma sticky di Desktop, di HP biarin normal */
+  @media (min-width: 1024px) {
+    .panel-kanan { position: sticky; top: 90px; }
+  }
+</style>
+
+<div class="ui-subheader">
+  <div class="ui-subheader-icon"><i data-lucide="package-search"></i></div>
+  <div class="ui-subheader-text">
+    <h2>Master Produk & Analisis</h2>
+    <p>Cari data produk, cek ketersediaan, dan analisis distribusi per konsumen.</p>
+  </div>
+</div>
+
+<div class="grid-3-2" style="align-items: start;">
+  
+  <div class="ui-card">
+    <div class="ui-card-header">Pencarian Produk</div>
+    <div class="ui-card-body">
+      
+      <div class="ui-dropdown-wrapper" style="margin-bottom: 20px;">
+        <i data-lucide="search" style="position:absolute; left:12px; top:12px; color:var(--text-light); width:18px;"></i>
+        <input type="text" id="prodSearch" placeholder="Cari Kode Barang / Nama / Batch..." autocomplete="off" 
+               style="width:100%; padding:12px 14px 12px 38px; border:1px solid var(--border); border-radius:10px; outline:none;">
+      </div>
+
+      <div id="table-products-container"></div>
+    </div>
+  </div>
+
+  <div class="ui-card panel-kanan" id="aggregate-panel">
+    <div class="ui-card-header" style="background: var(--primary-light); color: var(--primary-dark);">
+      <i data-lucide="pie-chart" style="margin-right:8px; width:18px;"></i> Analisis & Histori
+    </div>
+    <div class="ui-card-body" id="aggregate-container">
+      <div style="text-align:center; padding:40px 20px; color:var(--text-light); font-size:0.85rem;">
+        <i data-lucide="mouse-pointer-click" style="width:40px; height:40px; margin-bottom:10px; opacity:0.5;"></i><br>
+        Klik tombol <b>Riwayat</b> pada tabel produk di samping untuk melihat ringkasan.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let allProducts = [];
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+    loadAllProducts();
+
+    // Real-time Search Listener
+    document.getElementById('prodSearch').addEventListener('input', (e) => {
+      const keyword = e.target.value.toLowerCase().trim();
+      if(keyword === '') {
+        renderProductTable(allProducts.slice(0, 50)); 
+      } else {
+        const filtered = allProducts.filter(p => 
+          (p.namaBarangDagang && p.namaBarangDagang.toLowerCase().includes(keyword)) ||
+          (p.kodeBarang && p.kodeBarang.toLowerCase().includes(keyword)) ||
+          (p.batch && p.batch.toLowerCase().includes(keyword))
+        );
+        renderProductTable(filtered.slice(0, 50));
+      }
+    });
+  });
+
+  async function loadAllProducts() {
+    document.getElementById('table-products-container').innerHTML = '<div style="text-align:center; padding:20px; color:var(--primary);"><i data-lucide="loader-2" class="lucide-spin"></i> Menarik Data Master...</div>';
+    lucide.createIcons();
+    
+    try {
+      allProducts = await GasApi.get('getShortBatchLookup', 1, 5000);
+      renderProductTable(allProducts.slice(0, 50)); 
+    } catch (error) {
+      ToastSystem.show("Gagal narik data produk!", "error");
+    }
+  }
+
+  function renderProductTable(data) {
+    if(data.length === 0) {
+      document.getElementById('table-products-container').innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-light); font-size:0.85rem;">Tidak ada produk yang cocok.</div>';
+      return;
+    }
+
+    const tableData = data.map(item => ({
+      identitas: `<strong style="color:var(--text-main); font-size:0.9rem;">${item.namaBarangDagang}</strong><br><span style="font-size:0.75rem; color:var(--text-light);">${item.kodeBarang || '-'}</span>`,
+      batch: `<span class="ui-badge ui-badge-neutral">${item.batch}</span>`,
+      aksi: `
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary" style="padding:6px 10px; font-size:0.75rem;" onclick="loadAggregate('${item.batch}', '${item.namaBarangDagang.replace(/'/g, "\\'")}')"><i data-lucide="bar-chart-2" style="width:14px; margin-right:4px;"></i> Riwayat</button>
+          <a href="?page=detail&id=${item.id}" class="btn btn-primary" style="padding:6px 10px; font-size:0.75rem; text-decoration:none;"><i data-lucide="external-link" style="width:14px; margin-right:4px;"></i> Detail</a>
+        </div>
+      `
+    }));
+
+    new DataTable({
+      containerId: 'table-products-container',
+      headers: [
+        { label: 'Produk', key: 'identitas' },
+        { label: 'Batch', key: 'batch' },
+        { label: 'Aksi', key: 'aksi' }
+      ],
+      data: tableData
+    });
+  }
+
+  // =======================================================
+  // LOGIC AGGREGATE DISTRIBUSI & 10 LATEST HISTORY
+  // =======================================================
+  async function loadAggregate(batchNo, namaProduk) {
+    const container = document.getElementById('aggregate-container');
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--primary);"><i data-lucide="loader-2" class="lucide-spin" style="width:30px; height:30px;"></i><br><br>Menarik Log Mutasi Fisik...</div>';
+    lucide.createIcons();
+
+    // THE UX FIX: Auto Scroll ke Panel Kanan di Mobile biar user ga bingung
+    if (window.innerWidth < 1024) {
+      document.getElementById('aggregate-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    try {
+      const history = await GasApi.post('getBatchHistory', { batchNo: batchNo });
+      
+      const agg = {};
+      let runningBalance = 0;
+      const historyWithBalance = [];
+
+      // Kalkulasi Saldo Berjalan & Agregasi Distribusi
+      history.forEach(h => {
+        const ket = String(h.keterangan || '').toUpperCase().trim();
+        const kons = String(h.namaKonsumen || '').toUpperCase().trim();
+        const dist = parseFloat(h.distribusi) || 0;
+        const pen = parseFloat(h.penerimaan) || 0;
+        
+        const isRevisi = ket.includes('REVISI');
+        const isSaldoAwal = kons.includes('SALDO AWAL');
+
+        if (!isRevisi && !isSaldoAwal) {
+          // Hitung Agregat Top Customer
+          if (dist > 0) {
+            agg[kons] = (agg[kons] || 0) + dist;
+          }
+          
+          // Hitung Running Balance
+          runningBalance += pen;
+          runningBalance -= dist;
+
+          // Simpan Riwayat Bersih
+          historyWithBalance.push({
+            tanggal: h.tanggal,
+            konsumen: kons,
+            cabang: h.kotaCabang || '-',
+            distribusi: dist,
+            penerimaan: pen,
+            saldo: runningBalance,
+            tipe: dist > 0 ? 'OUT' : 'IN'
+          });
+        }
+      });
+
+      // Jika murni kosong setelah difilter
+      if (historyWithBalance.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; font-size:0.85rem; color:var(--text-light);">Belum ada riwayat distribusi valid untuk <b>${batchNo}</b></div>`;
+        return;
+      }
+
+// 1. OLAH BAGIAN TOP AGGREGATE
+      const sortedAgg = Object.keys(agg)
+        .map(k => ({ customer: k, total: agg[k] }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5); // Ambil Top 5 aja biar ga kepanjangan
+
+      let html = `<div style="font-weight:800; color:var(--primary); margin-bottom:4px; font-size:1.1rem; line-height:1.2;">${namaProduk}</div>`;
+      html += `<div style="font-size:0.8rem; color:var(--text-light); margin-bottom:15px; font-family:monospace;">Batch: ${batchNo}</div>`;
+      
+      if(sortedAgg.length > 0) {
+        html += `<table class="ui-table" style="font-size:0.75rem; margin-bottom:20px;">
+                  <thead><tr><th>Top Distribusi</th><th style="text-align:right;">Total</th></tr></thead>
+                  <tbody>`;
+        sortedAgg.forEach((item, index) => {
+          const highlight = index < 3 ? 'font-weight:800; color:var(--text-main);' : '';
+          
+          // THE FIX: PEMBANTAIAN EMOJI, GANTI PAKE ICON LUCIDE!
+          let iconHtml = '';
+          if (index === 0) iconHtml = `<i data-lucide="trophy" style="width:14px; height:14px; color:#eab308; margin-right:4px;"></i>`; // Emas
+          else if (index === 1) iconHtml = `<i data-lucide="medal" style="width:14px; height:14px; color:#94a3b8; margin-right:4px;"></i>`; // Perak
+          else if (index === 2) iconHtml = `<i data-lucide="medal" style="width:14px; height:14px; color:#b45309; margin-right:4px;"></i>`; // Perunggu
+
+          html += `<tr>
+                    <td style="display:flex; align-items:center;">${iconHtml}<span style="${highlight}">${item.customer}</span></td>
+                    <td style="text-align:right; ${highlight}">${item.total.toLocaleString('id-ID')}</td>
+                   </tr>`;
+        });
+        html += `</tbody></table>`;
+      }
+
+      // 2. OLAH BAGIAN 10 TRANSAKSI TERAKHIR (DESCENDING)
+      const latestHistory = historyWithBalance.reverse().slice(0, 10);
+
+      html += `<div style="font-weight:800; font-size:0.8rem; text-transform:uppercase; color:var(--text-main); margin-bottom:10px; padding-top:10px; border-top:2px dashed var(--border);">10 Transaksi Terakhir</div>`;
+      
+      html += `<div style="display:flex; flex-direction:column; gap:10px;">`;
+      latestHistory.forEach(h => {
+          const isOut = h.tipe === 'OUT';
+          const color = isOut ? '#ef4444' : '#10b981';
+          const sign = isOut ? '-' : '+';
+          const val = isOut ? h.distribusi : h.penerimaan;
+          const icon = isOut ? 'arrow-up-right' : 'arrow-down-left';
+          const cabangText = h.cabang !== '-' && h.cabang !== '' ? ` - ${h.cabang}` : '';
+
+          html += `
+          <div style="background:#f8fafc; border:1px solid var(--border); border-left:4px solid ${color}; border-radius:8px; padding:12px; font-size:0.8rem; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+            
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+              <span style="color:var(--text-light); font-size:0.7rem;"><i data-lucide="calendar" style="width:12px; display:inline-block; vertical-align:middle;"></i> ${Formatter.date(h.tanggal)}</span>
+              <span style="font-weight:800; color:var(--primary);">Stok Akhir: <span style="font-size:0.9rem;">${h.saldo.toLocaleString('id-ID')}</span></span>
+            </div>
+            
+            <div style="font-weight:800; color:var(--text-main); margin-bottom:4px; line-height:1.3;">
+              ${h.konsumen}${cabangText}
+            </div>
+            
+            <div style="color:${color}; font-weight:800; font-size:0.9rem; display:flex; align-items:center; gap:4px;">
+              <i data-lucide="${icon}" style="width:16px;"></i> ${sign}${val.toLocaleString('id-ID')}
+            </div>
+
+          </div>`;
+      });
+      html += `</div>`;
+
+      container.innerHTML = html;
+      lucide.createIcons({ root: container });
+
+    } catch (error) {
+      container.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444; font-size:0.85rem;">Gagal menarik data histori mutasi.</div>`;
+    }
+  }
+</script>

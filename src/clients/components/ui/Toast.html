@@ -1,0 +1,131 @@
+<style>
+  /* Container Toast Otomatis */
+  #ui-toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none; /* Biar area kosong di antara toast tetep bisa diklik */
+  }
+
+  /* THE FIX: Di Mobile, Toast pindah ke tengah dan naik ke atas Dock Menu! */
+  @media (max-width: 1023px) {
+    #ui-toast-container {
+      bottom: 95px; /* Aman dari Bottom Nav Dock (tingginya 65px + 15px) */
+      right: 16px;
+      left: 16px;
+      align-items: center;
+    }
+  }
+
+  /* Desain Toast Base */
+  .ui-toast {
+    pointer-events: auto;
+    min-width: 280px;
+    max-width: 350px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 10px 30px -5px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transform: translateX(120%);
+    opacity: 0;
+    animation: toastSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .ui-toast.hiding {
+    animation: toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Animasi Desktop (Dari Kanan) */
+  @keyframes toastSlideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes toastSlideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
+
+  /* Animasi Mobile (Dari Bawah) */
+  @media (max-width: 1023px) {
+    .ui-toast { width: 100%; transform: translateY(100%); animation: toastSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    .ui-toast.hiding { animation: toastSlideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    
+    @keyframes toastSlideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes toastSlideDown { from { transform: translateY(0); opacity: 1; } to { transform: translateY(100%); opacity: 0; } }
+  }
+
+  /* Varian Warna & Icon */
+  .toast-icon { flex-shrink: 0; margin-top: 2px; }
+  .toast-success .toast-icon { color: #10b981; } /* Hijau */
+  .toast-error .toast-icon { color: #ef4444; }   /* Merah */
+  .toast-warning .toast-icon { color: #f59e0b; } /* Kuning/Oren */
+  .toast-info .toast-icon { color: var(--primary); }
+
+  .toast-content { flex: 1; }
+  .toast-title { font-weight: 800; font-size: 0.9rem; color: var(--text-main); margin-bottom: 2px; }
+  .toast-msg { font-size: 0.8rem; color: var(--text-light); line-height: 1.4; }
+</style>
+
+<script>
+  /**
+   * ToastSystem: Global Notification Manager
+   */
+  class ToastSystem {
+    // Bikin container otomatis kalau belum ada (Agnostik banget!)
+    static init() {
+      if (!document.getElementById('ui-toast-container')) {
+        const container = document.createElement('div');
+        container.id = 'ui-toast-container';
+        document.body.appendChild(container);
+      }
+    }
+
+    /**
+     * Panggil ini buat munculin notif
+     * @param {string} message - Pesan utama
+     * @param {string} type - 'success', 'error', 'warning', 'info' (default)
+     * @param {string} customTitle - Opsional, kalo mau ganti judulnya
+     */
+    static show(message, type = 'info', customTitle = null) {
+      this.init();
+      const container = document.getElementById('ui-toast-container');
+
+      const toast = document.createElement('div');
+      toast.className = `ui-toast toast-${type}`;
+
+      // Mapping otomatis Icon & Title bawaan
+      let iconName = 'info';
+      let title = customTitle || 'Informasi';
+
+      if (type === 'success') { iconName = 'check-circle-2'; title = customTitle || 'Sukses'; }
+      if (type === 'error') { iconName = 'x-circle'; title = customTitle || 'Gagal'; }
+      if (type === 'warning') { iconName = 'alert-triangle'; title = customTitle || 'Peringatan'; }
+
+      toast.innerHTML = `
+        <div class="toast-icon"><i data-lucide="${iconName}"></i></div>
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-msg">${message}</div>
+        </div>
+      `;
+
+      container.appendChild(toast);
+      lucide.createIcons({ root: toast }); // Render icon khusus di dalem toast ini aja biar enteng
+
+      // Auto ilang setelah 3.5 detik
+      setTimeout(() => {
+        toast.classList.add('hiding');
+        toast.addEventListener('animationend', () => toast.remove());
+      }, 3500);
+    }
+  }
+
+  // Alias biar kompatibel sama kode lu yang lama (kalo lu udah terlanjur nulis UI.toast dimana-mana)
+  if (typeof UI !== 'undefined') {
+    UI.toast = (msg, type) => ToastSystem.show(msg, type);
+  } else {
+    window.UI = { toast: (msg, type) => ToastSystem.show(msg, type) };
+  }
+</script>

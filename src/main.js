@@ -78,6 +78,11 @@ const PostRegistry = {
   'generateBatchRecordSheet': {
     factory: () => new BatchRecordService(new BatchRecordRepo()),
     method: 'generateSheet' // Mengarah ke fungsi pembuat GSheet
+  },
+  // THE FIX: Tambahin endpoint ini biar UI bisa narik JSON History
+  'getBatchHistory': {
+    factory: () => new BatchRecordService(new BatchRecordRepo()),
+    method: 'getHistory'
   }
 
   // Nanti tambah: 'createProduct': { ... }
@@ -409,24 +414,32 @@ function doGet(e) {
       });    
     }
 
-    // ==========================================
+// ==========================================
     // ROUTER B: FRONTEND WEB APP (method=client)
     // ==========================================
     if (method === 'client') {
       const reqPage = params.page || 'home';
-      const template = HtmlService.createTemplateFromFile('src/client/ui/Layout');
+      const template = HtmlService.createTemplateFromFile('src/clients/components/ui/MainLayout');
       
-      // Mapping halaman UI
-      if (reqPage === 'shipping_label') {
-        template.pageContent = 'src/client/pages/shipping_label/ShippingLabel';
-      } else if (reqPage === 'detail' || reqPage === 'product') {
-        template.pageContent = 'src/client/pages/product_detail/ProductDetail';
+      // THE FIX: Daftar semua halaman yang valid di sini
+      const validPages = {
+        'shipping_label': 'src/client/pages/shipping_label/ShippingLabel',
+        'detail': 'src/client/pages/product_detail/ProductDetail',
+        'product': 'src/clients/pages/product/Product', // <--- ARAHIN KE FILE BARU LU
+        'home': 'src/clients/pages/Home'
+      };
+
+      // Kalo page-nya kedaftar, panggil file-nya. Kalo nggak ada? Lempar ke Void 404!
+      if (validPages[reqPage]) {
+        template.pageContent = validPages[reqPage];
         
-        // Injeksi parameter ke scriptlet HTML
-        template.urlParamId = params.id || null;
-        template.urlParamBatch = params.batch || null;
+        // Injeksi parameter khusus buat halaman detail
+        if (reqPage === 'detail' || reqPage === 'product') {
+          template.urlParamId = params.id || null;
+          template.urlParamBatch = params.batch || null;
+        }
       } else {
-        template.pageContent = 'src/client/pages/main/Home'; 
+        template.pageContent = 'src/clients/pages/Error404';
       }
 
       return template.evaluate()

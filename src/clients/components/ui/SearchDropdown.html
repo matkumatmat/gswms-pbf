@@ -1,0 +1,114 @@
+<style>
+  .ui-dropdown-wrapper { position: relative; width: 100%; }
+  
+  .ui-dropdown-list {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    max-height: 250px; overflow-y: auto; z-index: 50;
+    display: none; flex-direction: column; padding: 6px;
+  }
+  
+  .ui-dropdown-list.show { display: flex; animation: slideDown 0.2s ease-out; }
+  
+  .ui-dropdown-item {
+    padding: 10px 14px; cursor: pointer; border-radius: 8px;
+    transition: background 0.1s; text-align: left;
+  }
+  .ui-dropdown-item:hover { background-color: #f0fdfa; }
+  
+  .ui-dropdown-empty { padding: 12px; text-align: center; color: var(--text-light); font-size: 0.85rem; }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<script>
+  /**
+   * SearchDropdown (Agnostic Autocomplete Component)
+   */
+  class SearchDropdown {
+    constructor(config) {
+      this.inputId = config.inputId;
+      this.dropdownId = config.dropdownId;
+      this.data = config.data || [];
+      this.searchKeys = config.searchKeys || []; // Kolom apa aja yg mau dicari (array of strings)
+      this.renderItem = config.renderItem; // Fungsi HTML untuk tiap baris
+      this.onSelect = config.onSelect; // Fungsi callback pas diklik
+
+      this.inputEl = document.getElementById(this.inputId);
+      this.dropdownEl = document.getElementById(this.dropdownId);
+
+      this.init();
+    }
+
+    init() {
+      if (!this.inputEl || !this.dropdownEl) {
+        console.error(`SearchDropdown Error: Input/Dropdown element tidak ditemukan!`);
+        return;
+      }
+
+      // Event pas ngetik
+      this.inputEl.addEventListener('input', (e) => this.handleSearch(e.target.value));
+      
+      // Event klik di luar buat nutup dropdown
+      document.addEventListener('click', (e) => {
+        if (!this.inputEl.contains(e.target) && !this.dropdownEl.contains(e.target)) {
+          this.close();
+        }
+      });
+    }
+
+    handleSearch(keyword) {
+      const query = keyword.toLowerCase().trim();
+      this.dropdownEl.innerHTML = '';
+
+      if (query.length < 2) {
+        this.close();
+        return;
+      }
+
+      // Filter Agnostik: Cek semua keys yg di-define
+      const filtered = this.data.filter(item => {
+        return this.searchKeys.some(key => {
+          const val = item[key];
+          return val && String(val).toLowerCase().includes(query);
+        });
+      });
+
+      if (filtered.length > 0) {
+        filtered.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'ui-dropdown-item';
+          row.innerHTML = this.renderItem(item); // Panggil fungsi render template dari user
+          
+          row.addEventListener('click', () => {
+            this.inputEl.value = this.getDisplayValue(item); // Update isi text input
+            this.close();
+            this.onSelect(item); // Panggil callback user
+          });
+          
+          this.dropdownEl.appendChild(row);
+        });
+      } else {
+        this.dropdownEl.innerHTML = `<div class="ui-dropdown-empty">Data tidak ditemukan</div>`;
+      }
+
+      this.open();
+    }
+
+    // Heuristik bodoh: ambil key pertama yg ada buat display input pas diklik
+    getDisplayValue(item) {
+      return item[this.searchKeys[0]] || 'Selected';
+    }
+
+    updateData(newData) {
+      this.data = newData;
+    }
+
+    open() { this.dropdownEl.classList.add('show'); }
+    close() { this.dropdownEl.classList.remove('show'); }
+  }
+</script>

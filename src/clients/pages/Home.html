@@ -1,0 +1,172 @@
+<div class="ui-subheader">
+  <div class="ui-subheader-icon"><i data-lucide="home"></i></div>
+  <div class="ui-subheader-text">
+    <h2>PBF Logistics Hub</h2>
+    <p>Selamat datang kembali. Berikut adalah ringkasan operasional Anda hari ini.</p>
+  </div>
+</div>
+
+<div class="grid-c">
+  <div class="ui-card">
+    <div class="ui-card-body" style="text-align: center;">
+      <p style="font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px;">Shipment</p>
+      <h3 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">42</h3>
+      <span class="ui-badge ui-badge-primary">Hari Ini</span>
+    </div>
+  </div>
+  
+  <div class="ui-card">
+    <div class="ui-card-body" style="text-align: center;">
+      <p style="font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px;">ED Alert</p>
+      <h3 style="font-size: 1.8rem; font-weight: 800; color: #ef4444;">3</h3>
+      <span class="ui-badge ui-badge-danger">< 30 Hari</span>
+    </div>
+  </div>
+
+  <div class="ui-card">
+    <div class="ui-card-body" style="text-align: center;">
+      <p style="font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px;">Pending Print</p>
+      <h3 style="font-size: 1.8rem; font-weight: 800; color: var(--secondary);">12</h3>
+      <span class="ui-badge ui-badge-warning">Label</span>
+    </div>
+  </div>
+
+  <div class="ui-card">
+    <div class="ui-card-body" style="text-align: center;">
+      <p style="font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px;">System</p>
+      <h3 style="font-size: 1.8rem; font-weight: 800; color: #10b981;">OK</h3>
+      <span class="ui-badge ui-badge-success">Stable</span>
+    </div>
+  </div>
+
+  <div class="ui-card">
+    <div class="ui-card-body" style="text-align: center;">
+      <p style="font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px;">Active Users</p>
+      <h3 style="font-size: 1.8rem; font-weight: 800; color: var(--text-main);">5</h3>
+      <span class="ui-badge ui-badge-neutral">Online</span>
+    </div>
+  </div>
+</div>
+
+<div class="grid-3-2">
+  
+  <div class="ui-card">
+    <div class="ui-card-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <i data-lucide="history" style="width:18px;"></i> Log Perubahan Master Data
+      </div>
+    </div>
+    <div class="ui-card-body" style="padding: 0;"> <div id="container-changelog"></div>
+    </div>
+    <div class="ui-card-footer">
+      <span style="font-size: 0.75rem; color: var(--text-light);">Menampilkan 5 aktivitas terakhir</span>
+    </div>
+  </div>
+
+  <div> <div class="ui-card">
+      <div class="ui-card-header">System Test Component</div>
+      <div class="ui-card-body" style="display:flex; flex-direction:column; gap:12px;">
+        
+        <button class="btn btn-primary" style="width: 100%;" onclick="testToast()">
+          <i data-lucide="bell"></i> Cek Toast Notif
+        </button>
+        
+        <button class="btn btn-secondary" style="width: 100%;" onclick="testModal()">
+          <i data-lucide="layers"></i> Cek Global Modal
+        </button>
+        
+        <button class="btn btn-danger" style="width: 100%;" onclick="testLoading(this)">
+          <i data-lucide="loader-2"></i> Cek Loading State
+        </button>
+        
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /**
+   * INITIALIZE PAGE LOGIC
+   */
+  document.addEventListener('DOMContentLoaded', () => {
+    initHomeComponents();
+    lucide.createIcons();
+  });
+
+  function initHomeComponents() {
+    // 1. Render Table Change Log (Agnostik)
+    const mockChangeLog = [
+      { sheet: 'MASTER_DIST', user: 'Kaye', action: 'Update Stok', time: '10:45' },
+      { sheet: 'SHIPLBL_MASTER', user: 'Fitrah', action: 'Cetak Label', time: '09:20' },
+      { sheet: 'PM_BATCH', user: 'System', action: 'Auto ED Check', time: '00:01' },
+      { sheet: 'CUSTOMER_DB', user: 'Kaye', action: 'Tambah Alamat', time: 'Kemarin' },
+      { sheet: 'CONST_PARAM', user: 'Admin', action: 'Ubah Harga Embalage', time: '2 Hari Lalu' }
+    ];
+
+    new DataTable({
+      containerId: 'container-changelog',
+      headers: [
+        { label: 'Sheet', key: 'sheet' },
+        { label: 'User', key: 'user' },
+        { label: 'Aksi', key: 'action' },
+        { label: 'Waktu', key: 'time' }
+      ],
+      data: mockChangeLog
+    });
+
+    // 2. Render Search Dropdown (Agnostik)
+    const mockProducts = [
+      { name: 'Vaksin BCG 10 dosis', batch: 'B20250305' },
+      { name: 'Vaksin Polio 20 dosis', batch: 'B1124492' },
+      { name: 'Serum Anti Bisa Ular', batch: 'S990224' }
+    ];
+
+    new SearchDropdown({
+      inputId: 'homeSearchInput',
+      dropdownId: 'homeSearchDropdown',
+      data: mockProducts,
+      searchKeys: ['name', 'batch'],
+      renderItem: (item) => `
+        <div style="font-weight:700; font-size:0.85rem;">${item.name}</div>
+        <div style="font-size:0.7rem; color:var(--text-light);">Batch: ${item.batch}</div>
+      `,
+      onSelect: (item) => {
+        ToastSystem.show(`Membuka detail batch ${item.batch}`, 'info');
+      }
+    });
+  }
+
+  function testLoading(btn) {
+    btn.classList.add('loading');
+    setTimeout(() => {
+      btn.classList.remove('loading');
+      ToastSystem.show("Proses pura-pura loading selesai!", "success");
+    }, 2000);
+  }
+
+  // TESTER FUNCTIONS
+  function testToast() {
+    ToastSystem.show("Sistem sinkronisasi berhasil dijalankan!", "success");
+  }
+
+  function testModal() {
+    ModalSystem.show({
+      title: 'Peringatan Kadaluarsa',
+      body: `
+        <p>Terdapat <b>3 produk</b> yang akan expired dalam waktu dekat.</p>
+        <ul style="margin-top:10px; padding-left:20px;">
+          <li>Batch B2025 - Sisa 12 hari</li>
+          <li>Batch C9011 - Sisa 20 hari</li>
+        </ul>
+      `,
+      footerButtons: [
+        { text: 'Nanti Saja', type: 'secondary', action: () => ModalSystem.close() },
+        { text: 'Cetak Report', type: 'primary', action: () => {
+          ToastSystem.show("Laporan sedang di-generate...", "info");
+          ModalSystem.close();
+        }}
+      ]
+    });
+  }
+</script>

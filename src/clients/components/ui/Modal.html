@@ -1,0 +1,81 @@
+<style>
+  .ui-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+    z-index: 99999; display: none; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.3s ease;
+  }
+
+  .ui-modal-overlay.active { display: flex; opacity: 1; }
+
+  .ui-modal-container {
+    background: var(--surface); border-radius: 20px;
+    width: 90%; max-width: 500px; max-height: 85vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    transform: scale(0.95); transition: transform 0.3s ease;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  .ui-modal-overlay.active .ui-modal-container { transform: scale(1); }
+
+  .ui-modal-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .ui-modal-header h3 { 
+    margin: 0; font-size: 1.1rem; /* THE FIX: Gak kegedean */
+    font-weight: 800; color: var(--text-main); 
+  }
+
+  .ui-modal-body { padding: 20px; overflow-y: auto; font-size: 0.9rem; color: var(--text-light); }
+
+  .ui-modal-footer {
+    padding: 16px 20px; border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc;
+  }
+</style>
+
+<div class="ui-modal-overlay" id="global-modal-overlay">
+  <div class="ui-modal-container">
+    <div class="ui-modal-header">
+      <h3 id="modal-title">Modal Title</h3>
+      <button class="toggle-btn" onclick="ModalSystem.close()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="ui-modal-body" id="modal-body"></div>
+    <div class="ui-modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<script>
+  class ModalSystem {
+    static show({ title, body, footerButtons = [] }) {
+      const overlay = document.getElementById('global-modal-overlay');
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-body').innerHTML = body;
+      
+      const footer = document.getElementById('modal-footer');
+      footer.innerHTML = '';
+      
+      if (footerButtons.length === 0) {
+        footer.style.display = 'none';
+      } else {
+        footer.style.display = 'flex';
+        footerButtons.forEach(btn => {
+          const b = document.createElement('button');
+          b.className = `btn btn-${btn.type || 'primary'}`;
+          b.innerText = btn.text;
+          b.onclick = btn.action;
+          footer.appendChild(b);
+        });
+      }
+      
+      overlay.classList.add('active');
+      lucide.createIcons();
+    }
+
+    static close() {
+      document.getElementById('global-modal-overlay').classList.remove('active');
+    }
+  }
+</script>

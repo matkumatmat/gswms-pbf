@@ -1,0 +1,60 @@
+<style>
+  .ui-global-loader {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(248, 250, 252, 0.85); /* Semi transparan nembus ke background */
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    z-index: 999999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    opacity: 0; visibility: hidden; transition: opacity 0.3s ease;
+  }
+  
+  .ui-global-loader.active { opacity: 1; visibility: visible; }
+
+  /* Animasi Out of The Box: The Orbit */
+  .loader-orbit {
+    width: 60px; height: 60px; position: relative;
+    animation: spin 2s linear infinite;
+  }
+  .loader-orbit::before, .loader-orbit::after {
+    content: ''; position: absolute; border-radius: 50%;
+  }
+  .loader-orbit::before {
+    width: 100%; height: 100%;
+    border: 3px solid transparent;
+    border-top-color: var(--primary);
+    border-bottom-color: var(--secondary);
+    animation: spin 1.5s ease-in-out infinite alternate;
+  }
+  .loader-orbit::after {
+    width: 60%; height: 60%; top: 20%; left: 20%;
+    background: var(--tertiary); opacity: 0.2;
+    animation: pulseLoader 1s ease-in-out infinite alternate;
+  }
+
+  .loader-text {
+    margin-top: 24px; font-weight: 800; color: var(--text-main);
+    letter-spacing: 2px; text-transform: uppercase; font-size: 0.75rem;
+    animation: blink 1.5s infinite;
+  }
+
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  @keyframes pulseLoader { 0% { transform: scale(0.8); opacity: 0.2; } 100% { transform: scale(1.2); opacity: 0.8; } }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>
+
+<div class="ui-global-loader" id="globalLoader">
+  <div class="loader-orbit"></div>
+  <div class="loader-text" id="loaderText">Menarik Data dari Kehampaan...</div>
+</div>
+
+<script>
+  class Loader {
+    static show(msg = 'Memproses Kehampaan...') {
+      document.getElementById('loaderText').innerText = msg;
+      document.getElementById('globalLoader').classList.add('active');
+    }
+    static hide() {
+      document.getElementById('globalLoader').classList.remove('active');
+    }
+  }
+</script>

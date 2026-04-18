@@ -1,0 +1,49 @@
+<style>
+  .mobile-dock {
+    position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-radius: 30px; display: flex; justify-content: space-around; align-items: center; 
+    width: 90%; max-width: 400px; height: 65px;
+    z-index: 1000;
+  }
+  
+  .dock-item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--text-light); text-decoration: none; font-size: 0.65rem; font-weight: 600;
+    gap: 4px; transition: 0.2s; width: 33%; height: 100%; border-radius: 20px;
+  }
+  .dock-item.active { color: var(--primary); }
+  .dock-item.active .lucide { color: var(--primary); fill: var(--primary-light); }
+
+  /* Sembunyiin dock ini kalau di Desktop */
+  @media (min-width: 1024px) { .mobile-dock { display: none !important; } }
+</style>
+
+<nav class="mobile-dock" id="mobileDock"></nav>
+
+<script>
+  const dockData = [
+    { title: 'Dashboard', icon: 'layout-dashboard', url: '?page=home' },
+    { title: 'Shipping', icon: 'truck', url: '?page=shipping_label' },
+    { title: 'Sheet', icon: 'file-spreadsheet', url: '?page=sheet' }
+  ];
+
+  const dockContainer = document.getElementById('mobileDock');
+  const urlParamsDock = new URLSearchParams(window.location.search);
+  const currentDockPage = urlParamsDock.get('page') || 'home';
+
+  dockData.forEach(item => {
+    const isActive = item.url.includes(currentDockPage);
+    const el = document.createElement('a');
+    el.href = item.url;
+    el.className = `dock-item ${isActive ? 'active' : ''}`;
+    
+    // THE FIX: Trigger Loading di Mobile Dock
+    el.onclick = (e) => { if(!e.ctrlKey) { Loader.show('Otw Bos...'); } };
+
+    el.innerHTML = `<i data-lucide="${item.icon}" style="width: 22px; height: 22px;"></i><span>${item.title}</span>`;
+    dockContainer.appendChild(el);
+  });
+</script>

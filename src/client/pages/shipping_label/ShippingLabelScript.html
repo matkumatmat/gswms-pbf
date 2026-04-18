@@ -1,140 +1,101 @@
 <script>
-  // ====================================================================
-  // 1. GLOBAL STATE MANAGEMENT
-  // ====================================================================
+  // ==========================================
+  // GLOBAL STATE
+  // ==========================================
   let masterCustomers = [];
   let selectedCustomerPayload = null; 
-  let boxConfigs = []; // Format: [{ start: 1, end: 2, count: 2, petugas: '', temp: '', products: [{name, qty}] }]
+  let boxConfigs = []; 
   let totalCalculatedBoxes = 0; 
+  let globalPrintQueue = [];
 
-  // ====================================================================
-  // 2. INITIALIZATION
-  // ====================================================================
+  // ==========================================
+  // INIT PAGE
+  // ==========================================
   document.addEventListener('DOMContentLoaded', () => {
     loadPrintQueue(); 
     loadMasterCustomers();
-    renderBoxGrid(); // Inisialisasi kotak box kosong + tombol [+]
+    renderBoxGrid(); 
+    lucide.createIcons();
   });
 
-  // ====================================================================
-  // 3. LOGIC CUSTOMER & DROPDOWN (MISI A)
-  // ====================================================================
+  // ==========================================
+  // LOGIC CUSTOMER (GLOBAL SEARCH DROPDOWN)
+  // ==========================================
+  async function loadMasterCustomers() {
+    try {
+      masterCustomers = await GasApi.get('getCustomers', 1, 100); 
+      
+      // MENGGUNAKAN KOMPONEN AGNOSTIK KITA!
+      new SearchDropdown({
+        inputId: 'custSearch',
+        dropdownId: 'customDropdown',
+        data: masterCustomers,
+        searchKeys: ['namaKonsumen', 'kotaCabang'],
+        renderItem: (item) => `
+          <div style="font-weight:700; color:var(--text-main); font-size:0.85rem;">${item.namaKonsumen}</div>
+          <div style="font-size:0.75rem; color:var(--text-light); margin-top:2px;">Cabang: ${item.kotaCabang || '-'}</div>
+        `,
+        onSelect: (cust) => {
+          selectedCustomerPayload = cust;
+          
+          document.getElementById('ccNameBranch').innerText = `${cust.namaKonsumen} - ${cust.kotaCabang || '-'}`;
+          document.getElementById('ccAddress').innerHTML = `${cust.alamat || ''}<br>${cust.kota || ''}`;
+          document.getElementById('ccContact').innerText = cust.kontak || '-';
+          
+          document.getElementById('customerCard').style.display = 'block';
+          lucide.createIcons();
+        }
+      });
+    } catch (error) {
+      ToastSystem.show("Gagal narik data customer!", "error");
+    }
+  }
+
   function splitAddress15(fullAddress) {
     if (!fullAddress) return { line1: '', line2: '' };
     let text = fullAddress.trim();
     if (text.length <= 15) return { line1: text, line2: '' };
-    
     let splitIndex = text.lastIndexOf(' ', 15);
     if (splitIndex === -1 || splitIndex === 0) splitIndex = 15; 
-    
-    let l1 = text.substring(0, splitIndex).trim();
-    let l2 = text.substring(splitIndex).trim().substring(0, 15).trim();
-    return { line1: l1, line2: l2 };
+    return { 
+      line1: text.substring(0, splitIndex).trim(), 
+      line2: text.substring(splitIndex).trim().substring(0, 15).trim() 
+    };
   }
 
-  async function loadMasterCustomers() {
-    try {
-      masterCustomers = await GasApi.get('getCustomers', 1, 100); 
-    } catch (error) {
-      console.error("Gagal narik data customer:", error);
-    }
-  }
-
-  const searchInput = document.getElementById('custSearch');
-  const dropdown = document.getElementById('customDropdown');
-  const cardInfo = document.getElementById('customerCard');
-
-  searchInput.addEventListener('input', function(e) {
-    const keyword = e.target.value.toLowerCase();
-    dropdown.innerHTML = ''; 
-
-    if (keyword.length < 2) {
-      dropdown.classList.remove('show');
-      return;
-    }
-
-    const filtered = masterCustomers.filter(c => 
-      (c.namaKonsumen && c.namaKonsumen.toLowerCase().includes(keyword)) ||
-      (c.kotaCabang && c.kotaCabang.toLowerCase().includes(keyword))
-    );
-
-    if (filtered.length > 0) {
-      filtered.forEach(cust => {
-        const item = document.createElement('div');
-        item.className = 'dropdown-item';
-        item.innerHTML = `
-          <div class="di-title">${cust.namaKonsumen}</div>
-          <div class="di-sub">Cabang: ${cust.kotaCabang || '-'}</div>
-        `;
-        
-        item.addEventListener('click', () => {
-          selectedCustomerPayload = cust;
-          searchInput.value = cust.namaKonsumen;
-          dropdown.classList.remove('show');
-          
-          const alamatLengkap = `${cust.alamat || ''}, ${cust.kota || ''}`;
-          const splitAlamat = splitAddress15(alamatLengkap);
-          
-          document.getElementById('ccNameBranch').innerText = `${cust.namaKonsumen} - ${cust.kotaCabang || '-'}`;
-          document.getElementById('ccAddress1').innerText = `L1: ${splitAlamat.line1}`;
-          document.getElementById('ccAddress2').innerText = `L2: ${splitAlamat.line2}`;
-          document.getElementById('ccContact').innerText = cust.kontak || '-';
-          document.getElementById('ccPic').innerText = `PIC: ${cust.pic || '-'}`;
-          
-          cardInfo.classList.add('show');
-          lucide.createIcons();
-        });
-        dropdown.appendChild(item);
-      });
-      dropdown.classList.add('show');
-    } else {
-      dropdown.classList.remove('show');
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
-      dropdown.classList.remove('show');
-    }
-  });
-
-  // ====================================================================
-  // 4. LOGIC KONFIGURASI BOX (MODAL & GRID)
-  // ====================================================================
-  function openModal(modalId) { document.getElementById(modalId).classList.add('active'); }
-  function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
-
+  // ==========================================
+  // LOGIC BOX (GLOBAL MODAL SYSTEM)
+  // ==========================================
   function renderBoxGrid() {
     const container = document.getElementById('boxGridContainer');
     container.innerHTML = '';
     totalCalculatedBoxes = 0;
 
+    if(boxConfigs.length === 0) {
+      container.innerHTML = `<div style="text-align:center; padding:20px; border:1px dashed var(--border); border-radius:8px; color:var(--text-light); font-size:0.8rem;">Belum ada box. Klik "Tambah Box" di atas.</div>`;
+      return;
+    }
+
     boxConfigs.forEach((config, index) => {
       totalCalculatedBoxes += config.count;
-      const card = document.createElement('div');
-      card.className = 'box-card';
       const labelText = config.count > 1 ? `Box ${config.start} - ${config.end}` : `Box ${config.start}`;
+      const productsText = config.products.map(p => `• ${p.name} (Qty: ${p.qty})`).join('<br>');
       
-      // FIX EMOJI: Udah diganti pakai Lucide Icons yang cakep!
-      card.innerHTML = `
-        <button type="button" class="btn-delete-box" onclick="deleteBoxConfig(${index})" title="Hapus Config"><i data-lucide="trash-2" style="width:14px;"></i></button>
-        <div class="box-card-title">${labelText}</div>
-        <div class="box-card-desc" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
-          <div style="display:flex; align-items:center; gap:6px; color:#475569"><i data-lucide="user" style="width:14px; height:14px; color:var(--primary);"></i> ${config.petugas}</div>
-          <div style="display:flex; align-items:center; gap:6px; color:#475569"><i data-lucide="thermometer" style="width:14px; height:14px; color:var(--primary);"></i> ${config.temp}</div>
-          <div style="display:flex; align-items:center; gap:6px; color:#475569"><i data-lucide="package" style="width:14px; height:14px; color:var(--primary);"></i> ${config.products.length} Items</div>
+      const el = document.createElement('div');
+      el.className = 'sl-box-item';
+      el.innerHTML = `
+        <div style="flex:1;">
+          <div class="sl-box-title">${labelText}</div>
+          <div class="sl-box-meta">
+            <span><i data-lucide="user"></i> ${config.petugas}</span>
+            <span><i data-lucide="thermometer"></i> ${config.temp}</span>
+          </div>
+          <div class="sl-box-products">${productsText}</div>
         </div>
+        <button class="btn btn-danger" style="padding:6px; height:max-content;" onclick="deleteBoxConfig(${index})"><i data-lucide="trash-2"></i></button>
       `;
-      container.appendChild(card);
+      container.appendChild(el);
     });
-
-    const btnAdd = document.createElement('button');
-    btnAdd.type = "button";
-    btnAdd.className = "box-add-btn";
-    btnAdd.onclick = openAddBoxModal;
-    btnAdd.innerHTML = `<i data-lucide="plus" style="width: 24px; color: var(--primary);"></i><span>Tambah Config Box</span>`;
-    container.appendChild(btnAdd);
-
     lucide.createIcons();
   }
 
@@ -153,91 +114,119 @@
     });
   }
 
-  function openAddBoxModal() {
-    document.getElementById('inputJmlBox').value = 1;
-    document.getElementById('productRowsContainer').innerHTML = '';
-    addProductRow(); 
-    
-    const nextBoxNum = boxConfigs.length > 0 ? boxConfigs[boxConfigs.length-1].end + 1 : 1;
-    document.getElementById('modalBoxTitle').innerText = `Tambah Config (Mulai Box ${nextBoxNum})`;
-    
-    openModal('modalBoxConfig');
-  }
+  // Buka Modal Tambah Box Pake Global Modal
+  window.openAddBoxModal = function() {
+    ModalSystem.show({
+      title: `Konfigurasi Box Baru`,
+      body: `
+        <div style="display:flex; flex-direction:column; gap:15px; color:var(--text-main);">
+          <div>
+            <label style="font-size:0.75rem; font-weight:800; margin-bottom:6px; display:block;">Jumlah Box (Config Sama)</label>
+            <input type="number" id="modalJmlBox" value="1" min="1" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; outline:none;">
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label style="font-size:0.75rem; font-weight:800; margin-bottom:6px; display:block;">Petugas</label>
+              <input type="text" id="modalPetugas" value="Kaye" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; outline:none;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem; font-weight:800; margin-bottom:6px; display:block;">Suhu</label>
+              <input type="text" id="modalSuhu" value="2-8 °C" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; outline:none;">
+            </div>
+          </div>
+          <hr style="border:0; border-top:2px dashed var(--border); margin:5px 0;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <label style="font-size:0.75rem; font-weight:800; margin:0;">Daftar Produk</label>
+              <button class="btn btn-secondary" style="padding:6px 10px; font-size:0.7rem;" onclick="addModalProductRow()">+ Tambah Item</button>
+            </div>
+            <div id="modalProductsContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
+          </div>
+        </div>
+      `,
+      footerButtons: [
+        { text: 'Batal', type: 'secondary', action: () => ModalSystem.close() },
+        { text: 'Simpan Box', type: 'primary', action: () => saveBoxConfigFromModal() }
+      ]
+    });
+    addModalProductRow(); // Munculin baris pertama otomatis
+  };
 
-  function addProductRow() {
-    const container = document.getElementById('productRowsContainer');
+  // Nambah baris input produk di dalem Modal
+  window.addModalProductRow = function() {
+    const container = document.getElementById('modalProductsContainer');
     const row = document.createElement('div');
-    row.className = 'product-row';
+    row.style = "display:flex; gap:8px; align-items:center;";
     row.innerHTML = `
-      <input type="text" class="prod-name" placeholder="Nama Produk" style="flex:2;">
-      <input type="number" class="prod-qty" placeholder="Qty" value="1" style="flex:1;">
-      <button type="button" class="btn-close-icon" onclick="this.parentElement.remove()" style="color:#ef4444;"><i data-lucide="minus-circle" style="width:18px;"></i></button>
+      <input type="text" class="m-prod-name" placeholder="Nama Produk" style="flex:2; padding:10px; border:1px solid var(--border); border-radius:8px; outline:none; font-size:0.85rem;">
+      <input type="number" class="m-prod-qty" placeholder="Qty" value="1" style="flex:1; padding:10px; border:1px solid var(--border); border-radius:8px; outline:none; font-size:0.85rem;">
+      <button class="btn btn-danger" style="padding:10px;" onclick="this.parentElement.remove()"><i data-lucide="x" style="width:16px;"></i></button>
     `;
     container.appendChild(row);
-    lucide.createIcons();
-  }
+    lucide.createIcons({ root: row });
+  };
 
-  function saveBoxConfig() {
-    const count = parseInt(document.getElementById('inputJmlBox').value) || 1;
-    const petugas = document.getElementById('inputBoxPetugas').value;
-    const temp = document.getElementById('inputBoxSuhu').value;
-
+  window.saveBoxConfigFromModal = function() {
+    const count = parseInt(document.getElementById('modalJmlBox').value) || 1;
+    const petugas = document.getElementById('modalPetugas').value;
+    const temp = document.getElementById('modalSuhu').value;
+    
     const products = [];
-    document.querySelectorAll('.product-row').forEach(row => {
-      const name = row.querySelector('.prod-name').value.trim();
-      const qty = row.querySelector('.prod-qty').value;
-      if (name) products.push({ name: name, qty: qty });
+    document.querySelectorAll('#modalProductsContainer > div').forEach(row => {
+      const name = row.querySelector('.m-prod-name').value.trim();
+      const qty = row.querySelector('.m-prod-qty').value;
+      if(name) products.push({name, qty});
     });
 
-    if (products.length === 0) {
-      UI.toast("Minimal masukkan 1 produk!", "warning");
-      return;
-    }
+    if(products.length === 0) { ToastSystem.show("Minimal masukkan 1 produk!", "warning"); return; }
 
-    boxConfigs.push({ count: count, petugas: petugas, temp: temp, products: products });
+    boxConfigs.push({ count, petugas, temp, products });
     recalculateBoxNumbering();
     renderBoxGrid();
-    closeModal('modalBoxConfig');
-  }
+    ModalSystem.close();
+  };
 
-  // ====================================================================
-  // 5. FLOW REVIEW, KONFIRMASI, DAN SUBMIT
-  // ====================================================================
-  
-  // Nangkep klik tombol Review dari HTML
-  const btnShowConfirm = document.getElementById('btnShowConfirm');
-  if(btnShowConfirm) {
-    btnShowConfirm.addEventListener('click', function(e) {
-      e.preventDefault(); // Jaga-jaga kalau dia ada di dalem tag <form>
-      if (!selectedCustomerPayload) {
-        UI.toast("Pilih Customer dulu di atas!", "warning"); return;
-      }
-      if (boxConfigs.length === 0) {
-        UI.toast("Belum ada Konfigurasi Box yang ditambahkan!", "warning"); return;
-      }
+  // ==========================================
+  // REVIEW & SUBMIT
+  // ==========================================
+  window.openConfirmModal = function() {
+    if (!selectedCustomerPayload) { ToastSystem.show("Pilih Konsumen dulu!", "warning"); return; }
+    if (boxConfigs.length === 0) { ToastSystem.show("Belum ada Konfigurasi Box!", "warning"); return; }
 
-      document.getElementById('confCustomer').innerText = selectedCustomerPayload.namaKonsumen;
-      document.getElementById('confBranch').innerText = selectedCustomerPayload.kotaCabang || '-';
-      document.getElementById('confTotalBox').innerText = `${totalCalculatedBoxes} Box Fisik`;
+    let boxHtml = boxConfigs.map(c => `
+      <div style="margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--border);">
+        <div style="font-weight:800; color:var(--text-main); margin-bottom:4px;">Box ${c.count > 1 ? c.start+'-'+c.end : c.start}</div>
+        <div style="font-size:0.8rem; color:var(--text-light); margin-bottom:6px;">Suhu: ${c.temp} | Petugas: ${c.petugas}</div>
+        <div style="font-size:0.8rem; font-weight:500;">${c.products.map(p => `• ${p.name} (x${p.qty})`).join('<br>')}</div>
+      </div>
+    `).join('');
 
-      const ulBox = document.getElementById('confBoxList');
-      ulBox.innerHTML = '';
-      boxConfigs.forEach(c => {
-        const labelText = c.count > 1 ? `Box ${c.start}-${c.end}` : `Box ${c.start}`;
-        const prodText = c.products.map(p => `${p.name} (Qty: ${p.qty})`).join(', ');
-        ulBox.innerHTML += `<li style="margin-bottom:6px;"><b>${labelText}</b>: Petugas ${c.petugas}, Suhu ${c.temp} <br> <i style="color:#64748b">Isi: ${prodText}</i></li>`;
-      });
-
-      openModal('modalConfirm');
+    ModalSystem.show({
+      title: 'Konfirmasi Data Label',
+      body: `
+        <div style="background:#f0fdfa; border:1px solid #ccfbf1; padding:15px; border-radius:10px; margin-bottom:20px;">
+          <div style="font-size:0.75rem; color:#0f766e; font-weight:800; text-transform:uppercase; margin-bottom:4px;">Penerima</div>
+          <div style="font-weight:800; color:#0f766e; font-size:1.1rem;">${selectedCustomerPayload.namaKonsumen}</div>
+          <div style="font-size:0.85rem; color:#0d9488; margin-bottom:10px;">Cabang: ${selectedCustomerPayload.kotaCabang || '-'}</div>
+          <span class="ui-badge ui-badge-primary">TOTAL: ${totalCalculatedBoxes} BOX FISIK</span>
+        </div>
+        <div style="font-weight:800; font-size:0.85rem; margin-bottom:10px; text-transform:uppercase;">Rincian Box</div>
+        <div>${boxHtml}</div>
+      `,
+      footerButtons: [
+        { text: 'Edit Lagi', type: 'secondary', action: () => ModalSystem.close() },
+        { text: 'Simpan ke Database', type: 'primary', action: () => executeSubmitPayload() }
+      ]
     });
-  }
+  };
 
-  // Dieksekusi dari dalam Modal Konfirmasi
   async function executeSubmitPayload() {
-    UI.setBtnLoading('btnFinalSubmit', true);
+    ModalSystem.close(); 
+    Loader.show('Merakit Data & Menyimpan ke Database...'); // PAKE GLOBAL LOADER KEREN LU!
 
     const alamatLengkap = `${selectedCustomerPayload.alamat || ''}, ${selectedCustomerPayload.kota || ''}`;
     const finalAlamat = splitAddress15(alamatLengkap);
+    
     const recipient = {
       customer: selectedCustomerPayload.namaKonsumen,
       branch: selectedCustomerPayload.kotaCabang || '',
@@ -246,7 +235,6 @@
       contact: `${selectedCustomerPayload.pic || ''} - ${selectedCustomerPayload.kontak || ''}`
     };
 
-    // Expand Config Grup menjadi Array Box Fisik untuk Backend
     const expandedBoxesPayload = [];
     boxConfigs.forEach(config => {
       for (let i = config.start; i <= config.end; i++) {
@@ -261,8 +249,8 @@
 
     const finalPayload = {
       customerId: selectedCustomerPayload.id || "CUST-DUMMY", 
-      namaCustomer: selectedCustomerPayload.namaKonsumen,     // <--- FIX MASUK SPREADSHEET
-      cabangCustomer: selectedCustomerPayload.kotaCabang || '', // <--- FIX MASUK SPREADSHEET
+      namaCustomer: selectedCustomerPayload.namaKonsumen,     
+      cabangCustomer: selectedCustomerPayload.kotaCabang || '', 
       noDokumen: "DOC-" + Date.now(),
       payloadRecipient: recipient,
       payloadTotalBox: totalCalculatedBoxes, 
@@ -271,65 +259,88 @@
     };
 
     try {
-      const responseData = await GasApi.post("createShippingLabel", finalPayload);
+      await GasApi.post("createShippingLabel", finalPayload);
+      ToastSystem.show("Sukses! Data masuk ke antrian.", "success");
       
-      UI.toast("Mantap! Data sukses masuk ke Spreadsheet!", "success");
-      closeModal('modalConfirm');
-      
-      // Reset Form UI setelah sukses
+      // Reset Form UI
       boxConfigs = [];
       renderBoxGrid();
       document.getElementById('custSearch').value = '';
-      document.getElementById('customerCard').classList.remove('show');
+      document.getElementById('customerCard').style.display = 'none';
       selectedCustomerPayload = null;
 
-      addToQueueTable(responseData); 
-      
+      loadPrintQueue(); // Refresh tabel antrian
     } catch (error) {
-      UI.toast("Waduh Gagal: " + error.message, "error");
+      ToastSystem.show("Waduh Gagal: " + error.message, "error");
     } finally {
-      UI.setBtnLoading('btnFinalSubmit', false, "Generate & Simpan ke Sheet");
+      Loader.hide();
     }
   }
 
-  // ====================================================================
-  // 6. PRINTER & TABEL ANTRIAN (MISI B)
-  // ====================================================================
+  // ==========================================
+  // LOGIC ANTRIAN CETAK & PRINTER LOCALHOST
+  // ==========================================
   async function loadPrintQueue() {
-    UI.renderTableLoading('print-queue-body', 5, 'Menarik data antrian cetak...');
-    try {
-      const data = await GasApi.get('getShippingLabels', 1, 100); // Tarik agak banyakan
-      const tableBody = document.getElementById('print-queue-body');
-      tableBody.innerHTML = ''; 
+    document.getElementById('print-queue-container').innerHTML = '<div style="padding:30px; text-align:center; color:var(--primary);"><i data-lucide="loader-2" class="lucide-spin" style="width:30px; height:30px;"></i></div>';
+    lucide.createIcons();
 
-      // LOGIC FILTER: Hari Ini & BELUM_CETAK
+    try {
+      const data = await GasApi.get('getShippingLabels', 1, 100); 
+      
       const today = new Date();
-      const filteredData = data.filter(item => {
+      globalPrintQueue = data.filter(item => {
         if (!item || !item.tanggal) return false;
-        
         const itemDate = new Date(item.tanggal);
         const isToday = itemDate.getDate() === today.getDate() && 
                         itemDate.getMonth() === today.getMonth() && 
                         itemDate.getFullYear() === today.getFullYear();
-        
-        // Asumsi kalau kosong = belum cetak
         const isBelumCetak = (item.printStatus === 'BELUM_CETAK' || !item.printStatus);
-        
         return isToday && isBelumCetak;
       });
 
-      // Update Angka di Summary Card
-      document.getElementById('summaryCount').innerText = filteredData.length;
+      document.getElementById('summaryCount').innerText = globalPrintQueue.length;
 
-      if (filteredData && filteredData.length > 0) {
-        filteredData.forEach(label => addToQueueTable(label));
+      // SIAPIN DATA UNTUK AGNOSTIC TABLE KITA
+      if(globalPrintQueue.length > 0) {
+        const tableData = globalPrintQueue.map(label => {
+          const custName = label.payloadRecipient?.customer || 'Unknown';
+          return {
+            dokumen: `<strong style="color:var(--primary);">${label.noDokumen}</strong><br><span style="font-size:0.75rem; color:var(--text-light);">${Formatter.date(label.tanggal)}</span>`,
+            customer: `<span style="font-weight:600;">${custName}</span>`,
+            qty: `<b>${label.payloadTotalBox}</b> Box`,
+            status: `<span class="ui-badge ui-badge-warning">BELUM CETAK</span>`,
+            // Panggil global function window.processPrint
+            aksi: `<button class="btn btn-secondary" style="padding:6px 12px; font-size:0.75rem;" onclick="processPrint('${label.id}')"><i data-lucide="printer" style="width:14px; margin-right:4px;"></i> Cetak</button>`
+          };
+        });
+
+        // RENDER AGNOSTIC TABLE
+        new DataTable({
+          containerId: 'print-queue-container',
+          headers: [
+            { label: 'Dokumen', key: 'dokumen' },
+            { label: 'Konsumen', key: 'customer' },
+            { label: 'Qty', key: 'qty' },
+            { label: 'Status', key: 'status' },
+            { label: 'Aksi', key: 'aksi' }
+          ],
+          data: tableData
+        });
       } else {
-        UI.renderTableEmpty('print-queue-body', 5, 'Semua dokumen hari ini sudah dicetak! ');
+        document.getElementById('print-queue-container').innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-light); font-size:0.9rem;">Hore! Semua label hari ini sudah dicetak.</div>';
       }
+
     } catch (error) {
-      document.getElementById('print-queue-body').innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--secondary);">Error: ${error.message}</td></tr>`;
+      document.getElementById('print-queue-container').innerHTML = `<div style="padding:30px; text-align:center; color:#ef4444;">Error: ${error.message}</div>`;
     }
   }
+
+  // Bridging biar button di dalem Table bisa manggil function ini
+  window.processPrint = function(id) {
+    const labelData = globalPrintQueue.find(x => x.id === id);
+    if(labelData) sendToPrinter(labelData);
+  }
+
   async function sendToPrinter(labelData) {
     const LOCAL_PRINTER_URL = 'http://localhost:8080/print/shipping'; 
     const payloadGo = {
@@ -337,6 +348,8 @@
       total_box: labelData.payloadTotalBox,
       boxes: labelData.payloadBoxes
     };
+
+    Loader.show('Mengirim data ke Printer Lokal...'); // Animasi nyambung ke Go-lang!
 
     try {
       const response = await fetch(LOCAL_PRINTER_URL, {
@@ -346,54 +359,23 @@
         body: JSON.stringify(payloadGo)
       });
 
-  if (response.ok) {
-        UI.toast("Printer Zebra sedang memproses label!", "success");
+      if (response.ok) {
+        ToastSystem.show("Printer Zebra sedang memproses label!", "success");
         try {
-          UI.toast("Mengupdate status ke Spreadsheet...", "warning");
-          
-          // --- UPDATE PAYLOAD GAS API DI SINI ---
-          await GasApi.post('updatePrintStatus', {
-            id: labelData.id, // <-- PASTIKAN NGELEMPAR ID, BUKAN noDokumen LAGI!
-            status: 'SUDAH_CETAK'
-          });
-          
-          UI.toast("Status berhasil diupdate!", "success");
-          loadPrintQueue(); // Refresh tabel
+          Loader.show('Mengupdate Status ke Database...');
+          await GasApi.post('updatePrintStatus', { id: labelData.id, status: 'SUDAH_CETAK' });
+          ToastSystem.show("Status berhasil diupdate!", "success");
+          loadPrintQueue(); 
         } catch (gasError) {
-          UI.toast("Gagal update status ke Sheet: " + gasError.message, "error");
+          ToastSystem.show("Gagal update status: " + gasError.message, "error");
         }
+      } else {
+        ToastSystem.show("Respon lokal printer gagal!", "error");
       }
     } catch (error) {
-      console.error("Koneksi gagal:", error);
-      UI.toast("Gagal konek ke Go-lang Server Lokal (Port 8080)!", "error");
+      ToastSystem.show("Gagal konek ke Golang Server (Port 8080)!", "error");
+    } finally {
+      Loader.hide();
     }
-  }
-
-  function addToQueueTable(data) {
-    const tableBody = document.getElementById('print-queue-body');
-    
-    if (tableBody.rows.length > 0 && tableBody.rows[0].cells.length === 1) {
-      tableBody.innerHTML = '';
-    }
-
-    const row = document.createElement('tr');
-    const custName = (data.payloadRecipient && data.payloadRecipient.customer) ? data.payloadRecipient.customer : 'Unknown';
-
-    row.innerHTML = `
-      <td>
-        <strong style="color: var(--primary);">${data.noDokumen}</strong><br>
-        <small style="color:#64748b">${Formatter.date(data.tanggal)}</small>
-      </td>
-      <td>${custName}</td>
-      <td>${data.payloadTotalBox} Box</td>
-      <td>${Formatter.statusBadge(data.printStatus || 'BELUM_CETAK')}</td>
-      <td>
-        <button class="btn btn-secondary" onclick='sendToPrinter(${JSON.stringify(data)})'>
-          <i data-lucide="${ClientConfig.ICONS.PRINT}" style="width:16px; height:16px;"></i> Cetak
-        </button>
-      </td>
-    `;
-    tableBody.prepend(row); 
-    lucide.createIcons(); 
   }
 </script>

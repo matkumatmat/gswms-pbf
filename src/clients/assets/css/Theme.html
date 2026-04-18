@@ -1,0 +1,71 @@
+<style>
+  :root {
+    --primary: #00abbd;
+    --primary-dark: #008f9e;
+    --primary-light: rgba(0, 171, 189, 0.1);
+    
+    --secondary: #e46a26;
+    --secondary-dark: #c75a1e;
+    
+    --tertiary: #f2c21b;
+    --tertiary-dark: #ca9f0e;
+    
+    --bg-main: #f8fafc;
+    --surface: #ffffff;
+    
+    --text-main: #334155;
+    --text-light: #64748b; 
+    --border: #e2e8f0;
+    
+    /* Layout Variables */
+    --sidebar-width: 260px;
+    --sidebar-collapsed: 80px;
+    --header-height: 65px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+  body { background-color: var(--bg-main); color: var(--text-main); -webkit-font-smoothing: antialiased; overflow-x: hidden;}
+
+  /* Animasi Global */
+  .sidebar-transition { transition: var(--transition); }
+  
+  /* Grid Adjustment saat Sidebar Collapse */
+  @media (min-width: 1024px) {
+    body.sidebar-collapsed .app-main { margin-left: var(--sidebar-collapsed); }
+    body.sidebar-collapsed .app-header { left: var(--sidebar-collapsed); }
+  }
+
+  /* ==========================================
+     GRID SYSTEM (AGNOSTIK & MOBILE FIRST)
+     ========================================== */
+  
+  /* GRID A: Product Detail (Mobile: 1 Col | Desktop: 2/3 Kiri, 1/3 Kanan) */
+  .grid-a { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  @media (min-width: 1024px) { .grid-a { grid-template-columns: 2fr 1fr; } }
+
+  /* GRID B: Transaction/Form (Mobile: 1 Col | Desktop: Atas 2 Col, Bawah Full) */
+  .grid-b { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  .grid-b-full { grid-column: 1 / -1; }
+  @media (min-width: 768px) { .grid-b { grid-template-columns: 1fr 1fr; } }
+
+  /* GRID C: Dashboard (Mobile: 3 Col | Desktop: 5 Col) */
+  .grid-c { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (min-width: 1024px) { .grid-c { grid-template-columns: repeat(5, 1fr); gap: 20px; } }
+
+  /* GRID D: Proporsi 3/5 Kiri, 2/5 Kanan (Cocok buat Tabel vs Action Card) */
+  .grid-3-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  @media (min-width: 1024px) { 
+    .grid-3-2 { grid-template-columns: 3fr 2fr; } 
+  }
+
+  /* Utility Class */
+  .card-glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+</style>

@@ -1,0 +1,49 @@
+<style>
+  .app-header {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+    background-color: var(--primary); color: #ffffff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; z-index: 1000; transition: var(--transition);
+  }
+  
+  @media (min-width: 1024px) {
+    .app-header { left: var(--sidebar-width); }
+    /* Logo ilang kalo sidebar desktop aktif ngelebar */
+    body:not(.sidebar-collapsed) .header-logo {
+      opacity: 0; visibility: hidden; transform: translateX(-20px);
+    }
+  }
+
+  .app-header.scrolled {
+    background-color: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-main); 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }
+
+  .header-logo { 
+    font-weight: 800; font-size: 1.2rem; letter-spacing: 0.5px; 
+    display: flex; align-items: center; gap: 8px; transition: var(--transition);
+    cursor: pointer; /* Biar user tau ini bisa diklik */
+  }
+  .header-sync { font-size: 0.8rem; display: flex; align-items: center; gap: 6px; font-weight: 500; }
+</style>
+
+<header class="app-header sidebar-transition" id="mainHeader">
+  <div class="header-logo" onclick="toggleMobileSidebar()">
+    <div style="width:24px; height:24px; background:var(--tertiary); border-radius:6px; display:inline-block;"></div>
+    <span>PBF Manage</span>
+  </div>
+  <div class="header-sync">
+    <i data-lucide="refresh-cw" style="width:14px;"></i> Last Sync: <span id="txtLastSync">--:--</span>
+  </div>
+</header>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const header = document.getElementById('mainHeader');
+    if (window.scrollY > 10) header.classList.add('scrolled');
+    else header.classList.remove('scrolled');
+  });
+</script>

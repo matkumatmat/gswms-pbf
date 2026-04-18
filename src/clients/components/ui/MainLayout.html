@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>PBF Manage</title>
+  
+  <base target="_top" href="<?= ScriptApp.getService().getUrl() ?>">
+  
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <?!= include('src/clients/assets/css/Theme'); ?>
+  <?!= include('src/client/core/ClientConfig'); ?>
+  <?!= include('src/client/utils/Formatter'); ?>
+  <?!= include('src/client/services/GasApi'); ?>
+  <?!= include('src/client/components/UiComponents'); ?>
+  
+  <?!= include('src/clients/components/ui/Card'); ?>
+  <?!= include('src/clients/components/ui/SubHeader'); ?>
+  <?!= include('src/clients/components/ui/SearchDropdown'); ?>
+  <?!= include('src/clients/components/ui/Toast'); ?>
+  <?!= include('src/clients/components/ui/Badge'); ?>
+  <?!= include('src/clients/components/ui/Table'); ?>
+  <?!= include('src/clients/components/ui/Button'); ?>
+  
+  <style>
+    .app-main {
+      padding: calc(var(--header-height) + 20px) 15px 100px 15px;
+      min-height: 100vh;
+      max-width: 1400px;
+      margin: 0 auto;
+      transition: var(--transition);
+    }
+    @media (min-width: 1024px) {
+      .app-main { margin-left: var(--sidebar-width); padding: calc(var(--header-height) + 24px) 30px 30px 30px; }
+    }
+  </style>
+</head>
+<body>
+
+  <?!= include('src/clients/components/layout/Sidebar'); ?>
+  <?!= include('src/clients/components/layout/Header'); ?>
+  
+  <main class="app-main sidebar-transition">
+    <?!= include(pageContent); ?>
+  </main>
+
+  <?!= include('src/clients/components/layout/MobileNav'); ?>
+
+  <?!= include('src/clients/components/ui/Modal'); ?>
+  <?!= include('src/clients/components/ui/Loading'); ?>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

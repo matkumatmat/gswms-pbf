@@ -1,0 +1,239 @@
+<style>
+  /* Base Sidebar */
+  .desktop-sidebar {
+    position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width, 260px);
+    background: #ffffff; border-right: 1px solid var(--border);
+    z-index: 10001; display: flex; flex-direction: column; transition: 0.3s ease;
+  }
+
+  .sidebar-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px);
+    z-index: 10000; opacity: 0; visibility: hidden; transition: 0.3s ease;
+  }
+
+  @media (max-width: 1023px) {
+    .desktop-sidebar { transform: translateX(-100%); }
+    .desktop-sidebar.mobile-open { transform: translateX(0); box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
+    .sidebar-overlay.mobile-open { opacity: 1; visibility: visible; }
+  }
+
+  /* Header Sidebar */
+  .sidebar-header { 
+    height: 70px; padding: 0 20px; 
+    display: flex; align-items: center; justify-content: space-between; 
+    border-bottom: 1px solid var(--border); overflow: hidden;
+  }
+  
+  .toggle-btn { 
+    cursor: pointer; color: var(--text-light); display: flex; align-items: center; 
+    justify-content: center; width: 32px; height: 32px; border-radius: 8px; transition: 0.2s;
+  }
+  .toggle-btn:hover { background: #f1f5f9; color: var(--primary); }
+  @media (max-width: 1023px) { .toggle-btn { display: none; } }
+
+  /* ==========================================================
+     MENU AREA - MODE NORMAL (SCROLL JALAN)
+     ========================================================== */
+  .sidebar-menu { 
+    flex: 1; padding: 15px 12px; overflow-y: auto; overflow-x: hidden; 
+  }
+  
+  .menu-group-label {
+    font-size: 0.65rem; text-transform: uppercase; color: var(--text-light);
+    font-weight: 800; letter-spacing: 1px; padding: 10px 15px 5px 15px; margin-top: 10px;
+  }
+
+  .menu-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 15px;
+    color: var(--text-main); text-decoration: none; border-radius: 10px; 
+    font-weight: 600; transition: 0.2s; cursor: pointer; margin-bottom: 4px;
+    position: relative; min-height: 48px;
+  }
+  .menu-item:hover, .menu-item.active { background: var(--primary-light); color: var(--primary); }
+  
+  /* THE FIX 1: BULETAN DEFAULT 32px DI DALEM MENU */
+  .icon-wrapper {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 50%; transition: 0.2s;
+  }
+
+  .submenu-list { 
+    padding-left: 45px; display: none; flex-direction: column; gap: 2px; margin-bottom: 10px; 
+  }
+  .menu-item.has-sub.open + .submenu-list { display: flex; }
+  
+  .submenu-item { 
+    font-size: 0.85rem; padding: 10px 12px; color: var(--text-light); 
+    text-decoration: none; border-radius: 8px; font-weight: 500; transition: 0.2s;
+  }
+  .submenu-item:hover, .submenu-item.active { color: var(--primary); background: var(--primary-light); }
+
+  /* ==========================================================
+     COLLAPSED STATE DESIGN - KEMBALINYA SANG BULETAN DEWA!
+     ========================================================== */
+  @media (min-width: 1024px) {
+    body.sidebar-collapsed .desktop-sidebar { width: 80px; }
+    
+    /* THE FIX 2: JEBOL KANDANG BIAR BULETAN BISA NONGOL BEBAS */
+    body.sidebar-collapsed .sidebar-menu { overflow: visible !important; }
+
+    body.sidebar-collapsed .menu-text, 
+    body.sidebar-collapsed .submenu-indicator,
+    body.sidebar-collapsed .header-logo-content,
+    body.sidebar-collapsed .menu-group-label { display: none; }
+    
+    body.sidebar-collapsed .sidebar-header { justify-content: center; padding: 0; }
+    
+    /* Kasih margin bawah 24px biar buletan 60px nya ga saling injek! */
+    body.sidebar-collapsed .menu-item { 
+      padding: 0; background: transparent !important; justify-content: flex-end; margin-bottom: 24px; 
+    }
+    
+    body.sidebar-collapsed .submenu-list { display: none !important; } 
+
+    /* THE FIX 3: INI DIA! BULETAN 60px, BORDER RADIUS 50%, NONGOL KE KANAN 34px! */
+    body.sidebar-collapsed .icon-wrapper {
+      position: absolute; right: -34px; top: 50%; transform: translateY(-50%); 
+      width: 60px; height: 60px; background: #ffffff;
+      border: 1px solid var(--border); box-shadow: 2px 0 8px rgba(0,0,0,0.05); z-index: 10;
+      border-radius: 50%; /* BULET SEMPURNA 100% KEMBALI! */
+    }
+
+    body.sidebar-collapsed .menu-item:hover .icon-wrapper::before,
+    body.sidebar-collapsed .menu-item.active .icon-wrapper::before {
+      content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 40px; height: 40px; background: var(--primary-light); border-radius: 50%;
+      z-index: -1; transition: 0.2s;
+    }
+  }
+</style>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
+
+<aside class="desktop-sidebar sidebar-transition" id="mainSidebar">
+  <div class="sidebar-header">
+    <div class="header-logo-content" style="display: flex; align-items:center; gap:10px;">
+      <div style="min-width:24px; height:24px; background:var(--tertiary); border-radius:6px;"></div>
+      <span class="menu-text" style="font-weight: 800; font-size: 1.2rem; color: var(--text-main);">PBF System</span>
+    </div>
+    <div class="toggle-btn" onclick="toggleSidebarCollapse()"><i data-lucide="chevron-left" id="collapseIcon"></i></div>
+  </div>
+
+  <div class="sidebar-menu" id="sidebarMenuContainer"></div>
+</aside>
+
+<script>
+  // KEMBALI KE STRUKTUR DROPDOWN DEWA LU!
+  const menuData = [
+    { title: 'Dashboard', icon: 'layout-dashboard', url: '?page=home' },
+    { 
+      title: 'Master Data', icon: 'database', 
+      submenu: [
+        { title: 'Katalog Produk', url: '?page=master_product' },
+        { title: 'Inventaris & Batch', url: '?page=product' },
+        { title: 'Direktori Konsumen', url: '?page=master_customer' }
+      ]
+    },
+    { 
+      title: 'Operasional', icon: 'truck', 
+      submenu: [
+        { title: 'Penerimaan (In)', url: '?page=inbound' },
+        { title: 'Pengiriman (Out)', url: '?page=outbound' },
+        { title: 'Shipping Label', url: '?page=shipping_label' }
+      ]
+    },
+    { 
+      title: 'Inventory Control', icon: 'clipboard-list', 
+      submenu: [
+        { title: 'Cycle Count', url: '?page=cycle_count' },
+        { title: 'FEFO & Expiry Alert', url: '?page=fefo_center' }
+      ]
+    },
+    { 
+      title: 'Kepatuhan CDOB', icon: 'shield-check', 
+      submenu: [
+        { title: 'Retur & Recall', url: '?page=retur' },
+        { title: 'Cold Chain Log', url: '?page=cold_chain' },
+        { title: 'Arsip Dokumen SP', url: '?page=arsip_sp' }
+      ]
+    }
+  ];
+
+  function renderMenu() {
+    const container = document.getElementById('sidebarMenuContainer');
+    container.innerHTML = '';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = urlParams.get('page') || 'home';
+
+    menuData.forEach(item => {
+      const hasSub = item.submenu && item.submenu.length > 0;
+      const menuId = `menu-${item.title.replace(/\s/g, '')}`;
+      
+      let isActive = item.url && item.url.includes(currentPage);
+      let isSubActive = false;
+      if(hasSub) {
+        isSubActive = item.submenu.some(sub => sub.url.includes(currentPage));
+        if(isSubActive) isActive = true;
+      }
+      
+      const el = document.createElement(hasSub ? 'div' : 'a');
+      
+      if (!hasSub) {
+        el.href = item.url;
+        el.onclick = (e) => { if(!e.ctrlKey) { Loader.show('Menembus Dimensi Waktu...'); } };
+      } else {
+        el.onclick = () => toggleSubMenu(menuId);
+      }
+
+      el.id = menuId;
+      el.className = `menu-item ${hasSub ? 'has-sub' : ''} ${isActive ? 'active' : ''} ${isSubActive ? 'open' : ''}`;
+      
+      el.innerHTML = `
+        <div class="icon-wrapper"><i data-lucide="${item.icon}"></i></div>
+        <span class="menu-text" style="flex:1;">${item.title}</span>
+        ${hasSub ? `<i data-lucide="chevron-down" class="submenu-indicator" style="width:16px;"></i>` : ''}
+      `;
+
+      if (hasSub) {
+        const subList = document.createElement('div');
+        subList.className = 'submenu-list';
+        subList.innerHTML = item.submenu.map(sub => `
+          <a href="${sub.url}" class="submenu-item ${sub.url.includes(currentPage) ? 'active' : ''}" 
+             style="${sub.url.includes(currentPage) ? 'color:var(--primary); background:var(--primary-light);' : ''}"
+             onclick="Loader.show('Memuat Data...')">${sub.title}</a>
+        `).join('');
+        
+        const wrapper = document.createElement('div');
+        wrapper.appendChild(el);
+        wrapper.appendChild(subList);
+        container.appendChild(wrapper);
+      } else {
+        container.appendChild(el);
+      }
+    });
+    lucide.createIcons();
+  }
+
+  function toggleSidebarCollapse() {
+    document.body.classList.toggle('sidebar-collapsed');
+    const isCollapsed = document.body.classList.contains('sidebar-collapsed');
+    document.getElementById('collapseIcon').setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
+    lucide.createIcons();
+  }
+
+  function toggleMobileSidebar() {
+    document.getElementById('mainSidebar').classList.toggle('mobile-open');
+    document.getElementById('sidebarOverlay').classList.toggle('mobile-open');
+  }
+
+  function toggleSubMenu(id) {
+    // Kalau diklik pas lagi collapsed, dia otomatis expand dulu!
+    if(document.body.classList.contains('sidebar-collapsed')) {
+      toggleSidebarCollapse();
+    }
+    document.getElementById(id).classList.toggle('open');
+  }
+
+  renderMenu();
+</script>

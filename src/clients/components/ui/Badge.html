@@ -1,0 +1,59 @@
+<style>
+  /* ==========================================
+     GLOBAL STATUS BADGES (CAPSULE DESIGN)
+     ========================================== */
+  .ui-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px; /* Jarak kalo lu mau nyelipin icon di dalem badge */
+    padding: 4px 12px; /* Kiri-kanan lebih lebar biar ngebentuk kapsul sempurna */
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+    border-radius: 9999px; /* THE FIX: BENTUK KAPSUL MUTLAK */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+
+  /* Auto-resize icon kalau ditaruh di dalem badge biar nggak kegedean */
+  .ui-badge .lucide {
+    width: 12px;
+    height: 12px;
+    stroke-width: 3;
+  }
+
+  /* --- VARIAN WARNA (Soft Background + Bold Text) --- */
+  
+  /* 1. Neutral (Default abu-abu) */
+  .ui-badge-neutral { 
+    background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; 
+  }
+
+  /* 2. Primary (Pake warna cyan/teal tema lu) */
+  .ui-badge-primary { 
+    background: var(--primary-light); color: var(--primary-dark); border: 1px solid rgba(0, 171, 189, 0.2); 
+  }
+
+  /* 3. Success (Hijau - Buat status 'RECEIVED' atau 'SELESAI') */
+  .ui-badge-success { 
+    background: #d1fae5; color: #166534; border: 1px solid #a7f3d0; 
+  }
+
+  /* 4. Warning (Kuning/Oren - Buat status 'PENDING' atau 'ANTRIAN') */
+  .ui-badge-warning { 
+    background: #fef3c7; color: #b45309; border: 1px solid #fde68a; 
+  }
+
+  /* 5. Danger/Error (Merah - Buat status 'BATAL' atau 'ERROR') */
+  .ui-badge-danger { 
+    background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; 
+  }
+
+  /* 6. Outline (Garis doang, cocok buat label kategori biasa) */
+  .ui-badge-outline { 
+    background: transparent; border: 1px solid var(--text-light); color: var(--text-light); 
+  }
+</style>

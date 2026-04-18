@@ -1,0 +1,86 @@
+<style>
+  .ui-table-wrapper { width: 100%; overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+
+  .ui-table { width: 100%; border-collapse: collapse; background: var(--surface); text-align: left; }
+
+  .ui-table th {
+    background: #f8fafc; padding: 12px 16px;
+    font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
+    color: var(--text-light); border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .ui-table td {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    font-size: 0.85rem; /* THE FIX: Teks compact 13-14px */
+    color: var(--text-main); font-weight: 500;
+  }
+
+  .ui-table tbody tr:hover { background: var(--bg-main); }
+
+  /* ==========================================
+     RESPONSIVE MODE: TABLE TO CARDS (MOBILE)
+     ========================================== */
+  @media (max-width: 767px) {
+    .ui-table, .ui-table thead, .ui-table tbody, .ui-table th, .ui-table td, .ui-table tr { 
+      display: block; 
+    }
+    
+    .ui-table thead tr { position: absolute; top: -9999px; left: -9999px; }
+    
+    .ui-table tr { 
+      border: 1px solid var(--border); border-radius: 12px;
+      margin-bottom: 12px; padding: 8px; background: var(--surface);
+    }
+    
+    .ui-table td { 
+      border: none; position: relative; padding-left: 45% !important; 
+      text-align: right; font-size: 0.8rem;
+    }
+    
+    .ui-table td:before { 
+      content: attr(data-label); position: absolute; left: 12px; width: 40%; 
+      white-space: nowrap; text-align: left; font-weight: 800;
+      color: var(--text-light); text-transform: uppercase; font-size: 0.7rem;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * DataTable Agnostik
+   */
+  class DataTable {
+    constructor(config) {
+      this.containerId = config.containerId;
+      this.headers = config.headers; // Format: [{ label: 'Nama', key: 'name' }]
+      this.data = config.data || [];
+      this.render();
+    }
+
+    render() {
+      const container = document.getElementById(this.containerId);
+      if (!container) return;
+
+      let html = `
+        <div class="ui-table-wrapper">
+          <table class="ui-table">
+            <thead>
+              <tr>${this.headers.map(h => `<th>${h.label}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+              ${this.data.map(row => `
+                <tr>
+                  ${this.headers.map(h => `
+                    <td data-label="${h.label}">${row[h.key] || '-'}</td>
+                  `).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+  }
+</script>

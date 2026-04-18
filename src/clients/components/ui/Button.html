@@ -1,0 +1,68 @@
+<style>
+  /* ==========================================
+     GLOBAL BUTTON COMPONENT
+     ========================================== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .btn:active { transform: scale(0.95); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+  .btn .lucide { width: 16px; height: 16px; stroke-width: 2.5; }
+
+  /* --- VARIANTS --- */
+  .btn-primary { background: var(--primary); color: #ffffff; }
+  .btn-primary:hover { background: var(--primary-dark); box-shadow: 0 4px 12px rgba(0, 171, 189, 0.25); }
+
+  .btn-secondary { background: #f8fafc; color: var(--text-main); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: #f1f5f9; border-color: #cbd5e1; color: var(--primary); }
+
+  .btn-danger { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+  .btn-danger:hover { background: #fecaca; color: #991b1b; }
+
+  /* --- LOADING STATE (FIXED) --- */
+  .btn.loading { position: relative; color: transparent !important; pointer-events: none; }
+  
+  .btn.loading::after {
+    content: ''; 
+    position: absolute; 
+    width: 18px; 
+    height: 18px;
+    /* THE FIX: Posisikan di tengah mutlak secara matematika */
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    
+    border: 2px solid rgba(255,255,255,0.3); 
+    border-radius: 50%;
+    
+    /* THE FIX: Paksa warna putih, jangan pake currentColor */
+    border-top-color: #ffffff; 
+    
+    animation: btn-spin 0.7s linear infinite;
+  }
+
+  /* Khusus tombol abu-abu, spinnernya pake warna primary (cyan) biar kontras */
+  .btn-secondary.loading::after { 
+    border-color: var(--border); 
+    border-top-color: var(--primary); 
+  }
+
+  /* Keyframe rotasi yang aman dari konflik translate center */
+  @keyframes btn-spin { 
+    0% { transform: translate(-50%, -50%) rotate(0deg); } 
+    100% { transform: translate(-50%, -50%) rotate(360deg); } 
+  }
+</style>

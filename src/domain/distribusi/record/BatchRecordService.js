@@ -95,4 +95,10 @@ class BatchRecordService {
       fileId: file.getId()
     };
   }
+  // Tambahin ini buat ngirim raw data history ke Frontend
+  getHistory(payload) {
+    const { batchNo } = payload;
+    if (!batchNo) throw new Error("Nomor Batch harus disertakan.");
+    return this.repo.getHistoryByBatch(batchNo);
+  }
 }

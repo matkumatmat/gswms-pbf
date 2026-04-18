@@ -1,9 +1,10 @@
 <script>
+  let currentBatchForRecord = null; 
+
   document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
-    let currentBatchForRecord = null; // Menyimpan batch aktif
     
-    // TANGKAP URL PARAMETER LANGSUNG DARI BROWSER
+    // THE FIX: Balik ke cara GAS halal buat nangkep URL Parameter yang ada di address bar
     google.script.url.getLocation(function(location) {
       const params = location.parameter;
       const directId = params.id;
@@ -17,8 +18,10 @@
     });
   });
 
-  async function initProductDetail(directId) {
+async function initProductDetail(directId) {
+    Loader.show('Memindai Struktur Data Produk...'); 
     try {
+      // 1. Tarik Data Master
       const detail = await GasApi.post('getBatchDetail', { id: directId });
       
       if (!detail) {
@@ -27,19 +30,41 @@
       }
 
       renderDetailData(detail);
+
+      // THE FIX: 2. Tarik History Mutasi buat ngitung "[TBA Master]"
+      try {
+        const history = await GasApi.post('getBatchHistory', { batchNo: detail.batch });
+        let totalIn = 0, totalOut = 0;
+        
+        history.forEach(h => {
+          const ket = String(h.keterangan || '').toUpperCase();
+          const kons = String(h.namaKonsumen || '').toUpperCase();
+          // Filter validasi mutasi
+          if (!ket.includes('REVISI') && !kons.includes('SALDO AWAL')) {
+            totalIn += (h.penerimaan || 0);
+            totalOut += (h.distribusi || 0);
+          }
+        });
+
+        // Render Angkanya!
+        document.getElementById('detStokIn').innerText = totalIn.toLocaleString('id-ID');
+        document.getElementById('detStokOut').innerText = totalOut.toLocaleString('id-ID');
+        document.getElementById('detStokCurrent').innerText = (totalIn - totalOut).toLocaleString('id-ID');
+      } catch (histError) {
+        document.getElementById('detStokCurrent').innerText = 'ERROR';
+        console.error("Gagal narik history:", histError);
+      }
       
-      document.getElementById('pdLoading').style.display = 'none';
       document.getElementById('pdContent').style.display = '';
-      
       lucide.createIcons(); 
 
     } catch (err) {
       showError(err.message);
+    } finally {
+      Loader.hide(); 
     }
   }
-
   function showError(msg) {
-    document.getElementById('pdLoading').style.display = 'none';
     document.getElementById('pdError').style.display = 'block';
     document.getElementById('pdErrorMsg').innerText = msg;
     lucide.createIcons();
@@ -47,10 +72,9 @@
 
   function renderDetailData(data) {
     currentBatchForRecord = data.batch;
-    // Helper function buat fallback "-" kalau null/kosong
+    // Helper function buat fallback "-"
     const val = (v, postfix = '') => (v !== null && v !== undefined && v !== '') ? `${v} ${postfix}` : '-';
 
-    // 1. IDENTITAS (Kiri Atas)
     document.getElementById('detNamaDagang').innerText = val(data.namaBarangDagang);
     document.getElementById('detNamaErp').innerText = val(data.namaBarangErp);
     document.getElementById('detKode').innerText = val(data.kodeBarang);
@@ -61,25 +85,25 @@
     document.getElementById('detAlokasi').innerText = val(data.alokasi);
     document.getElementById('detSektor').innerText = val(data.sektor);
 
-    // Render Status Dynamic
+    // RENDER GLOBAL CAPSULE BADGES
     let statusHtml = '';
     if (data.status) {
         const s = data.status.toUpperCase();
-        let bg = '#e2e8f0', col = '#475569'; // Default abu-abu
+        let css = 'ui-badge-neutral'; 
         
-        if (s === 'RECEIVED') { bg = '#bbf7d0'; col = '#166534'; } // Hijau
-        else if (s === 'NOT RECEIVED') { bg = '#fecaca'; col = '#991b1b'; } // Merah
-        else if (s === 'OTHER') { bg = '#fef08a'; col = '#854d0e'; } // Kuning
+        if (s === 'RECEIVED') css = 'ui-badge-success'; 
+        else if (s === 'NOT RECEIVED') css = 'ui-badge-danger'; 
+        else if (s === 'OTHER') css = 'ui-badge-warning'; 
 
-        statusHtml += `<span class="badge" style="background-color:${bg}; color:${col};">${s}</span>`;
+        statusHtml += `<span class="ui-badge ${css}">${s}</span>`;
     }
     if (data.sysStatus) {
-        statusHtml += ` <span class="badge badge-info"><i data-lucide="cpu" style="width:12px; margin-right:4px; vertical-align:-2px;"></i>${data.sysStatus}</span>`;
+        // Gabung sama icon biar makin mantep
+        statusHtml += ` <span class="ui-badge ui-badge-primary"><i data-lucide="cpu"></i>${data.sysStatus}</span>`;
     }
     document.getElementById('detStatus').innerHTML = statusHtml || '-';
 
-
-    // 2. FISIK (Kiri Bawah)
+    // FISIK
     document.getElementById('detBerat').innerText = val(data.berat);
     document.getElementById('detPerBucket').innerText = val(data.perBucket);
     document.getElementById('detCatatanFisik').innerText = val(data.catatanFisik);
@@ -92,7 +116,7 @@
     }
     document.getElementById('detDimensi').innerText = dimText;
 
-    // 3. BATCH & DATES (Kanan Atas)
+    // BATCH & DATES 
     document.getElementById('detBatch').innerText = val(data.batch);
     document.getElementById('detMfg').innerText = Formatter.date(data.manufacturingDate);
     document.getElementById('detExp').innerText = Formatter.date(data.expiryDate);
@@ -101,7 +125,7 @@
     document.getElementById('detRslBln').innerText = val(rslBln);
     document.getElementById('detRslHari').innerText = val(data.rslHari);
 
-    // 4. META SYSTEM (Kanan Bawah)
+    // META SYSTEM 
     document.getElementById('detNotes').innerText = val(data.notes);
     document.getElementById('detCreatedAt').innerText = Formatter.date(data.createdAt);
     document.getElementById('detUpdatedAt').innerText = Formatter.date(data.updatedAt);
@@ -115,7 +139,7 @@
       btnLink.style.display = 'none';
     }
 
-    // 5. RENDER GALLERY 
+    // RENDER GALLERY (Klik nembak ke ModalSystem)
     const photoContainer = document.getElementById('detPhotos');
     photoContainer.innerHTML = '';
     
@@ -131,58 +155,43 @@
         photoContainer.appendChild(img);
       });
     } else {
-      photoContainer.innerHTML = '<span style="color:#94a3b8; font-style:italic; font-size: 0.9rem;">Dokumentasi foto tidak tersedia.</span>';
+      photoContainer.innerHTML = '<span style="color:var(--text-light); font-style:italic; font-size: 0.85rem;">Dokumentasi foto tidak tersedia.</span>';
     }
   }
 
-  // --- LOGIC MODAL GAMBAR HD ---
+  // --- LOGIC MODAL GAMBAR HD PAKE GLOBAL MODAL ---
   function openModalImg(hdUrl) {
-    const modal = document.getElementById('imageModal');
-    const modalImg = document.getElementById('modalImg');
-    const modalLoading = document.getElementById('modalLoading');
-    
-    modal.style.display = 'flex';
-    modal.style.opacity = '1';
-    modal.style.visibility = 'visible'; 
-    
-    modalImg.style.display = 'none';
-    modalLoading.style.display = 'flex';
-    modalImg.src = hdUrl;
-
-    modalImg.onload = () => {
-      modalLoading.style.display = 'none';
-      modalImg.style.display = 'block';
-    };
+    ModalSystem.show({
+      title: 'Preview Foto Fisik',
+      body: `
+        <div style="text-align:center; min-height:200px; display:flex; align-items:center; justify-content:center; flex-direction:column; position:relative;">
+          <i data-lucide="loader-2" class="lucide-spin" id="imgLoader" style="color:var(--primary); width:32px; height:32px; position:absolute;"></i>
+          <img src="${hdUrl}" onload="document.getElementById('imgLoader').style.display='none'" style="max-width:100%; max-height:60vh; border-radius:8px; object-fit:contain; position:relative; z-index:2;">
+        </div>
+      `
+    });
   }
 
-  function closeModalImg() {
-    const modal = document.getElementById('imageModal');
-    modal.style.display = 'none';
-    document.getElementById('modalImg').src = ''; 
-  }
   // --- LOGIC CETAK BUKU TABUNGAN ---
-  async function handlePrintBukuTabungan() {
+  async function handlePrintBukuTabungan(btn) {
     if (!currentBatchForRecord || currentBatchForRecord === '-') {
-      UI.toast("Nomor batch tidak valid untuk dicetak!", "warning");
+      ToastSystem.show("Nomor batch tidak valid untuk dicetak!", "warning");
       return;
     }
 
-    const originalBtnText = `<i data-lucide="file-spreadsheet" style="width: 18px;"></i> Cetak Buku Tabungan`;
-    UI.setBtnLoading('btnCetakBukuTabungan', true, "Menyusun Spreadsheet...");
+    // Trigger Efek Loading di Button Global
+    btn.classList.add('loading');
 
     try {
       const result = await GasApi.post('generateBatchRecordSheet', { batchNo: currentBatchForRecord });
       
-      UI.toast("Buku Tabungan berhasil dibuat!", "success");
-      
-      // Otomatis buka file GSheet di tab baru
+      ToastSystem.show("Buku Tabungan berhasil dibuat!", "success");
       window.open(result.fileUrl, '_blank');
       
     } catch (error) {
-      UI.toast("Gagal membuat Buku Tabungan: " + error.message, "error");
+      ToastSystem.show("Gagal membuat Buku Tabungan: " + error.message, "error");
     } finally {
-      UI.setBtnLoading('btnCetakBukuTabungan', false, originalBtnText);
-      lucide.createIcons(); // Render ulang icon lucide setelah innerHTML ditimpa
+      btn.classList.remove('loading');
     }
   }
 </script>
