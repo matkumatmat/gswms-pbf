@@ -45,6 +45,7 @@ const DomainRegistry = {
     cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
     method: 'getDetail'
   },
+  
 
 
   'updatePrintStatus': { factory: () => new ShippingLabelService(new ShippingLabelRepo()) },
@@ -157,11 +158,11 @@ function processUiRequest(action, payload) {
 function fetchUiData(action, reqPage = 1, reqLimit = 50) {
   try {
     const route = DomainRegistry[action];
-    if (!route) {
-      throw new Error(`Endpoint action '${action}' tidak terdaftar di Registry!`);
-    }
     if (action === 'getNavbarLogo') {
       return { status: "success", data: getNavbarLogo() }; // Langsung tembak fungsinya!
+    }
+    if (!route) {
+      throw new Error(`Endpoint action '${action}' tidak terdaftar di Registry!`);
     }
 
     const service = route.factory();
@@ -484,4 +485,8 @@ function doGet(e) {
       `);
     }
   }
+}
+
+function getNavbarLogo() {
+  return `https://drive.google.com/thumbnail?id=${AppConfig.LOGO_DRIVE_ID}&sz=w200`;
 }
