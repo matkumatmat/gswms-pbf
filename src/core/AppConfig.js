@@ -3,6 +3,7 @@
 const AppConfig = {
   WEB_APP_URL: "https://script.google.com/macros/s/AKfycbzlqoerdfGyCNPryzaxOvNZ0DutljadQOCM1EXzFr58e_OZwx4zimmzeLAoE3YYCNNS/exec",
 //   WEB_APP_URL: "https://script.google.com/macros/s/AKfycbxsJ6_3ajDsLjYKFKqwG_nuZxHAXzVi0-iwYUXKwTs/dev",
+  LOGO_DRIVE_ID:'18xdVTIKD8A7zbwfrVzX03wTNGaZv8KBF',
   DRIVE_ARCHIEVE_FOLDER_ID: '1wHjMQYXS12VA7WyMfhqFlz06Aj6asbWh',
   DRIVE_ARCHIEVE_BATCH_RECORD_ID: '1tXAjYIVX7qldupfvXnZh4zpZRvHL3c9m',
 

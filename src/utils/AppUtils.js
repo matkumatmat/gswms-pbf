@@ -58,4 +58,30 @@ class AppUtils {
     const versionKey = `VERSION_${sheetName}`;
     props.setProperty(versionKey, Date.now().toString());
   }
+  
+}
+
+// src/utils/AppUtils.js
+
+/**
+ * Mengambil file logo dari Google Drive dan mengubahnya menjadi Base64 string
+ * agar bisa ditampilkan di elemen <img> HTML.
+ * @returns {string} String Base64 gambar atau string kosong jika gagal
+ */
+function getNavbarLogo() {
+  try {
+    const logoId = AppConfig.LOGO_DRIVE_ID;
+    if (!logoId) return "";
+    
+    const file = DriveApp.getFileById(logoId);
+    const contentType = file.getMimeType();
+    
+    // Konversi blob file ke base64
+    const base64 = Utilities.base64Encode(file.getBlob().getBytes());
+    
+    return `data:${contentType};base64,${base64}`;
+  } catch (e) {
+    console.error("Gagal narik logo dari Drive: " + e.toString());
+    return "";
+  }
 }

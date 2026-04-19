@@ -111,20 +111,49 @@
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
 
 <aside class="desktop-sidebar sidebar-transition" id="mainSidebar">
-  <div class="sidebar-header">
-    <div class="header-logo-content" style="display: flex; align-items:center; gap:10px;">
-      <div style="min-width:24px; height:24px; background:var(--tertiary); border-radius:6px;"></div>
-      <span class="menu-text" style="font-weight: 800; font-size: 1.2rem; color: var(--text-main);">PBF System</span>
+<div class="sidebar-header" style="padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; min-height: 70px;">
+    <div id="sidebar-logo-container" style="display: flex; justify-content: center; align-items: center; width: 100%;">
+        <i id="sidebar-logo-loader" data-lucide="loader-2" class="lucide-spin" style="width: 24px; color: var(--text-light);"></i>
+        
+        <img id="sidebar-logo-img" src="" alt="PBF Logo" style="max-height: 40px; max-width: 100%; object-fit: contain; display: none;">
+        
+        <h2 id="sidebar-logo-text" style="color: var(--primary); margin: 0; font-size: 1.25rem; font-weight: 800; display: none;">GSWMS PBF</h2>
     </div>
-    <div class="toggle-btn" onclick="toggleSidebarCollapse()"><i data-lucide="chevron-left" id="collapseIcon"></i></div>
-  </div>
+</div>
 
   <div class="sidebar-menu" id="sidebarMenuContainer"></div>
 </aside>
 
 <script>
-  // KEMBALI KE STRUKTUR DROPDOWN DEWA LU!
-  const menuData = [
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const logoData = await GasApi.get('getNavbarLogo');
+        const loader = document.getElementById('sidebar-logo-loader');
+        const img = document.getElementById('sidebar-logo-img');
+        const text = document.getElementById('sidebar-logo-text');
+
+        if(loader) loader.style.display = 'none'; // Matiin loading
+
+        if (logoData) {
+            // Kalau berhasil narik logo
+            if(img) {
+                img.src = logoData;
+                img.style.display = 'block';
+            }
+        } else {
+            // Kalau gagal narik logo (tampilin teks aja)
+            if(text) text.style.display = 'block';
+        }
+    } catch (e) {
+        console.error("Gagal nembak API logo:", e);
+        const loader = document.getElementById('sidebar-logo-loader');
+        const text = document.getElementById('sidebar-logo-text');
+        if(loader) loader.style.display = 'none';
+        if(text) text.style.display = 'block';
+    }
+});  
+
+const menuData = [
     { title: 'Dashboard', icon: 'layout-dashboard', url: '?page=home' },
     { 
       title: 'Master Data', icon: 'database', 

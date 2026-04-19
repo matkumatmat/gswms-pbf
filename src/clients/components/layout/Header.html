@@ -25,25 +25,57 @@
   .header-logo { 
     font-weight: 800; font-size: 1.2rem; letter-spacing: 0.5px; 
     display: flex; align-items: center; gap: 8px; transition: var(--transition);
-    cursor: pointer; /* Biar user tau ini bisa diklik */
+    cursor: pointer; 
   }
   .header-sync { font-size: 0.8rem; display: flex; align-items: center; gap: 6px; font-weight: 500; }
 </style>
 
 <header class="app-header sidebar-transition" id="mainHeader">
   <div class="header-logo" onclick="toggleMobileSidebar()">
-    <div style="width:24px; height:24px; background:var(--tertiary); border-radius:6px; display:inline-block;"></div>
-    <span>PBF Manage</span>
+    <div id="header-logo-placeholder" style="width:24px; height:24px; background:var(--tertiary); border-radius:6px; display:inline-block;"></div>
+    
+    <img id="header-logo-img" src="" alt="PBF Logo" style="height: 28px; width: auto; object-fit: contain; display: none;">
+    
+    <span id="header-logo-text">PBF Manage</span>
   </div>
+  
   <div class="header-sync">
     <i data-lucide="refresh-cw" style="width:14px;"></i> Last Sync: <span id="txtLastSync">--:--</span>
   </div>
 </header>
 
 <script>
+  // Script Scroll bawaan lu (Aman!)
   window.addEventListener('scroll', () => {
     const header = document.getElementById('mainHeader');
     if (window.scrollY > 10) header.classList.add('scrolled');
     else header.classList.remove('scrolled');
+  });
+
+  // ==========================================
+  // INJEKSI SCRIPT NARIK LOGO DARI DRIVE
+  // ==========================================
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      // Panggil fungsi getNavbarLogo yang di AppUtils.js
+      const logoData = await GasApi.get('getNavbarLogo');
+      
+      if (logoData) {
+        const placeholder = document.getElementById('header-logo-placeholder');
+        const img = document.getElementById('header-logo-img');
+        const text = document.getElementById('header-logo-text');
+
+        // Kalau dapet gambarnya, matiin kotak palsu sama teksnya, terus idupin img-nya!
+        if (img) {
+          img.src = logoData;
+          img.style.display = 'inline-block';
+        }
+        if (placeholder) placeholder.style.display = 'none';
+        if (text) text.style.display = 'none'; 
+      }
+    } catch (e) {
+      console.error("Gagal narik logo ke Header bos:", e);
+      // Kalo error, biarin aja nampilin kotak asli sama teks bawaan lu (Fallback aman)
+    }
   });
 </script>
