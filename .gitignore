@@ -1,2 +1,4 @@
 node_modules
 cols.txt
+server.py
+identities.json

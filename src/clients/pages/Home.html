@@ -1,172 +1,129 @@
 <div class="ui-subheader">
-  <div class="ui-subheader-icon"><i data-lucide="home"></i></div>
+  <div class="ui-subheader-icon" style="background: #e0f2fe; color: #0284c7;"><i data-lucide="layout-dashboard"></i></div>
   <div class="ui-subheader-text">
-    <h2>PBF Logistics Hub</h2>
-    <p>Selamat datang kembali. Berikut adalah ringkasan operasional Anda hari ini.</p>
+    <h2>Dashboard Operasional</h2>
+    <p>Ringkasan data inventori, batch, dan direktori PBF.</p>
   </div>
 </div>
 
-<div class="grid-c">
-  <div class="ui-card">
-    <div class="ui-card-body" style="text-align: center;">
-      <p style="font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px;">Shipment</p>
-      <h3 style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">42</h3>
-      <span class="ui-badge ui-badge-primary">Hari Ini</span>
-    </div>
-  </div>
-  
-  <div class="ui-card">
-    <div class="ui-card-body" style="text-align: center;">
-      <p style="font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px;">ED Alert</p>
-      <h3 style="font-size: 1.8rem; font-weight: 800; color: #ef4444;">3</h3>
-      <span class="ui-badge ui-badge-danger">< 30 Hari</span>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+
+  <div class="ui-card" style="border-bottom: 4px solid #3b82f6;">
+    <div class="ui-card-body" style="padding: 20px;">
+      <div style="color: #3b82f6; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
+        <i data-lucide="package" style="width:14px; vertical-align:text-bottom;"></i> Varian Produk
+      </div>
+      <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="dash-produk">
+        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#94a3b8;"></i>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 6px;">Total item terdaftar</div>
     </div>
   </div>
 
-  <div class="ui-card">
-    <div class="ui-card-body" style="text-align: center;">
-      <p style="font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px;">Pending Print</p>
-      <h3 style="font-size: 1.8rem; font-weight: 800; color: var(--secondary);">12</h3>
-      <span class="ui-badge ui-badge-warning">Label</span>
+  <div class="ui-card" style="border-bottom: 4px solid #8b5cf6;">
+    <div class="ui-card-body" style="padding: 20px;">
+      <div style="color: #8b5cf6; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
+        <i data-lucide="layers" style="width:14px; vertical-align:text-bottom;"></i> Total Batch
+      </div>
+      <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="dash-batch">
+        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#94a3b8;"></i>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 6px;">Batch aktif di gudang</div>
     </div>
   </div>
 
-  <div class="ui-card">
-    <div class="ui-card-body" style="text-align: center;">
-      <p style="font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px;">System</p>
-      <h3 style="font-size: 1.8rem; font-weight: 800; color: #10b981;">OK</h3>
-      <span class="ui-badge ui-badge-success">Stable</span>
+  <div class="ui-card" style="border-bottom: 4px solid #10b981;">
+    <div class="ui-card-body" style="padding: 20px;">
+      <div style="color: #10b981; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
+        <i data-lucide="users" style="width:14px; vertical-align:text-bottom;"></i> Klien / Konsumen
+      </div>
+      <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="dash-konsumen">
+        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#94a3b8;"></i>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 6px;">RS, Apotek & Distributor</div>
     </div>
   </div>
 
-  <div class="ui-card">
-    <div class="ui-card-body" style="text-align: center;">
-      <p style="font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px;">Active Users</p>
-      <h3 style="font-size: 1.8rem; font-weight: 800; color: var(--text-main);">5</h3>
-      <span class="ui-badge ui-badge-neutral">Online</span>
+<a href="?page=fefo_center" style="text-decoration: none; color: inherit; display: block;">
+  <div class="ui-card" style="border-bottom: 4px solid #ef4444; cursor:pointer;">
+    <div class="ui-card-body" style="padding: 20px; background:#fef2f2;">
+      <div style="color: #ef4444; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
+        <i data-lucide="alert-triangle" style="width:14px; vertical-align:text-bottom;"></i> FEFO (< 3 Bulan)
+      </div>
+      <div style="font-size: 2.2rem; font-weight: 900; color: #b91c1c; line-height: 1;" id="dash-fefo">
+        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#94a3b8;"></i>
+      </div>
+      <div style="font-size: 0.75rem; color: #ef4444; margin-top: 6px; font-weight:600;">Klik untuk detail &rarr;</div>
     </div>
   </div>
+</a>
+
 </div>
 
-<div class="grid-3-2">
-  
-  <div class="ui-card">
-    <div class="ui-card-header">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <i data-lucide="history" style="width:18px;"></i> Log Perubahan Master Data
-      </div>
-    </div>
-    <div class="ui-card-body" style="padding: 0;"> <div id="container-changelog"></div>
-    </div>
-    <div class="ui-card-footer">
-      <span style="font-size: 0.75rem; color: var(--text-light);">Menampilkan 5 aktivitas terakhir</span>
-    </div>
+<div class="ui-card" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: none;">
+  <div class="ui-card-body" style="padding: 30px; text-align: center;">
+    <i data-lucide="shield-check" style="width:48px; height:48px; color:var(--primary); margin-bottom:16px;"></i>
+    <h3 style="color:var(--text-main); margin-bottom:8px;">Sistem Terkoneksi Real-Time</h3>
+    <p style="color:var(--text-light); font-size:0.9rem; max-width:500px; margin:0 auto;">
+      Data pada dashboard ini ditarik secara langsung dari Master Spreadsheet. Pastikan tim lapangan melakukan update penerimaan dan distribusi secara berkala melalui perangkat mobile (AppSheet).
+    </p>
   </div>
-
-  <div> <div class="ui-card">
-      <div class="ui-card-header">System Test Component</div>
-      <div class="ui-card-body" style="display:flex; flex-direction:column; gap:12px;">
-        
-        <button class="btn btn-primary" style="width: 100%;" onclick="testToast()">
-          <i data-lucide="bell"></i> Cek Toast Notif
-        </button>
-        
-        <button class="btn btn-secondary" style="width: 100%;" onclick="testModal()">
-          <i data-lucide="layers"></i> Cek Global Modal
-        </button>
-        
-        <button class="btn btn-danger" style="width: 100%;" onclick="testLoading(this)">
-          <i data-lucide="loader-2"></i> Cek Loading State
-        </button>
-        
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script>
-  /**
-   * INITIALIZE PAGE LOGIC
-   */
   document.addEventListener('DOMContentLoaded', () => {
-    initHomeComponents();
     lucide.createIcons();
+    loadRealDashboardData();
   });
 
-  function initHomeComponents() {
-    // 1. Render Table Change Log (Agnostik)
-    const mockChangeLog = [
-      { sheet: 'MASTER_DIST', user: 'Kaye', action: 'Update Stok', time: '10:45' },
-      { sheet: 'SHIPLBL_MASTER', user: 'Fitrah', action: 'Cetak Label', time: '09:20' },
-      { sheet: 'PM_BATCH', user: 'System', action: 'Auto ED Check', time: '00:01' },
-      { sheet: 'CUSTOMER_DB', user: 'Kaye', action: 'Tambah Alamat', time: 'Kemarin' },
-      { sheet: 'CONST_PARAM', user: 'Admin', action: 'Ubah Harga Embalage', time: '2 Hari Lalu' }
-    ];
+async function loadRealDashboardData() {
+    try {
+      // THE FIX: Tarik satu-satu secara berurutan biar token session Google ga tabrakan!
+      const batches = await GasApi.get('getShortBatchLookup', 1, 5000);
+      const customers = await GasApi.get('getCustomers', 1, 2000);
 
-    new DataTable({
-      containerId: 'container-changelog',
-      headers: [
-        { label: 'Sheet', key: 'sheet' },
-        { label: 'User', key: 'user' },
-        { label: 'Aksi', key: 'action' },
-        { label: 'Waktu', key: 'time' }
-      ],
-      data: mockChangeLog
-    });
+      // 1. Set Total Konsumen
+      document.getElementById('dash-konsumen').innerText = customers.length.toLocaleString('id-ID');
 
-    // 2. Render Search Dropdown (Agnostik)
-    const mockProducts = [
-      { name: 'Vaksin BCG 10 dosis', batch: 'B20250305' },
-      { name: 'Vaksin Polio 20 dosis', batch: 'B1124492' },
-      { name: 'Serum Anti Bisa Ular', batch: 'S990224' }
-    ];
+      // 2. Set Total Batch
+      document.getElementById('dash-batch').innerText = batches.length.toLocaleString('id-ID');
 
-    new SearchDropdown({
-      inputId: 'homeSearchInput',
-      dropdownId: 'homeSearchDropdown',
-      data: mockProducts,
-      searchKeys: ['name', 'batch'],
-      renderItem: (item) => `
-        <div style="font-weight:700; font-size:0.85rem;">${item.name}</div>
-        <div style="font-size:0.7rem; color:var(--text-light);">Batch: ${item.batch}</div>
-      `,
-      onSelect: (item) => {
-        ToastSystem.show(`Membuka detail batch ${item.batch}`, 'info');
-      }
-    });
+      // 3. Hitung Produk Unik & Batch Kritis (FEFO)
+      const uniqueProducts = new Set();
+      let fefoCount = 0;
+      
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      batches.forEach(b => {
+        if (b.productId || b.namaBarangDagang) {
+          uniqueProducts.add(b.productId || b.namaBarangDagang);
+        }
+        
+        if (b.expiryDate) {
+          const expDate = new Date(b.expiryDate);
+          if (!isNaN(expDate.getTime())) {
+            const diffTime = expDate - today;
+            const sisaHari = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (sisaHari <= 90) {
+              fefoCount++;
+            }
+          }
+        }
+      });
+
+      // Render Hasil ke Layar
+      document.getElementById('dash-produk').innerText = uniqueProducts.size.toLocaleString('id-ID');
+      document.getElementById('dash-fefo').innerText = fefoCount.toLocaleString('id-ID');
+
+    } catch (e) {
+      console.error("Gagal memuat data dashboard:", e);
+      document.getElementById('dash-produk').innerText = "ERR";
+      document.getElementById('dash-batch').innerText = "ERR";
+      document.getElementById('dash-konsumen').innerText = "ERR";
+      document.getElementById('dash-fefo').innerText = "ERR";
+      ToastSystem.show("Gagal memuat data dashboard!", "error");
+    }
   }
 
-  function testLoading(btn) {
-    btn.classList.add('loading');
-    setTimeout(() => {
-      btn.classList.remove('loading');
-      ToastSystem.show("Proses pura-pura loading selesai!", "success");
-    }, 2000);
-  }
-
-  // TESTER FUNCTIONS
-  function testToast() {
-    ToastSystem.show("Sistem sinkronisasi berhasil dijalankan!", "success");
-  }
-
-  function testModal() {
-    ModalSystem.show({
-      title: 'Peringatan Kadaluarsa',
-      body: `
-        <p>Terdapat <b>3 produk</b> yang akan expired dalam waktu dekat.</p>
-        <ul style="margin-top:10px; padding-left:20px;">
-          <li>Batch B2025 - Sisa 12 hari</li>
-          <li>Batch C9011 - Sisa 20 hari</li>
-        </ul>
-      `,
-      footerButtons: [
-        { text: 'Nanti Saja', type: 'secondary', action: () => ModalSystem.close() },
-        { text: 'Cetak Report', type: 'primary', action: () => {
-          ToastSystem.show("Laporan sedang di-generate...", "info");
-          ModalSystem.close();
-        }}
-      ]
-    });
-  }
 </script>
