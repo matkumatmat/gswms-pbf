@@ -31,14 +31,16 @@
 </style>
 
 <header class="app-header sidebar-transition" id="mainHeader">
-  <div class="header-logo" onclick="toggleMobileSidebar()">
-    <img src="https://drive.google.com/thumbnail?id=18xdVTIKD8A7zbwfrVzX03wTNGaZv8KBF&sz=w200" alt="PBF Logo" style="height: 28px; width: auto; object-fit: contain;">    
-    <span id="header-logo-text">PBF Manage</span>
+  
+  <div class="header-logo" onclick="handleHeaderLogoClick()">      
+    <img id="header-logo-img" src="https://drive.google.com/thumbnail?id=18xdVTIKD8A7zbwfrVzX03wTNGaZv8KBF&sz=w200" alt="PBF Logo" style="height: 28px; width: auto; object-fit: contain;">    
+    <span id="header-logo-text" style="display:none;">PBF Manage</span>
   </div>
   
   <div class="header-sync">
     <i data-lucide="refresh-cw" style="width:14px;"></i> Last Sync: <span id="txtLastSync">--:--</span>
   </div>
+
 </header>
 
 <script>
@@ -75,4 +77,14 @@
       // Kalo error, biarin aja nampilin kotak asli sama teks bawaan lu (Fallback aman)
     }
   });
+
+  function handleHeaderLogoClick() {
+    if (window.innerWidth >= 1024) {
+      // Desktop: Klik logo header biru = buka sidebar
+      document.body.classList.remove('sidebar-collapsed');
+    } else {
+      // Mobile: Klik logo = buka/tutup menu samping
+      toggleMobileSidebar();
+    }
+  }
 </script>

@@ -1,6 +1,6 @@
 // src/domain/product/product/ProductService.js
 
-class ProductService {
+class ProductServices {
     constructor(repo) {
         this.repo = repo;
         this.defaultLimit = 500;

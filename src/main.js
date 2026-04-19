@@ -1,71 +1,76 @@
 // src/main.js
-
-/**
- * REGISTRY DOMAIN: Daftarkan semua endpoint dan inisialisasi servicenya di sini.
- * Format diubah jadi Object agar router tahu harus ngecek versi Cache dari Sheet mana.
- */
 const DomainRegistry = {
   'getCustomers': {
     factory: () => new CustomerService(new CustomerRepo()),
     cacheGroup: AppConfig.DB_CUSTOMER_SHEET_NAME // Menghubungkan ke "CUSTOMER"
   },
   
-  // Domain Shipping Embalage (Lookup)
   'getLookupShippingEmbalage': {
     factory: () => new LookupShippingEmbalageService(new LookupShippingEmbalageRepo()),
     cacheGroup: AppConfig.DB_SHIPPING_EMBALAGE_LOOKUP_SHEET_NAME
   },
 
-  // Domain Shipping Embalage (Master)
   'getMasterShippingEmbalage': {
     factory: () => new MasterShippingEmbalageService(new MasterShippingEmbalageRepo()),
     cacheGroup: AppConfig.DB_SHIPPING_EMBALAGE_MASTER_SHEET_NAME
   },
 
-  // Domain Shipping Label
   'getShippingLabels': {
     factory: () => new ShippingLabelService(new ShippingLabelRepo()),
     cacheGroup: AppConfig.DB_SHIPPING_LABEL_SHEET_NAME
   },
 
-'getBatchLookup': {
-    // THE FIX: Masukin new ProductRepo() di argumen kedua!
-    factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
-    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME
-  },
+// 'getBatchLookup': {
+//     // THE FIX: Masukin new ProductRepo() di argumen kedua!
+//     factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
+//     cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME
+//   },
 
-  'getShortBatchLookup': {
-    factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
-    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
-    method: 'getShortBatchLookup'
-  },
+//   'getShortBatchLookup': {
+//     factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
+//     cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
+//     method: 'getShortBatchLookup'
+//   },
 
-  'getBatchDetail': {
-    factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
-    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
-    method: 'getDetail'
-  },
+//   'getBatchDetail': {
+//     factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
+//     cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
+//     method: 'getDetail'
+//   },
   
 
 
   'updatePrintStatus': { factory: () => new ShippingLabelService(new ShippingLabelRepo()) },
-
-
-  // Nanti product begini juga:
-  // 'getProducts': {
-  //   factory: () => new ProductService(new ProductRepo()),
-  //   cacheGroup: AppConfig.DB_PRODUCT_SHEET_NAME
-  // }
+  'getBatchLookup': {
+    factory: () => new BatchService(new BatchRepo(), new ProductRepo()),
+    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
+    method: 'getPaginatedData',
+    defaultSchema: 'table'
+  },
+  'getShortBatchLookup': {
+    factory: () => new BatchService(new BatchRepo(), new ProductRepo()),
+    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
+    method: 'getShortBatchLookup',
+    defaultSchema: 'short'
+  },
+  'getBatchDetail': {
+    factory: () => new BatchService(new BatchRepo(), new ProductRepo()),
+    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
+    method: 'getDetail',
+    defaultSchema: 'detail'
+  },
+  'queryBatch': {
+    factory: () => new BatchService(new BatchRepo(), new ProductRepo()),
+    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
+    method: 'query'
+  },
+  'getActiveReceivedBatches': {
+    factory: () => new BatchService(new BatchRepo(), new ProductRepo()),
+    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
+    method: 'getActiveReceivedBatches',
+    defaultSchema: 'short'
+}
 };
-
-// src/main.js
-
-/**
- * REGISTRY UNTUK WRITE OPERATIONS (doPost)
- */
-/**
- * REGISTRY UNTUK WRITE OPERATIONS (doPost)
- */
 const PostRegistry = {
   'createShippingLabel': {
     factory: () => new ShippingLabelService(new ShippingLabelRepo()),
@@ -76,9 +81,7 @@ const PostRegistry = {
     method: 'updatePrintStatus'
   },
   
-  // --- ENDPOINT BARU UNTUK PENCARIAN SPESIFIK ---
   'getBatchDetail': {
-    // THE FIX: MASUKIN new ProductRepo() KE SINI JUGA BOS!
     factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
     method: 'getDetail'
   },
@@ -96,7 +99,6 @@ const PostRegistry = {
     method: 'create'
   },
 };
-
 function doPost(e) {
   try {
     const contents = JSON.parse(e.postData.contents);
@@ -107,7 +109,6 @@ function doPost(e) {
     const route = PostRegistry[action];
     if (!route) throw new Error(`Endpoint POST '${action}' tidak ditemukan!`);
 
-    // Inisialisasi Service dan panggil method-nya
     const service = route.factory();
     const result = service[route.method](contents.data);
 
@@ -124,11 +125,6 @@ function doPost(e) {
     });
   }
 }
-
-/**
- * JEMBATAN UNTUK NATIVE UI (google.script.run)
- * Fungsi ini dipanggil langsung dari JavaScript di HTML
- */
 function processUiRequest(action, payload) {
   try {
     const route = PostRegistry[action];
@@ -136,57 +132,33 @@ function processUiRequest(action, payload) {
 
     const service = route.factory();
     const result = service[route.method](payload);
-
-    // Bungkus dalam satu variabel biar bisa disanitasi
     const responsePayload = { status: "success", data: result };
-
-    // ================================================================
-    // WAJIB: Sanitasi untuk membunuh Objek Date agar tidak null di UI
-    // ================================================================
     return JSON.parse(JSON.stringify(responsePayload));
-
   } catch (error) {
     console.error("UI Request Error: " + error.toString());
     throw new Error(error.toString()); 
   }
 }
-
-/**
- * JEMBATAN UNTUK MENGAMBIL DATA KE UI (READ/GET)
- * Dipanggil dari google.script.run di frontend
- */
 function fetchUiData(action, reqPage = 1, reqLimit = 50) {
   try {
     const route = DomainRegistry[action];
     if (action === 'getNavbarLogo') {
-      return { status: "success", data: getNavbarLogo() }; // Langsung tembak fungsinya!
+      return { status: "success", data: getNavbarLogo() };
     }
     if (!route) {
       throw new Error(`Endpoint action '${action}' tidak terdaftar di Registry!`);
     }
-
     const service = route.factory();
     const pageNum = parseInt(reqPage) || 1;
     const limitNum = parseInt(reqLimit) || 50;
-
-    // Tarik data dari Service
     const methodName = route.method || 'getPaginatedData';
-    // const data = service.getPaginatedData(pageNum, limitNum);
     const data = service[methodName](pageNum, limitNum);
-
-    // Siapkan payload balikan
     const responsePayload = { 
       status: "success", 
       count: data.length,
       data: data 
     };
-
-    // ================================================================
-    // THE MAGIC TRICK: Sanitasi objek biar ga ada Date Object bawaan GAS
-    // Biar google.script.run ga panik dan ga ngirim null ke frontend
-    // ================================================================
     return JSON.parse(JSON.stringify(responsePayload));
-
   } catch (error) {
     return { 
       status: "error", 
@@ -194,204 +166,53 @@ function fetchUiData(action, reqPage = 1, reqLimit = 50) {
     };
   }
 }
-
-/**
- * Standarisasi Response Format
- */
 function responseHelper(payload) {
   return ContentService.createTextOutput(JSON.stringify(payload, null, 2))
     .setMimeType(ContentService.MimeType.JSON);
 }
-
-
-// GANTI FUNGSI INCLUDE INI DI main.js
 function include(filename) {
-  // Pake createTemplateFromFile -> evaluate, biar Nested Include bisa dieksekusi!
   return HtmlService.createTemplateFromFile(filename).evaluate().getContent();
 }
-
-// function doGet(e) {
-//   try {
-//     const params = e ? e.parameter : {};
-//     const action = params.action;
-//     const reqPage = params.page || 'home'; // Default ke home kalau kosong
-
-//     // 1. ROUTER HALAMAN UI
-//     if (!action) {
-//       const template = HtmlService.createTemplateFromFile('src/client/ui/Layout');
-      
-//       // Mapping nama parameter page ke lokasi file HTML-nya
-//       if (reqPage === 'shipping_label') {
-//         template.pageContent = 'src/client/pages/shipping_label/ShippingLabel';
-//       } else {
-//         template.pageContent = 'src/client/pages/main/Home'; // Nanti lo bikin Home.html di sini
-//       }
-
-//       return template.evaluate()
-//         .setTitle('PBF Manage')
-//         .addMetaTag('viewport', 'width=device-width, initial-scale=1') // WAJIB BUAT MOBILE
-//         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-//     }
-
-//     if (action === 'ping') {
-//       return responseHelper({ status: "success", message: "API V2 is running & Scalable!" });
-//     }
-
-//     // 1. DYNAMIC ROUTER: Cari action di Registry
-//     const route = DomainRegistry[action];
-//     if (!route) {
-//       throw new Error(`Endpoint action '${action}' tidak valid atau belum terdaftar!`);
-//     }
-
-//     // 2. CEK VERSI GLOBAL TERBARU DARI PROPERTIES
-//     const props = PropertiesService.getScriptProperties();
-//     const versionKey = `VERSION_${route.cacheGroup}`;
-//     let currentVersion = props.getProperty(versionKey);
-    
-//     // Kalau belum pernah ada yang ngedit (belum ada versi), set versi 1
-//     if (!currentVersion) {
-//       currentVersion = Date.now().toString();
-//       props.setProperty(versionKey, currentVersion);
-//     }
-
-//     // 3. Inisialisasi Service secara on-demand
-//     const service = route.factory();
-
-//     // 4. Tangkap Parameter Pagination
-//     // 2. Ganti nama variabelnya jadi pageNumber
-//     const pageNumber = parseInt(reqPage) || 1; 
-//     const limit = params.limit || null; 
-
-//     // 5. CACHE LAYER (DENGAN VERSIONING)
-//     // Pastikan di sini panggilnya pageNumber
-//     const cacheKey = `CACHE_${action}_V${currentVersion}_P${pageNumber}_L${limit || 'default'}`;
-//     const cache = CacheService.getScriptCache();
-//     const cachedString = cache.get(cacheKey);
-
-//     if (cachedString) {
-//       const cachedData = JSON.parse(cachedString);
-//       return responseHelper({ 
-//         status: "success", 
-//         source: `cache (v.${currentVersion})`, 
-//         count: cachedData.length, 
-//         data: cachedData 
-//       });
-//     }
-
-//     // // 6. Eksekusi Data Layer jika Cache kosong atau versi basi
-//     // // Pastikan di sini juga panggilnya pageNumber
-//     // const data = service.getPaginatedData(pageNumber, limit);
-
-//     // // 7. Simpan ke Cache selama 6 jam (21600 detik)
-//     // cache.put(cacheKey, JSON.stringify(data), 21600);
-
-//     // return responseHelper({ 
-//     //   status: "success", 
-//     //   source: `spreadsheet (v.${currentVersion})`, 
-//     //   count: data.length, 
-//     //   data: data 
-//     // });
-
-// // 6. Eksekusi Data Layer jika Cache kosong atau versi basi
-//     // Pastikan di sini juga panggilnya pageNumber
-//     // const data = service.getPaginatedData(pageNumber, limit);
-//     // 6. Eksekusi Data Layer jika Cache kosong atau versi basi
-//     const methodName = route.method || 'getPaginatedData';
-//     const data = service[methodName](pageNumber, limit);
-
-//     // 7. Simpan ke Cache selama 6 jam (21600 detik)
-//     // Penanganan khusus jika ukuran data melebihi batas maksimal CacheService (100 KB)
-//     try {
-//       const jsonString = JSON.stringify(data);
-//       // Pengecekan kasar panjang string (1 karakter kira-kira 1-2 bytes).
-//       // Batas aman diset di sekitar 90.000 karakter sebelum dilempar ke cache.
-//       if (jsonString.length < 90000) {
-//         cache.put(cacheKey, jsonString, 600); // 600 detik = 10 menit
-//       }
-//     } catch (cacheError) {
-//       // Abaikan error cache (misal argumen terlalu besar), lanjutkan untuk me-return data
-//       console.warn("Bypass cache, payload melebihi limit batas ukuran GAS.");
-//     }
-
-//     return responseHelper({ 
-//       status: "success", 
-//       source: `spreadsheet (v.${currentVersion})`, 
-//       count: data.length, 
-//       data: data 
-//     });    
-
-//   } catch (error) {
-//     return responseHelper({ 
-//       status: "error", 
-//       message: error.toString(),
-//       stack: error.stack
-//     });
-//   }
-// }
-
-
 function doGet(e) {
   try {
     const params = e ? e.parameter : {};
     const method = params.method || 'client';
-    
-    // ==========================================
-    // ROUTER A: API BACKEND (method=fetch)
-    // ==========================================
     if (method === 'fetch') {
       const action = params.action;
-      
       if (action === 'ping') {
         return responseHelper({ status: "success", message: "API V2 is running & Scalable!" });
       }
-
       if (action === 'getNavbarLogo') {
         return responseHelper({ status: "success", data: getNavbarLogo() });
       }
-
       const route = DomainRegistry[action];
       if (!route) {
         throw new Error(`Endpoint action '${action}' tidak valid atau belum terdaftar di DomainRegistry!`);
       }
-
-      // Cek Versi Global untuk Cache
       const props = PropertiesService.getScriptProperties();
       const versionKey = `VERSION_${route.cacheGroup}`;
       let currentVersion = props.getProperty(versionKey);
-      
       if (!currentVersion) {
         currentVersion = Date.now().toString();
         props.setProperty(versionKey, currentVersion);
       }
-
       const service = route.factory();
-      // DEKLARASI DI ATAS BIAR GAK ERROR INITIALIZATION
       const methodName = route.method || 'getPaginatedData'; 
-
-      // Setup Variabel Cache & Parameter
       let cacheKey = '';
       let pageNum = 1;
       let limit = null;
-
       if (methodName === 'getDetail') {
-        // Kalau narik detail, Cache dipisah berdasarkan ID barang
         cacheKey = `CACHE_DETAIL_${action}_V${currentVersion}_ID_${params.id || params.batch}`;
       } else {
-        // Kalau narik list, Cache berdasarkan Pagination
         pageNum = parseInt(params.page) || 1; 
         limit = params.limit || null; 
         cacheKey = `CACHE_${action}_V${currentVersion}_P${pageNum}_L${limit || 'default'}`;
       }
-
-      // Cek apakah data ada di Cache
       const cache = CacheService.getScriptCache();
       const cachedString = cache.get(cacheKey);
-
       if (cachedString) {
         const cachedData = JSON.parse(cachedString);
-        // Hitung count (kalau array pakai length, kalau object detail berarti 1)
         const dataCount = Array.isArray(cachedData) ? cachedData.length : (cachedData ? 1 : 0);
-        
         return responseHelper({ 
           status: "success", 
           source: `cache (v.${currentVersion})`, 
@@ -399,18 +220,12 @@ function doGet(e) {
           data: cachedData 
         });
       }
-
-      // EKSEKUSI DATA KE SPREADSHEET (Jika Cache Kosong)
       let data;
       if (methodName === 'getDetail') {
-        // Oper seluruh parameter URL (termasuk id/batch) ke dalam getDetail()
         data = service[methodName](params); 
       } else {
-        // Oper parameter pagination ke getPaginatedData()
         data = service[methodName](pageNum, limit);
       }
-
-      // Simpan hasil ke Cache
       try {
         const jsonString = JSON.stringify(data);
         if (jsonString.length < 90000) {
@@ -419,9 +234,7 @@ function doGet(e) {
       } catch (cacheError) {
         console.warn("Bypass cache, payload melebihi limit.");
       }
-
       const finalCount = Array.isArray(data) ? data.length : (data ? 1 : 0);
-
       return responseHelper({ 
         status: "success", 
         source: `spreadsheet (v.${currentVersion})`, 
@@ -430,14 +243,9 @@ function doGet(e) {
       });    
     }
 
-// ==========================================
-    // ROUTER B: FRONTEND WEB APP (method=client)
-    // ==========================================
     if (method === 'client') {
       const reqPage = params.page || 'home';
-      const template = HtmlService.createTemplateFromFile('src/clients/components/ui/MainLayout');
-      
-      // THE FIX: Daftar semua halaman yang valid di sini
+      const template = HtmlService.createTemplateFromFile('src/clients/components/ui/MainLayout');      
       const validPages = {
         'shipping_label': 'src/client/pages/shipping_label/ShippingLabel',
         'detail': 'src/client/pages/product_detail/ProductDetail',
@@ -448,7 +256,6 @@ function doGet(e) {
         'fefo_center': 'src/client/pages/fefo/FefoCenter'
       };
 
-      // Kalo page-nya kedaftar, panggil file-nya. Kalo nggak ada? Lempar ke Void 404!
       if (validPages[reqPage]) {
         template.pageContent = validPages[reqPage];
         
@@ -460,7 +267,6 @@ function doGet(e) {
       } else {
         template.pageContent = 'src/clients/pages/Error404';
       }
-
       return template.evaluate()
         .setTitle('PBF Manage')
         .addMetaTag('viewport', 'width=device-width, initial-scale=1')
@@ -486,7 +292,37 @@ function doGet(e) {
     }
   }
 }
-
 function getNavbarLogo() {
   return `https://drive.google.com/thumbnail?id=${AppConfig.LOGO_DRIVE_ID}&sz=w200`;
+}
+function fetchUiDataQuery(action, params = {}) {
+  try {
+    const route = DomainRegistry[action];
+    if (!route) throw new Error(`Endpoint '${action}' tidak terdaftar!`);
+
+    const service = route.factory();
+    const page = parseInt(params.page) || 1;
+    const limit = parseInt(params.limit) || 50;
+    const schema = params.schema || route.defaultSchema || 'table';
+    const filters = params.filters || {};
+    
+    const methodName = route.method || 'getPaginatedData';
+    let data;
+    
+    if (methodName === 'query') {
+      data = service.query({ page, limit, schema, filters });
+    } else {
+      const filterConfig = filters.sysStatusIn ? { allowedStatuses: filters.sysStatusIn } : null;
+      data = service[methodName](page, limit, schema, filterConfig);
+    }
+
+    return JSON.parse(JSON.stringify({ 
+      status: "success", 
+      count: Array.isArray(data) ? data.length : 1,
+      data: data 
+    }));
+
+  } catch (error) {
+    return { status: "error", message: error.toString() };
+  }
 }

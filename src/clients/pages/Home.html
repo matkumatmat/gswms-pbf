@@ -79,7 +79,7 @@
 async function loadRealDashboardData() {
     try {
       // THE FIX: Tarik satu-satu secara berurutan biar token session Google ga tabrakan!
-      const batches = await GasApi.get('getShortBatchLookup', 1, 5000);
+      const batches = await GasApi.get('getActiveReceivedBatches', 1, 5000);
       const customers = await GasApi.get('getCustomers', 1, 2000);
 
       // 1. Set Total Konsumen

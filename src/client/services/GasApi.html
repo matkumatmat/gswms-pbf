@@ -1,33 +1,37 @@
 <script>
-/**
- * GasApi: Wrapper Promise untuk google.script.run
- * Mengubah callback hell .withSuccessHandler menjadi async/await yang elegan.
- */
 const GasApi = {
   
-  /**
-   * Fungsi untuk Read/GET (Manggil fetchUiData di main.js)
-   */
   get: (action, page = 1, limit = 50) => {
     return new Promise((resolve, reject) => {
       google.script.run
         .withSuccessHandler(response => {
-          // Tangani logical error dari backend
           if (response && response.status === "error") {
             reject(new Error(response.message));
           } else {
-            // Langsung ekstrak datanya, buang bungkus 'status' dll
             resolve(response.data); 
           }
         })
         .withFailureHandler(error => reject(error))
-        .fetchUiData(action, page, limit); // Nembak ke main.js
+        .fetchUiData(action, page, limit);
     });
   },
 
-  /**
-   * Fungsi untuk Create/POST (Manggil processUiRequest di main.js)
-   */
+  // TAMBAHAN: Untuk query dengan filter/schema dinamis
+  query: (action, params = {}) => {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(response => {
+          if (response && response.status === "error") {
+            reject(new Error(response.message));
+          } else {
+            resolve(response.data);
+          }
+        })
+        .withFailureHandler(error => reject(error))
+        .fetchUiDataQuery(action, params);
+    });
+  },
+
   post: (action, payload) => {
     return new Promise((resolve, reject) => {
       google.script.run
@@ -39,9 +43,8 @@ const GasApi = {
           }
         })
         .withFailureHandler(error => reject(error))
-        .processUiRequest(action, payload); // Nembak ke main.js
+        .processUiRequest(action, payload);
     });
   }
-
 };
 </script>

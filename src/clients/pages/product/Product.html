@@ -63,33 +63,61 @@
     });
   });
 
-  async function loadAllProducts() {
-    document.getElementById('table-products-container').innerHTML = '<div style="text-align:center; padding:20px; color:var(--primary);"><i data-lucide="loader-2" class="lucide-spin"></i> Menarik Data Master...</div>';
-    lucide.createIcons();
+  // async function loadAllProducts() {
+  //   document.getElementById('table-products-container').innerHTML = '<div style="text-align:center; padding:20px; color:var(--primary);"><i data-lucide="loader-2" class="lucide-spin"></i> Menarik Data Master...</div>';
+  //   lucide.createIcons();
     
-    try {
-      const batches = await GasApi.get('getShortBatchLookup', 1, 5000);
+  //   try {
+  //     const batches = await GasApi.get('getShortBatchLookup', 1, 5000);
       
-      const productMap = new Map();
-      batches.forEach(b => {
-          const key = b.namaBarangDagang;
-          if (!productMap.has(key)) {
-              productMap.set(key, {
-                  namaDagang: b.namaBarangDagang,
-                  kodeBarangOld: b.kodeBarangOld, // Simpen DUA kode!
-                  kodeBarangNew: b.kodeBarangNew,
-                  batches: []
-              });
-          }
-          productMap.get(key).batches.push(b);
-      });
+  //     const productMap = new Map();
+  //     batches.forEach(b => {
+  //         const key = b.namaBarangDagang;
+  //         if (!productMap.has(key)) {
+  //             productMap.set(key, {
+  //                 namaDagang: b.namaBarangDagang,
+  //                 kodeBarangOld: b.kodeBarangOld, // Simpen DUA kode!
+  //                 kodeBarangNew: b.kodeBarangNew,
+  //                 batches: []
+  //             });
+  //         }
+  //         productMap.get(key).batches.push(b);
+  //     });
 
-      groupedProducts = Array.from(productMap.values());
-      renderGroupedTable(groupedProducts.slice(0, 30)); 
-    } catch (error) {
-      ToastSystem.show("Gagal narik data produk!", "error");
-    }
+  //     groupedProducts = Array.from(productMap.values());
+  //     renderGroupedTable(groupedProducts.slice(0, 30)); 
+  //   } catch (error) {
+  //     ToastSystem.show("Gagal narik data produk!", "error");
+  //   }
+  // }
+
+async function loadAllProducts() {
+  document.getElementById('table-products-container').innerHTML = '<div style="text-align:center; padding:20px; color:var(--primary);"><i data-lucide="loader-2" class="lucide-spin"></i> Menarik Data Master...</div>';
+  lucide.createIcons();
+  
+  try {
+    const batches = await GasApi.get('getActiveReceivedBatches', 1, 5000);
+    
+    const productMap = new Map();
+    batches.forEach(b => {
+        const key = b.namaBarangDagang;
+        if (!productMap.has(key)) {
+            productMap.set(key, {
+                namaDagang: b.namaBarangDagang,
+                kodeBarangOld: b.kodeBarangOld,
+                kodeBarangNew: b.kodeBarangNew,
+                batches: []
+            });
+        }
+        productMap.get(key).batches.push(b);
+    });
+
+    groupedProducts = Array.from(productMap.values());
+    renderGroupedTable(groupedProducts.slice(0, 30)); 
+  } catch (error) {
+    ToastSystem.show("Gagal narik data produk!", "error");
   }
+}
 
   function renderGroupedTable(data) {
     if(data.length === 0) {

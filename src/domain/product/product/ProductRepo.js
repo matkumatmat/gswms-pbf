@@ -1,6 +1,6 @@
 // src/domain/product/product/ProductRepo.js
 
-class ProductRepo extends BaseRepository {
+class ProductRepos extends BaseRepository {
     constructor() {
         super(AppConfig.DB_PRODUCT_LOOKUP_ID, AppConfig.DB_PRODUCT_LOOKUP_SHEET_NAME);
         this.startRow = AppConfig.DB_PRODUCT_LOOKUP_START_ROW || 2;

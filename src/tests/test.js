@@ -1,116 +1,253 @@
-// src/utils/test.js
+/**
+ * test_BatchService.gs
+ * Test script untuk BatchService refactor.
+ * Langsung run dari Apps Script editor, output JSON raw.
+ */
 
-function debugCariBatch() {
-  // GANTI NAMA BATCH DI SINI BUAT NGETEST (Sesuaiin sama yang lagi error)
-  const targetBatch = "B20250305-2"; 
-  
-  Logger.log("==================================================");
-  Logger.log("MULAI DEBUG PENCARIAN BATCH: [" + targetBatch + "]");
-  Logger.log("==================================================");
+// ============================================================================
+// TEST ENTRY POINTS
+// ============================================================================
 
-  const targetLower = targetBatch.trim().toLowerCase();
-
-  // 1. CEK HOT STORAGE (2026)
-  Logger.log("\n>>> CEK HOT STORAGE (TAHUN BERJALAN) <<<");
-  const hotConfig = AppConfig.DB_DISTRIBUSI_CURRENT;
-  if (!hotConfig) {
-    Logger.log("❌ FATAL: AppConfig.DB_DISTRIBUSI_CURRENT tidak terdefinisi!");
-  } else {
-    // Normalisasi struktur object biar gampang dibaca fungsi
-    const configHotObj = {
-      id: hotConfig.DB_DISTRIBUSI_CURRENT_ID,
-      sheetName: hotConfig.DB_DISTRIBUSI_CURRENT_SHEET_NAME,
-      tableName: hotConfig.DB_DISTRIBUSI_CURRENT_TABLE_NAME,
-      startRow: hotConfig.DB_DISTRIBUSI_CURRENT_START_ROW,
-      mapper: hotConfig.DB_DISTRIBUSI_CURRENT_COLUMN_MAPPER,
-      year: hotConfig.DB_DISTRIBUSI_CURRENT_YEAR
+function test_ServiceInstantiation() {
+  try {
+    var batchRepo = new BatchRepo();
+    var productRepo = new ProductRepo();
+    var service = new BatchService(batchRepo, productRepo);
+    
+    var result = {
+      status: 'success',
+      message: 'Service instantiated successfully',
+      hasBatchRepo: !!service.batchRepo,
+      hasProductRepo: !!service.productRepo,
+      defaultLimit: service.defaultLimit
     };
-    jalaninInvestigasi(configHotObj, targetLower);
-  }
-
-  // 2. CEK COLD STORAGE (2025 dkk)
-  Logger.log("\n>>> CEK COLD STORAGE (TAHUN LALU) <<<");
-  const coldConfigs = AppConfig.DB_DISTRIBUSI_COLD;
-  if (!coldConfigs || !Array.isArray(coldConfigs)) {
-    Logger.log("❌ FATAL: AppConfig.DB_DISTRIBUSI_COLD rusak atau bukan array!");
-  } else {
-    coldConfigs.forEach(c => {
-      if (c.DB_DISTRIBUSI_ID && c.DB_DISTRIBUSI_ID !== 'NOT_SET_YET') {
-        Logger.log("\n--- Cek Tahun: " + c.DB_DISTRIBUSI_YEAR + " ---");
-        const configColdObj = {
-          id: c.DB_DISTRIBUSI_ID,
-          sheetName: c.DB_DISTRIBUSI_SHEET_NAME,
-          tableName: c.DB_DISTRIBUSI_TABLE_NAME,
-          startRow: c.DB_DISTRIBUSI_START_ROW,
-          mapper: c.DB_DISTRIBUSI_CURRENT_COLUMN_MAPPER,
-          year: c.DB_DISTRIBUSI_YEAR
-        };
-        jalaninInvestigasi(configColdObj, targetLower);
-      }
-    });
+    Logger.log(JSON.stringify(result));
+    return result;
+  } catch (e) {
+    var result = { status: 'error', message: e.toString(), stack: e.stack };
+    Logger.log(JSON.stringify(result));
+    return result;
   }
 }
 
-function jalaninInvestigasi(conf, targetBatch) {
+function test_JoinLogic() {
   try {
-    Logger.log("1. Buka Spreadsheet ID: " + conf.id);
-    const ss = SpreadsheetApp.openById(conf.id);
-
-    Logger.log("2. Nyari Sheet: '" + conf.sheetName + "' atau '" + conf.tableName + "'");
-    let sheet = ss.getSheetByName(conf.sheetName);
+    var batchRepo = new BatchRepo();
+    var productRepo = new ProductRepo();
+    var service = new BatchService(batchRepo, productRepo);
     
-    if (!sheet) {
-      Logger.log("⚠️ GAGAL! Nyoba pake fallback nama tabel: '" + conf.tableName + "'");
-      sheet = ss.getSheetByName(conf.tableName);
-    }
-
-    if (!sheet) {
-      Logger.log("❌ FATAL: Sheet tetep ga ketemu bos! Berarti nama sheet di file ini bener-bener beda.");
-      return;
-    }
+    // Ambil raw data kecil untuk tes join
+    var rawBatch = batchRepo.getPaginatedRawData(1, 10);
+    var joined = service._joinBatchWithProduct(rawBatch);
     
-    Logger.log("✅ Sheet berhasil dibuka: " + sheet.getName());
-
-    const lastRow = sheet.getLastRow();
-    Logger.log("3. Total baris yang ada isinya: " + lastRow);
-
-    if (lastRow < conf.startRow) {
-      Logger.log("⚠️ Data kosong melompong, cuma ada header.");
-      return;
-    }
-
-    const map = conf.mapper;
-    const batchColIndex = map.batch - 1; // Index array
-    
-    Logger.log("4. Aturan Kolom: Batch di Kolom ke-" + map.batch + " (Index Array: " + batchColIndex + ")");
-
-    const rawData = sheet.getRange(conf.startRow, 1, lastRow - conf.startRow + 1, sheet.getLastColumn()).getValues();
-    Logger.log("✅ Berhasil narik " + rawData.length + " baris data ke RAM.");
-
-    let foundCount = 0;
-    
-    for (let i = 0; i < rawData.length; i++) {
-      const row = rawData[i];
-      const rawBatchValue = row[batchColIndex];
-      const currentBatch = String(rawBatchValue || '').trim().toLowerCase();
-
-      // Cek kalo ada yang "hampir mirip" (Spasi gaib, typo, huruf kecil/gede)
-      if (currentBatch.includes(targetBatch) || targetBatch.includes(currentBatch)) {
-         if (currentBatch !== targetBatch && currentBatch.length > 0) {
-            Logger.log(`⚠️ MENCURIGAKAN di Baris ${i + conf.startRow}: Asli='${rawBatchValue}' -> Dibaca='${currentBatch}'`);
-         }
-      }
-
-      // Cek Match Sempurna
-      if (currentBatch === targetBatch) {
-        foundCount++;
-        Logger.log(`🎯 KETEMU MATCH! Di baris ${i + conf.startRow}. IN: ${row[map.penerimaan-1]} | OUT: ${row[map.distribusi-1]} | Konsumen: ${row[map.namaKonsumen-1]}`);
-      }
-    }
-
-    Logger.log("🏁 TOTAL MATCH DI TAHUN " + conf.year + ": " + foundCount + " baris mutasi.");
-
+    var result = {
+      status: 'success',
+      rawCount: rawBatch.length,
+      joinedCount: joined.length,
+      sample: joined.length > 0 ? joined[0] : null,
+      hasProductFields: joined.length > 0 ? {
+        hasKodeBarangOld: joined[0].kodeBarangOld !== undefined,
+        hasNamaBarangDagang: joined[0].namaBarangDagang !== undefined,
+        hasHjp: joined[0].hjp !== undefined
+      } : null
+    };
+    Logger.log(JSON.stringify(result));
+    return result;
   } catch (e) {
-    Logger.log("❌ ERROR EXCEPTION MUNCUL: " + e.message);
+    var result = { status: 'error', message: e.toString(), stack: e.stack };
+    Logger.log(JSON.stringify(result));
+    return result;
   }
+}
+
+function test_GetShortBatchLookup() {
+  try {
+    var batchRepo = new BatchRepo();
+    var productRepo = new ProductRepo();
+    var service = new BatchService(batchRepo, productRepo);
+    
+    // Tes method dengan filter status + schema 'short'
+    var data = service.getShortBatchLookup(1, 20);
+    
+    // Validasi: pastikan tidak ada CLOSED yang lolos
+    var hasClosed = data.some(function(item) {
+      return String(item.sysStatus || '').toUpperCase() === 'CLOSED';
+    });
+    
+    // Validasi: pastikan output sesuai schema 'short'
+    var schemaFields = ['id', 'productId', 'kodeBarangOld', 'kodeBarangNew', 'namaBarangDagang', 'batch', 'expiryDate', 'perBucket'];
+    var hasExtraFields = false;
+    if (data.length > 0) {
+      var first = data[0];
+      for (var key in first) {
+        if (schemaFields.indexOf(key) === -1) {
+          hasExtraFields = true;
+          break;
+        }
+      }
+    }
+    
+    var result = {
+      status: 'success',
+      count: data.length,
+      hasClosedStatus: hasClosed,
+      hasExtraFields: hasExtraFields,
+      schemaUsed: 'short',
+      sample: data.length > 0 ? data[0] : null
+    };
+    Logger.log(JSON.stringify(result));
+    return result;
+  } catch (e) {
+    var result = { status: 'error', message: e.toString(), stack: e.stack };
+    Logger.log(JSON.stringify(result));
+    return result;
+  }
+}
+
+function test_GetTableData() {
+  try {
+    var batchRepo = new BatchRepo();
+    var productRepo = new ProductRepo();
+    var service = new BatchService(batchRepo, productRepo);
+    
+    var data = service.getTableData(1, 10);
+    
+    var result = {
+      status: 'success',
+      count: data.length,
+      schemaUsed: 'table',
+      sample: data.length > 0 ? data[0] : null
+    };
+    Logger.log(JSON.stringify(result));
+    return result;
+  } catch (e) {
+    var result = { status: 'error', message: e.toString(), stack: e.stack };
+    Logger.log(JSON.stringify(result));
+    return result;
+  }
+}
+
+function test_GetDetail() {
+  try {
+    var batchRepo = new BatchRepo();
+    var productRepo = new ProductRepo();
+    var service = new BatchService(batchRepo, productRepo);
+    
+    // Coba cari detail by batch (ganti dengan batch valid di data kamu)
+    var payload = { batch: 'M202404027' };
+    var detail = service.getDetail(payload, 'detail');
+    
+    var result = {
+      status: detail ? 'success' : 'not_found',
+      schemaUsed: 'detail',
+      data: detail
+    };
+    Logger.log(JSON.stringify(result));
+    return result;
+  } catch (e) {
+    var result = { status: 'error', message: e.toString(), stack: e.stack };
+    Logger.log(JSON.stringify(result));
+    return result;
+  }
+}
+
+function test_QueryMethod() {
+  try {
+    var batchRepo = new BatchRepo();
+    var productRepo = new ProductRepo();
+    var service = new BatchService(batchRepo, productRepo);
+    
+    // Tes query dengan filter dinamis
+    var params = {
+      page: 1,
+      limit: 15,
+      schema: 'dropdown',
+      filters: {
+        batch: ['M202404027']
+      }
+    };
+    
+    var data = service.query(params);
+    
+    // Validasi: semua item harus sektor=PBF dan sysStatus in allowed list
+    var allMatch = data.every(function(item) {
+      var sectorOk = String(item.sektor || '').toUpperCase() === 'PBF';
+      var status = String(item.sysStatus || '').toUpperCase();
+      var statusOk = ['ACTIVE', 'NTC'].indexOf(status) !== -1;
+      return sectorOk && statusOk;
+    });
+    
+    var result = {
+      status: 'success',
+      count: data.length,
+      allMatchFilter: allMatch,
+      schemaUsed: 'dropdown',
+      sample: data.length > 0 ? data[0] : null
+    };
+    Logger.log(JSON.stringify(result));
+    return result;
+  } catch (e) {
+    var result = { status: 'error', message: e.toString(), stack: e.stack };
+    Logger.log(JSON.stringify(result));
+    return result;
+  }
+}
+
+function test_FullFlow() {
+  try {
+    var batchRepo = new BatchRepo();
+    var productRepo = new ProductRepo();
+    var service = new BatchService(batchRepo, productRepo);
+    
+    // 1. Join
+    var raw = batchRepo.getPaginatedRawData(1, 50);
+    var joined = service._joinBatchWithProduct(raw);
+    
+    // 2. Process JSON fields
+    var processed = service._processJsonFields(joined);
+    
+    // 3. Filter
+    var filterConfig = {
+      allowedStatuses: ['ACTIVE', 'INACTIVE', 'NTC', 'ANOMALI']
+    };
+    var filtered = service._applyFilters(processed, filterConfig);
+    
+    // 4. Project to schema
+    var projected = projectArrayToSchema(filtered, 'table');
+    
+    var result = {
+      status: 'success',
+      steps: {
+        raw: raw.length,
+        joined: joined.length,
+        processed: processed.length,
+        filtered: filtered.length,
+        projected: projected.length
+      },
+      sample: projected.length > 0 ? projected[0] : null
+    };
+    Logger.log(JSON.stringify(result));
+    // Di dalam test_FullFlow, setelah join:
+  var sampleRaw = raw[0];
+  var sampleJoined = joined[0];
+  Logger.log('DEBUG: Raw batch productId: ' + sampleRaw[1]); // index 1 = productId
+  Logger.log('DEBUG: Joined productId: ' + sampleJoined.productId);
+
+  // Cek apakah product-nya ketemu
+  var productRepo = new ProductRepo();
+  var allProducts = productRepo.getAllProductRaw();
+  var foundProduct = allProducts.find(function(p) {
+    return p[0] === sampleRaw[1]; // p[0] = product id
+  });
+  Logger.log('DEBUG: Product found: ' + !!foundProduct);
+  if (foundProduct) {
+    Logger.log('DEBUG: Product kodeBarangOld: ' + foundProduct[1]); // sesuaikan index
+  }
+    return result;
+  } catch (e) {
+    var result = { status: 'error', message: e.toString(), stack: e.stack };
+    Logger.log(JSON.stringify(result));
+    return result;
+  }
+  
 }
