@@ -160,6 +160,9 @@ function fetchUiData(action, reqPage = 1, reqLimit = 50) {
     if (!route) {
       throw new Error(`Endpoint action '${action}' tidak terdaftar di Registry!`);
     }
+    if (action === 'getNavbarLogo') {
+      return { status: "success", data: getNavbarLogo() }; // Langsung tembak fungsinya!
+    }
 
     const service = route.factory();
     const pageNum = parseInt(reqPage) || 1;
@@ -339,6 +342,10 @@ function doGet(e) {
       
       if (action === 'ping') {
         return responseHelper({ status: "success", message: "API V2 is running & Scalable!" });
+      }
+
+      if (action === 'getNavbarLogo') {
+        return responseHelper({ status: "success", data: getNavbarLogo() });
       }
 
       const route = DomainRegistry[action];
