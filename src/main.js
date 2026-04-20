@@ -28,6 +28,10 @@ const DomainRegistry = {
     cacheGroup: AppConfig.DB_SHIPPING_EMBALAGE_MASTER_SHEET_NAME,
     method: 'getDashboardStats'
   },
+  'getDashboardAnalytics': {
+    factory: () => new AnalyticsService(),
+    method: 'getDashboardAnalytics'
+  },
 
 // 'getBatchLookup': {
 //     // THE FIX: Masukin new ProductRepo() di argumen kedua!
