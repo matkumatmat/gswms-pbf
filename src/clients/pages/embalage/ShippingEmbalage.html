@@ -1,0 +1,65 @@
+<style>
+  /* CSS Native Horizontal Bar Chart (Single Approach) */
+  .chart-container { margin-bottom: 10px; }
+  .chart-row { display: flex; flex-direction: column; margin-bottom: 16px; }
+  .chart-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px; }
+  .chart-label span.qty { font-family: monospace; color: var(--text-light); font-weight: 600; }
+  
+  .chart-track {
+    width: 100%; height: 22px; background-color: #f1f5f9; border-radius: 6px;
+    position: relative; overflow: hidden; border: 1px solid var(--border);
+    cursor: help; /* Kursor berubah jadi tanda tanya pas dihover */
+  }
+  
+  .chart-bar {
+    height: 100%; border-radius: 6px 0 0 6px; transition: width 0.5s ease-in-out;
+  }
+  .chart-track:hover .chart-bar { opacity: 0.85; }
+  
+  .chart-marker {
+    position: absolute; top: 0; bottom: 0; width: 2px; z-index: 10;
+  }
+  .marker-reorder { background-color: #f59e0b; } /* Orange */
+  .marker-safe { background-color: #ef4444; } /* Merah */
+
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-light); font-weight: 600; margin-right: 16px; }
+  .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* Tweak Khusus Mobile */
+  @media (max-width: 767px) {
+    .chart-row { margin-bottom: 12px; }
+    .chart-label { font-size: 0.8rem; }
+    .chart-track { height: 18px; } 
+    .hide-on-mobile { display: none; }
+  }
+</style>
+
+<div class="ui-subheader" style="justify-content: space-between;">
+  <div style="display: flex; align-items: center; gap: 16px;">
+    <div class="ui-subheader-icon"><i data-lucide="package-open"></i></div>
+    <div class="ui-subheader-text">
+      <h2>Manajemen Embalage</h2>
+      <p>Pantau sisa stok dan catat distribusi harian.</p>
+    </div>
+  </div>
+  
+  <button class="btn btn-primary" onclick="openMutasiModal()">
+    <i data-lucide="plus-circle"></i> <span class="hide-on-mobile">Catat Mutasi</span>
+  </button>
+</div>
+
+<div class="ui-card">
+  <div class="ui-card-header">Ketersediaan & Status Stok Aktual</div>
+  <div class="ui-card-body">
+    <div style="margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
+      <div class="legend-item"><div class="legend-color" style="background: var(--primary);"></div> Aman</div>
+      <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div> Reorder Point</div>
+      <div class="legend-item"><div class="legend-color" style="background: #ef4444;"></div> Safety Stock</div>
+    </div>
+    
+    <div id="embalage-chart-container" class="chart-container">
+      </div>
+  </div>
+</div>
+
+<?!= include('src/clients/pages/embalage/ShippingEmbalageScript'); ?>

@@ -10,14 +10,23 @@ const DomainRegistry = {
     cacheGroup: AppConfig.DB_SHIPPING_EMBALAGE_LOOKUP_SHEET_NAME
   },
 
-  'getMasterShippingEmbalage': {
-    factory: () => new MasterShippingEmbalageService(new MasterShippingEmbalageRepo()),
-    cacheGroup: AppConfig.DB_SHIPPING_EMBALAGE_MASTER_SHEET_NAME
-  },
+  // 'getMasterShippingEmbalage': {
+  //   factory: () => new MasterShippingEmbalageService(new MasterShippingEmbalageRepo()),
+  //   cacheGroup: AppConfig.DB_SHIPPING_EMBALAGE_MASTER_SHEET_NAME
+  // },
 
   'getShippingLabels': {
     factory: () => new ShippingLabelService(new ShippingLabelRepo()),
     cacheGroup: AppConfig.DB_SHIPPING_LABEL_SHEET_NAME
+  },
+  'getConstantShippingEmbalage': {
+    factory: () => new ShippingEmbalageService(new MasterShippingEmbalageRepo(), new ConstantShippingEmbalageRepo()),
+    cacheGroup: AppConfig.DB_SHIPPING_EMBALAGE_MASTER_SHEET_NAME
+  },
+  'getEmbalageDashboard': {
+    factory: () => new ShippingEmbalageService(new MasterShippingEmbalageRepo(), new ConstantShippingEmbalageRepo()),
+    cacheGroup: AppConfig.DB_SHIPPING_EMBALAGE_MASTER_SHEET_NAME,
+    method: 'getDashboardStats'
   },
 
 // 'getBatchLookup': {
@@ -97,6 +106,10 @@ const PostRegistry = {
   'createCustomer': {
     factory: () => new CustomerService(new CustomerRepo()),
     method: 'create'
+  },
+  'createEmbalageTransaction': {
+    factory: () => new ShippingEmbalageService(new MasterShippingEmbalageRepo(), new ConstantShippingEmbalageRepo()),
+    method: 'createTransaction'
   },
 };
 function doPost(e) {
@@ -253,7 +266,8 @@ function doGet(e) {
         'home': 'src/clients/pages/Home',
         'master_customer': 'src/client/pages/customer/CustomerList',
         'add_customer': 'src/client/pages/customer/CustomerForm',
-        'fefo_center': 'src/client/pages/fefo/FefoCenter'
+        'fefo_center': 'src/client/pages/fefo/FefoCenter',
+        'embalage': 'src/clients/pages/embalage/ShippingEmbalage',
       };
 
       if (validPages[reqPage]) {
