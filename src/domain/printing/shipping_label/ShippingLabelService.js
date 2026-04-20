@@ -50,8 +50,8 @@ create(data) {
       data.tanggal || new Date(),
       data.noDokumen,
       data.customerId,
-      data.namaCustomer,      // <--- SEKARANG INI BISA DIISI
-      data.cabangCustomer,    // <--- SEKARANG INI BISA DIISI
+      data.namaCustomer,      
+      data.cabangCustomer,    
       JSON.stringify(data.payloadRecipient || {}),
       data.payloadTotalBox || 1,
       JSON.stringify(data.payloadBoxes || []),
@@ -70,7 +70,7 @@ create(data) {
   }
 
     updatePrintStatus(payload) {
-    const { id, status } = payload; // <-- GANTI JADI ID
+    const { id, status } = payload;
     
     if (!id || !status) {
       throw new Error("Payload tidak lengkap. Butuh 'id' dan 'status'.");
