@@ -99,8 +99,8 @@ function scheduledDailyStockSync() {
     
     // 1. Sinkronisasi Stok (In/Out)
     console.log("1. Menjalankan Aggregator Stok...");
-    // const aggregatorService = new StockAggregatorService();
-    // aggregatorService.executeDailySync(); // Asumsi ini fungsi lu yg kemarin
+    const aggregatorService = new StockAggregatorService();
+    aggregatorService.executeDailySync(); // Asumsi ini fungsi lu yg kemarin
     
     // 2. Update Umur Simpan (RSL)
     console.log("2. Menghitung Ulang RSL Batch...");

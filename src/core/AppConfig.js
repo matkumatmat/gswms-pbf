@@ -126,8 +126,8 @@ const AppConfig = {
     DB_DISTRIBUSI_COLD:[
         {
         DB_DISTRIBUSI_ID: '1JywVff65IRXuKcobbLIvcaufTMHCDcWHU8zx16-Eu-s',
-        DB_DISTRIBUSI_SHEET_NAME: 'MASTER DISTRIBUSI',
-        DB_DISTRIBUSI_TABLE_NAME: 'MASTER',
+        DB_DISTRIBUSI_SHEET_NAME: 'ALL DIST',
+        DB_DISTRIBUSI_TABLE_NAME: 'Table1',
         DB_DISTRIBUSI_YEAR : '2025',
         DB_DISTRIBUSI_START_ROW: 2,
         DB_DISTRIBUSI_ID_COL: 17,  // kolom Q untuk idDistribusi

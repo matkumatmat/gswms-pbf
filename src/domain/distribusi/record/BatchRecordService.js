@@ -31,7 +31,8 @@ class BatchRecordService {
       const kons = String(record.namaKonsumen || '').toUpperCase();
 
       // Abaikan data anomali / revisi dari perhitungan buku tabungan
-      if (ket.includes('REVISI') || kons.includes('SALDO AWAL')) return;
+      // if (ket.includes('REVISI') || kons.includes('SALDO AWAL')) return;
+      if (kons.includes('SALDO AWAL')) return;
 
       runningBalance += (record.penerimaan || 0);
       runningBalance -= (record.distribusi || 0);

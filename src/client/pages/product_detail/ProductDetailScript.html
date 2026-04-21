@@ -37,7 +37,8 @@
         history.forEach(h => {
           const ket = String(h.keterangan || '').toUpperCase();
           const kons = String(h.namaKonsumen || '').toUpperCase();
-          if (!ket.includes('REVISI') && !kons.includes('SALDO AWAL')) {
+          // if (!ket.includes('REVISI') && !kons.includes('SALDO AWAL')) {
+          if (!kons.includes('SALDO AWAL')) {
             totalIn += (h.penerimaan || 0);
             totalOut += (h.distribusi || 0);
           }
