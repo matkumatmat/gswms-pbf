@@ -1,8 +1,42 @@
+<style>
+  /* Filter Bar Styling */
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; background: var(--surface, #fff); padding: 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
+  .filter-item { display: flex; flex-direction: column; flex: 1; min-width: 150px; }
+  .filter-item label { font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; }
+  .filter-item select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; outline: none; background: #fff; cursor: pointer; }
+  
+  /* Interactive Card Styling */
+  .metric-card { cursor: pointer; transition: 0.2s; user-select: none; border-bottom: 4px solid var(--border); }
+  .metric-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+  .metric-card.m-dist { border-bottom-color: #3b82f6; }
+  .metric-card.m-batch { border-bottom-color: #8b5cf6; }
+  .metric-subtitle { font-size: 0.7rem; color: var(--text-light); font-weight: 600; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+  
+  /* Accordion Styling: 2 Grid Layout on Desktop */
+  .acc-container { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; align-items: start; }
+  @media (min-width: 1024px) { 
+    .acc-container { grid-template-columns: repeat(2, 1fr); } 
+  }
+  .acc-item { background: var(--surface, #fff); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: 0.3s; }
+  .acc-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+  .acc-header:hover { background: #f8fafc; }
+  .acc-body { display: none; padding: 0 15px 15px 15px; border-top: 1px dashed var(--border); background: #f8fafc; }
+  .acc-body.open { display: block; animation: slideDown 0.3s ease; }
+  
+  .batch-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  .batch-row:last-child { border-bottom: none; }
+
+  /* Utility: Truncate Text */
+  .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 100%; }
+
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
 <div class="ui-subheader">
   <div class="ui-subheader-icon" style="background: #e0f2fe; color: #0284c7;"><i data-lucide="layout-dashboard"></i></div>
   <div class="ui-subheader-text">
     <h2>Dashboard Operasional</h2>
-    <p>Ringkasan data inventori, batch, dan direktori PBF.</p>
+    <p>Ringkasan data inventori, batch, direktori PBF, dan analitik distribusi.</p>
   </div>
 </div>
 
@@ -14,7 +48,7 @@
         <i data-lucide="package" style="width:14px; vertical-align:text-bottom;"></i> Varian Produk
       </div>
       <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="dash-produk">
-        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#94a3b8;"></i>
+        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
       </div>
       <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 6px;">Total item terdaftar</div>
     </div>
@@ -26,7 +60,7 @@
         <i data-lucide="layers" style="width:14px; vertical-align:text-bottom;"></i> Total Batch
       </div>
       <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="dash-batch">
-        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#94a3b8;"></i>
+        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
       </div>
       <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 6px;">Batch aktif di gudang</div>
     </div>
@@ -38,26 +72,86 @@
         <i data-lucide="users" style="width:14px; vertical-align:text-bottom;"></i> Klien / Konsumen
       </div>
       <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="dash-konsumen">
-        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#94a3b8;"></i>
+        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
       </div>
       <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 6px;">RS, Apotek & Distributor</div>
     </div>
   </div>
 
-<a href="?page=fefo_center" style="text-decoration: none; color: inherit; display: block;">
-  <div class="ui-card" style="border-bottom: 4px solid #ef4444; cursor:pointer;">
-    <div class="ui-card-body" style="padding: 20px; background:#fef2f2;">
-      <div style="color: #ef4444; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
-        <i data-lucide="alert-triangle" style="width:14px; vertical-align:text-bottom;"></i> FEFO (< 3 Bulan)
+  <a href="?page=fefo_center" style="text-decoration: none; color: inherit; display: block;">
+    <div class="ui-card" style="border-bottom: 4px solid #ef4444; cursor:pointer;">
+      <div class="ui-card-body" style="padding: 20px; background:#fef2f2;">
+        <div style="color: #ef4444; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
+          <i data-lucide="alert-triangle" style="width:14px; vertical-align:text-bottom;"></i> FEFO (< 3 Bulan)
+        </div>
+        <div style="font-size: 2.2rem; font-weight: 900; color: #b91c1c; line-height: 1;" id="dash-fefo">
+          <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
+        </div>
+        <div style="font-size: 0.75rem; color: #ef4444; margin-top: 6px; font-weight:600;">Klik untuk detail &rarr;</div>
       </div>
-      <div style="font-size: 2.2rem; font-weight: 900; color: #b91c1c; line-height: 1;" id="dash-fefo">
-        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#94a3b8;"></i>
+    </div>
+  </a>
+
+</div>
+
+<div style="border-top: 2px dashed var(--border); margin: 30px 0; padding-top: 20px;">
+  <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 16px; font-weight: 800;">Analitik Distribusi & Stok Real-Time</h3>
+  
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 20px;">
+    <div class="ui-card metric-card m-dist" onclick="toggleDistCard()" title="Klik untuk ubah rentang tahun">
+      <div class="ui-card-body" style="padding: 20px;">
+        <div style="color: #3b82f6; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
+          <i data-lucide="arrow-up-right" style="width:14px; vertical-align:text-bottom;"></i> Total Distribusi Keluar
+        </div>
+        <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="lblDistQty">
+          <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
+        </div>
+        <div class="metric-subtitle">
+          <span id="lblDistMode">Mode: Tahun Ini</span>
+          <i data-lucide="refresh-cw" style="width:12px;"></i>
+        </div>
       </div>
-      <div style="font-size: 0.75rem; color: #ef4444; margin-top: 6px; font-weight:600;">Klik untuk detail &rarr;</div>
+    </div>
+
+    <div class="ui-card metric-card m-batch" onclick="toggleBatchCard()" title="Klik untuk ubah status batch">
+      <div class="ui-card-body" style="padding: 20px;">
+        <div style="color: #8b5cf6; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
+          <i data-lucide="layers" style="width:14px; vertical-align:text-bottom;"></i> Status Akumulasi Batch
+        </div>
+        <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="lblBatchQty">
+          <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
+        </div>
+        <div class="metric-subtitle">
+          <span id="lblBatchMode">Mode: ACTIVE</span>
+          <i data-lucide="refresh-cw" style="width:12px;"></i>
+        </div>
+      </div>
     </div>
   </div>
-</a>
 
+  <div class="filter-bar">
+    <div class="filter-item">
+      <label>Rentang Waktu (Untuk Distribusi)</label>
+      <select id="filterWaktu" onchange="processAnalyticsData()">
+        <option value="ALL">Semua Waktu (Termasuk Thn Lalu)</option>
+        <option value="THIS_YEAR" selected>Tahun Ini (Berjalan)</option>
+        <option value="THIS_MONTH">Bulan Ini</option>
+        <option value="LAST_MONTH">Bulan Lalu</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <label>Pilih Produk</label>
+      <select id="filterProduk" onchange="processAnalyticsData()">
+        <option value="ALL">Semua Produk</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="accordion-container" class="acc-container">
+    <div style="text-align:center; padding: 40px; color: var(--primary); grid-column: 1 / -1;">
+      <i data-lucide="loader-2" class="lucide-spin" style="width:36px; height:36px;"></i><br><br>Memuat Data Analytics...
+    </div>
+  </div>
 </div>
 
 <div class="ui-card" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: none;">
@@ -65,56 +159,45 @@
     <i data-lucide="shield-check" style="width:48px; height:48px; color:var(--primary); margin-bottom:16px;"></i>
     <h3 style="color:var(--text-main); margin-bottom:8px;">Sistem Terkoneksi Real-Time</h3>
     <p style="color:var(--text-light); font-size:0.9rem; max-width:500px; margin:0 auto;">
-      Data pada dashboard ini ditarik secara langsung dari Master Spreadsheet. Pastikan tim lapangan melakukan update penerimaan dan distribusi secara berkala melalui perangkat mobile (AppSheet).
+      Data pada dashboard ini ditarik secara langsung dari Master Spreadsheet. Pastikan tim lapangan melakukan update penerimaan dan distribusi secara berkala melalui perangkat mobile.
     </p>
   </div>
 </div>
 
 <script>
+  let RAW_ANALYTICS = null;
+  let PROCESSED_DATA = [];
+  
+  let distState = 0; 
+  let batchState = 0; 
+
   document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
-    loadRealDashboardData();
+    loadAllDashboardData();
   });
 
-async function loadRealDashboardData() {
+  async function loadAllDashboardData() {
     try {
-      // THE FIX: Tarik satu-satu secara berurutan biar token session Google ga tabrakan!
-      const batches = await GasApi.get('getActiveReceivedBatches', 1, 5000);
-      const customers = await GasApi.get('getCustomers', 1, 2000);
+      const [activeBatches, customers, analyticsStats] = await Promise.all([
+        GasApi.get('getActiveReceivedBatches', 1, 5000),
+        GasApi.get('getCustomers', 1, 2000),
+        GasApi.get('getDashboardAnalytics')
+      ]);
 
-      // 1. Set Total Konsumen
-      document.getElementById('dash-konsumen').innerText = customers.length.toLocaleString('id-ID');
+      populateBasicMetrics(activeBatches, customers);
 
-      // 2. Set Total Batch
-      document.getElementById('dash-batch').innerText = batches.length.toLocaleString('id-ID');
-
-      // 3. Hitung Produk Unik & Batch Kritis (FEFO)
-      const uniqueProducts = new Set();
-      let fefoCount = 0;
+      RAW_ANALYTICS = analyticsStats;
       
-      const today = new Date();
-      today.setHours(0,0,0,0);
-
-      batches.forEach(b => {
-        if (b.productId || b.namaBarangDagang) {
-          uniqueProducts.add(b.productId || b.namaBarangDagang);
-        }
-        
-        if (b.expiryDate) {
-          const expDate = new Date(b.expiryDate);
-          if (!isNaN(expDate.getTime())) {
-            const diffTime = expDate - today;
-            const sisaHari = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (sisaHari <= 90) {
-              fefoCount++;
-            }
-          }
+      const selProd = document.getElementById('filterProduk');
+      const uniqueProducts = new Map();
+      RAW_ANALYTICS.products.forEach(p => {
+        if (!uniqueProducts.has(p.kodeBarang)) {
+          uniqueProducts.set(p.kodeBarang, true);
+          selProd.innerHTML += `<option value="${p.kodeBarang}">${p.namaDagang} (${p.kodeBarang})</option>`;
         }
       });
 
-      // Render Hasil ke Layar
-      document.getElementById('dash-produk').innerText = uniqueProducts.size.toLocaleString('id-ID');
-      document.getElementById('dash-fefo').innerText = fefoCount.toLocaleString('id-ID');
+      processAnalyticsData();
 
     } catch (e) {
       console.error("Gagal memuat data dashboard:", e);
@@ -122,8 +205,218 @@ async function loadRealDashboardData() {
       document.getElementById('dash-batch').innerText = "ERR";
       document.getElementById('dash-konsumen').innerText = "ERR";
       document.getElementById('dash-fefo').innerText = "ERR";
-      ToastSystem.show("Gagal memuat data dashboard!", "error");
+      document.getElementById('accordion-container').innerHTML = `<div style="color:red; text-align:center; padding:20px; grid-column: 1 / -1;">Gagal memuat data analitik.</div>`;
+      ToastSystem.show("Gagal memuat data dashboard lengkap!", "error");
     }
   }
 
+  function populateBasicMetrics(batches, customers) {
+    document.getElementById('dash-konsumen').innerText = customers.length.toLocaleString('id-ID');
+    document.getElementById('dash-batch').innerText = batches.length.toLocaleString('id-ID');
+
+    const uniqueProducts = new Set();
+    let fefoCount = 0;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    batches.forEach(b => {
+      if (b.productId || b.namaBarangDagang) uniqueProducts.add(b.productId || b.namaBarangDagang);
+      if (b.expiryDate) {
+        const expDate = new Date(b.expiryDate);
+        if (!isNaN(expDate.getTime())) {
+          const diffTime = expDate - today;
+          const sisaHari = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          if (sisaHari <= 90) fefoCount++;
+        }
+      }
+    });
+
+    document.getElementById('dash-produk').innerText = uniqueProducts.size.toLocaleString('id-ID');
+    document.getElementById('dash-fefo').innerText = fefoCount.toLocaleString('id-ID');
+  }
+
+  // ==========================================
+  // CORE ENGINE ANALITIK (DISTRIBUSI & STOK ASLI)
+  // ==========================================
+  function processAnalyticsData() {
+    if (!RAW_ANALYTICS) return;
+
+    const waktu = document.getElementById('filterWaktu').value;
+    const filterProduk = document.getElementById('filterProduk').value;
+
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+
+    const productGroup = new Map();
+
+    const initProduct = (kode) => {
+      if (!productGroup.has(kode)) {
+        const prodMaster = RAW_ANALYTICS.products.find(p => p.kodeBarang === kode);
+        productGroup.set(kode, { 
+          nama: prodMaster ? prodMaster.namaDagang : 'Produk Tidak Dikenal', 
+          kode: kode,
+          totalDistFilter: 0, 
+          totalStokAsli: 0,
+          batches: new Map() 
+        });
+      }
+      return productGroup.get(kode);
+    };
+
+    const initBatch = (pg, batchNo) => {
+      if (!pg.batches.has(batchNo)) {
+        const batchMaster = RAW_ANALYTICS.batches.find(b => b.batch === batchNo);
+        pg.batches.set(batchNo, {
+          batch: batchNo,
+          distFilter: 0,
+          stokAsli: 0,
+          status: batchMaster ? batchMaster.sysStatus : 'UNKNOWN'
+        });
+      }
+      return pg.batches.get(batchNo);
+    };
+
+    const allTrx = RAW_ANALYTICS.hotTransactions.concat(RAW_ANALYTICS.coldAggregations);
+
+    // LOOP 1: Hitung True Stock (Abaikan Filter Waktu)
+    allTrx.forEach(trx => {
+      if (filterProduk !== 'ALL' && trx.kodeBarang !== filterProduk) return;
+      const pg = initProduct(trx.kodeBarang);
+      const bg = initBatch(pg, trx.batch);
+      
+      const net = (trx.in || 0) - (trx.out || 0);
+      pg.totalStokAsli += net;
+      bg.stokAsli += net;
+    });
+
+    // LOOP 2: Hitung Distribusi (Ikutin Filter Waktu)
+    allTrx.forEach(trx => {
+      if (filterProduk !== 'ALL' && trx.kodeBarang !== filterProduk) return;
+
+      let isMatchWaktu = false;
+      if (trx.tanggal) { 
+        const trxDate = new Date(trx.tanggal);
+        if (waktu === 'ALL' || waktu === 'THIS_YEAR') isMatchWaktu = true;
+        else if (waktu === 'THIS_MONTH' && trxDate.getMonth() === currentMonth && trxDate.getFullYear() === currentYear) isMatchWaktu = true;
+        // Fix untuk pergantian tahun (Januari -> Desember)
+        else if (waktu === 'LAST_MONTH' && trxDate.getMonth() === (currentMonth === 0 ? 11 : currentMonth - 1) && trxDate.getFullYear() === (currentMonth === 0 ? currentYear - 1 : currentYear)) isMatchWaktu = true;
+      } else { 
+        if (waktu === 'ALL') isMatchWaktu = true;
+      }
+
+      if (isMatchWaktu) {
+        const pg = initProduct(trx.kodeBarang);
+        const bg = initBatch(pg, trx.batch);
+        pg.totalDistFilter += (trx.out || 0);
+        bg.distFilter += (trx.out || 0);
+      }
+    });
+
+    PROCESSED_DATA = Array.from(productGroup.values()).map(pg => {
+      pg.batchArray = Array.from(pg.batches.values());
+      // Urutkan batch dari distribusi terbanyak
+      pg.batchArray.sort((a, b) => b.distFilter - a.distFilter);
+      return pg;
+    });
+
+    // Urutkan produk dari distribusi terbanyak
+    PROCESSED_DATA.sort((a, b) => b.totalDistFilter - a.totalDistFilter);
+    
+    updateInteractiveCards();
+    renderAccordion();
+  }
+
+  function toggleDistCard() { distState = (distState + 1) % 3; updateInteractiveCards(); }
+  function toggleBatchCard() { batchState = (batchState + 1) % 3; updateInteractiveCards(); }
+
+  function updateInteractiveCards() {
+    if (!RAW_ANALYTICS) return;
+
+    const distLabels = ['Tahun Ini (Hot)', 'Tahun Lalu (Cold)', 'Total Semua'];
+    let totalDist = 0;
+    
+    if (distState === 0 || distState === 2) {
+      totalDist += RAW_ANALYTICS.hotTransactions.reduce((sum, trx) => sum + trx.out, 0);
+    }
+    if (distState === 1 || distState === 2) {
+      totalDist += RAW_ANALYTICS.coldAggregations.reduce((sum, trx) => sum + trx.out, 0);
+    }
+    
+    document.getElementById('lblDistQty').innerText = totalDist.toLocaleString('id-ID');
+    document.getElementById('lblDistMode').innerText = `Mode: ${distLabels[distState]}`;
+
+    const batchLabels = ['ACTIVE', 'INACTIVE', 'CLOSED'];
+    const targetStatus = batchLabels[batchState];
+    const countBatch = RAW_ANALYTICS.batches.filter(b => String(b.sysStatus).toUpperCase() === targetStatus).length;
+
+    document.getElementById('lblBatchQty').innerText = countBatch.toLocaleString('id-ID');
+    document.getElementById('lblBatchMode').innerText = `Mode: ${targetStatus}`;
+  }
+
+  function renderAccordion() {
+    const container = document.getElementById('accordion-container');
+    
+    if (PROCESSED_DATA.length === 0) {
+      container.innerHTML = `<div style="text-align:center; padding: 20px; background:var(--surface); border-radius:10px; border:1px dashed var(--border); color:var(--text-light); grid-column: 1 / -1;">Tidak ada data yang sesuai dengan filter.</div>`;
+      return;
+    }
+
+    let html = '';
+    PROCESSED_DATA.forEach((prod, index) => {
+      const id = `acc-${index}`;
+      
+      let batchHtml = '';
+      prod.batchArray.forEach(b => {
+        let badgeColor = b.status === 'ACTIVE' ? 'success' : (b.status === 'CLOSED' ? 'neutral' : 'danger');
+        
+        batchHtml += `
+          <div class="batch-row">
+            <div>
+              <span style="font-family:monospace; font-weight:800; color:var(--text-main);">${b.batch}</span>
+              <span class="ui-badge ui-badge-${badgeColor}" style="font-size:0.6rem; padding:2px 6px; margin-left:8px;">${b.status}</span>
+            </div>
+            <div style="text-align: right; font-weight:700;">
+              <span style="color:#3b82f6; font-size:0.95rem;" title="Distribusi Keluar">${b.distFilter.toLocaleString('id-ID')}</span>
+              <span style="color:#cbd5e1; margin:0 4px;">/</span>
+              <span style="color:#10b981; font-size:0.95rem;" title="Sisa Stok Asli">${b.stokAsli.toLocaleString('id-ID')}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAccordion('${id}')">
+            <div style="min-width: 0; flex: 1; padding-right: 12px;">
+              <div class="text-truncate" style="font-weight:800; font-size:1rem; color:var(--text-main);" title="${prod.nama}">${prod.nama}</div>
+              <div style="font-size:0.75rem; color:var(--text-light); margin-top:2px;">Kode: ${prod.kode} • ${prod.batchArray.length} Batch</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; flex-shrink: 0;">
+              <div style="text-align:right;">
+                <div style="font-size:0.6rem; color:var(--text-light); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Dist &nbsp;|&nbsp; Stok</div>
+                <div style="font-size:1.1rem; font-weight:900; line-height:1; margin-top:2px;">
+                  <span style="color:#3b82f6;">${prod.totalDistFilter.toLocaleString('id-ID')}</span> 
+                  <span style="color:#cbd5e1; font-size:0.9rem;">/</span> 
+                  <span style="color:#10b981;">${prod.totalStokAsli.toLocaleString('id-ID')}</span>
+                </div>
+              </div>
+              <i data-lucide="chevron-down" style="color:var(--text-light);"></i>
+            </div>
+          </div>
+          <div id="${id}" class="acc-body">
+            <div style="padding-top:10px;">${batchHtml}</div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+    lucide.createIcons();
+  }
+
+  function toggleAccordion(id) {
+    const body = document.getElementById(id);
+    body.classList.toggle('open');
+  }
 </script>

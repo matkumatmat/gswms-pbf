@@ -35,7 +35,7 @@ class ShippingEmbalageService extends BaseService {
         return this._project(filtered, schemaName);
     }
 
-    // FUNGSI BARU: Agregasi di Server-Side
+
     getDashboardStats() {
         const rawConstant = this.constantRepo.getAllLookupShippingEmbalageRaw();
         const constants = AppUtils.mapArrayToObject(rawConstant, ConstantShippingEmbalageRepo.TABLE_KEYS);
@@ -45,25 +45,19 @@ class ShippingEmbalageService extends BaseService {
 
         const stockMap = new Map();
 
-        // Inisialisasi map dengan master data (Katalog)
         constants.forEach(c => {
             if(c.kodeBarang) {
                 stockMap.set(c.kodeBarang, {
                     kodeBarang: c.kodeBarang,
                     namaBarang: c.namaBarang,
-                    kategori: c.kategori || '-',
                     satuan: c.satuan || 'Pcs',
                     safeStock: parseFloat(c.safeStock) || 0,
                     reorderPoint: parseFloat(c.reorderPoint) || 0,
-                    totalIn: 0,
-                    totalOut: 0,
-                    currentStock: 0,
-                    status: 'UNKNOWN'
+                    totalIn: 0, totalOut: 0, currentStock: 0, status: 'SAFE'
                 });
             }
         });
 
-        // Agregasi mutasi (Masuk/Keluar)
         masters.forEach(m => {
             if(m.kodeBarang && stockMap.has(m.kodeBarang)) {
                 const item = stockMap.get(m.kodeBarang);
@@ -72,48 +66,27 @@ class ShippingEmbalageService extends BaseService {
             }
         });
 
-        const result = [];
-        stockMap.forEach(item => {
+        return Array.from(stockMap.values()).map(item => {
             item.currentStock = item.totalIn - item.totalOut;
-            
-            // Penentuan Status
-            if (item.currentStock <= item.safeStock) {
-                item.status = 'CRIT';
-            } else if (item.currentStock <= item.reorderPoint) {
-                item.status = 'WARN';
-            } else {
-                item.status = 'SAFE';
-            }
-            
-            result.push(item);
+            if (item.currentStock <= item.safeStock) item.status = 'CRIT';
+            else if (item.currentStock <= item.reorderPoint) item.status = 'WARN';
+            return item;
         });
-
-        return result;
     }
 
-    // FUNGSI BARU: Simpan Transaksi Baru
     createTransaction(data) {
         const id = AppUtils.generateUUID();
         const audit = AppUtils.getAuditTrail();
-        
         const row = [
-            id,
-            data.tanggal || new Date(),
-            data.noDokumen || '-',
-            data.kodeBarang,
-            data.namaBarang,
-            data.kategori || '-',
-            data.satuan || '-',
-            parseFloat(data.penerimaan) || 0,
-            parseFloat(data.distribusi) || 0,
-            data.keterangan || '-',
-            audit.updatedAt,
-            audit.updatedBy
+            id, data.tanggal || new Date(), data.noDokumen || '-',
+            data.kodeBarang, data.namaBarang, data.kategori || '-',
+            data.satuan || '-', parseFloat(data.penerimaan) || 0,
+            parseFloat(data.distribusi) || 0, data.keterangan || '-',
+            audit.updatedAt, audit.updatedBy
         ];
-
         this.repo.appendRow(row);
         AppUtils.invalidateCache(AppConfig.DB_SHIPPING_EMBALAGE_MASTER_SHEET_NAME);
-        
         return { id, ...data };
     }
+    
 }

@@ -36,7 +36,8 @@ class AnalyticsService {
       const ket = String(row[map.keterangan - 1] || '').toUpperCase();
       const kons = String(row[map.namaKonsumen - 1] || '').toUpperCase();
       
-      if (!batch || ket.includes('REVISI') || kons.includes('SALDO AWAL')) continue;
+      // if (!batch || ket.includes('REVISI') || kons.includes('SALDO AWAL')) continue;
+      if (!batch || ket.includes('REVISI')) continue;
 
       hotTransactions.push({
         tanggal: row[map.tanggal - 1], // Kirim raw date
