@@ -42,7 +42,7 @@ _createBatchActiveFilter() {
     return (item) => {
         if (!item || !item.id || String(item.id).trim() === '') return false;
         if (!item.productId || String(item.productId).trim() === '') return false;
-        if (String(item.status || '').toUpperCase().trim() !== 'RECEIVED') return false;
+        // if (String(item.status || '').toUpperCase().trim() !== 'RECEIVED') return false;
         // if (String(item.sysStatus || '').toUpperCase().trim() !== 'ACTIVE') return false;
         return true;
     };
