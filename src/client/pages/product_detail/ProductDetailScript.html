@@ -31,7 +31,8 @@
       renderDetailData(detail);
 
       try {
-        const history = await GasApi.post('getBatchHistory', { batchNo: detail.batch });
+        // const history = await GasApi.post('getBatchHistory', { batchNo: detail.batch });
+        const history = await GasApi.post('getBatchHistoryV2', { batchNo: detail.batch });
         let totalIn = 0, totalOut = 0;
         
         history.forEach(h => {
@@ -176,7 +177,8 @@
     btn.classList.add(`loading`);
 
     try {
-      const result = await GasApi.post('generateBatchRecordSheet', { batchNo: currentBatchForRecord });
+      // const result = await GasApi.post('generateBatchRecordSheet', { batchNo: currentBatchForRecord });
+      const result = await GasApi.post('generateBatchRecordSheetV2', { batchNo: currentBatchForRecord });
       
       ToastSystem.show(`Buku Tabungan berhasil dibuat!`, `success`);
       window.open(result.fileUrl, '_blank');

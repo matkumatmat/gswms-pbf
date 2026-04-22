@@ -54,9 +54,9 @@ function runColdStorageAggregator() {
         const konsumen = String(row[mapper.namaKonsumen - 1] || '').toUpperCase();
 
         // Filter validasi: Abaikan REVISI dan SALDO AWAL tahun berjalan (kecuali saldo awal tahun pertama sistem)
-        if (keterangan.includes('REVISI') || konsumen.includes('SALDO AWAL')) {
-          continue;
-        }
+        // if (keterangan.includes('REVISI') || konsumen.includes('SALDO AWAL')) {
+        //   continue;
+        // }
 
         const kodeBarang = String(row[mapper.kodeBarang - 1] || '-').trim();
         const qtyIn = parseFloat(row[mapper.penerimaan - 1]) || 0;

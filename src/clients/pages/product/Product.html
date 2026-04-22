@@ -187,7 +187,8 @@ async function loadAllProducts() {
     if (window.innerWidth < 1024) document.getElementById('aggregate-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     try {
-      const history = await GasApi.post('getBatchHistory', { batchNo: batchNo });
+      const history = await GasApi.post('getBatchHistoryV2', { batchNo: batchNo });
+      // const history = await GasApi.post('getBatchHistory', { batchNo: batchNo });
       const agg = {};
       let runningBalance = 0;
       const historyWithBalance = [];

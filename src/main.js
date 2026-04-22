@@ -115,6 +115,20 @@ const PostRegistry = {
     factory: () => new ShippingEmbalageService(new MasterShippingEmbalageRepo(), new ConstantShippingEmbalageRepo()),
     method: 'createTransaction'
   },
+  // --- ENDPOINT V2 (Struktur Baru) ---
+  'getBatchHistoryV2': {
+    factory: () => new TransactionHistoryService(new TransactionHistoryRepo()),
+    method: 'getHistory'
+  },
+  'generateBatchRecordSheetV2': {
+    factory: () => {
+      const historyRepo = new TransactionHistoryRepo();
+      const historyService = new TransactionHistoryService(historyRepo);
+      return new BatchDocumentGeneratorService(historyService);
+    },
+    method: 'generateDocument' 
+  },
+  // -----------------------------------
 };
 function doPost(e) {
   try {
