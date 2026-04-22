@@ -88,7 +88,23 @@ getActiveReceivedBatches(page = 1, limit = null, schema = 'short') {
         return this.getPaginatedData(page, limit, 'table', filterConfig);
     }
 
-    getDetail(payload, schemaName = 'detail') {
+    // getDetail(payload, schemaName = 'detail') {
+    //     const rawData = this.repo.getAllBatchLookupRaw();
+    //     const joinedData = this._joinBatchWithProduct(rawData);
+        
+    //     let found = null;
+    //     if (payload && payload.id) {
+    //         found = joinedData.find(e => e.id === payload.id);
+    //     } else if (payload && payload.batch) {
+    //         found = joinedData.find(e => e.batch === payload.batch);
+    //     }
+
+    //     if (!found) return null;
+    //     const processed = this._processJsonFields([found])[0];
+    //     return this._project(processed, schemaName);
+    // }
+
+    getDetail(payload) {
         const rawData = this.repo.getAllBatchLookupRaw();
         const joinedData = this._joinBatchWithProduct(rawData);
         
@@ -100,9 +116,11 @@ getActiveReceivedBatches(page = 1, limit = null, schema = 'short') {
         }
 
         if (!found) return null;
-        const processed = this._processJsonFields([found])[0];
-        return this._project(processed, schemaName);
-    }
+        
+        // THE FIX: Langsung return object mentahnya. JANGAN di-project pake SchemaRegistry!
+        // Biar frontend tetep dapet key 'expiryDate', 'manufacturingDate', dll secara utuh.
+        return this._processJsonFields([found])[0];
+    }    
 
     query(params) {
         const {

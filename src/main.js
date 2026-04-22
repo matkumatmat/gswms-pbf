@@ -9,12 +9,6 @@ const DomainRegistry = {
     factory: () => new LookupShippingEmbalageService(new LookupShippingEmbalageRepo()),
     cacheGroup: AppConfig.DB_SHIPPING_EMBALAGE_LOOKUP_SHEET_NAME
   },
-
-  // 'getMasterShippingEmbalage': {
-  //   factory: () => new MasterShippingEmbalageService(new MasterShippingEmbalageRepo()),
-  //   cacheGroup: AppConfig.DB_SHIPPING_EMBALAGE_MASTER_SHEET_NAME
-  // },
-
   'getShippingLabels': {
     factory: () => new ShippingLabelService(new ShippingLabelRepo()),
     cacheGroup: AppConfig.DB_SHIPPING_LABEL_SHEET_NAME
@@ -32,26 +26,6 @@ const DomainRegistry = {
     factory: () => new AnalyticsService(),
     method: 'getDashboardAnalytics'
   },
-
-// 'getBatchLookup': {
-//     // THE FIX: Masukin new ProductRepo() di argumen kedua!
-//     factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
-//     cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME
-//   },
-
-//   'getShortBatchLookup': {
-//     factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
-//     cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
-//     method: 'getShortBatchLookup'
-//   },
-
-//   'getBatchDetail': {
-//     factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
-//     cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
-//     method: 'getDetail'
-//   },
-  
-
 
   'updatePrintStatus': { factory: () => new ShippingLabelService(new ShippingLabelRepo()) },
   'getBatchLookup': {
@@ -95,10 +69,9 @@ const PostRegistry = {
   },
   
   'getBatchDetail': {
-    factory: () => new BatchLookupService(new BatchLookupRepo(), new ProductRepo()),
+    factory: () => new BatchService(new BatchRepo(), new ProductRepo()),
     method: 'getDetail'
   },
-  
   'generateBatchRecordSheet': {
     factory: () => new BatchRecordService(new BatchRecordRepo()),
     method: 'generateSheet' 
@@ -115,7 +88,6 @@ const PostRegistry = {
     factory: () => new ShippingEmbalageService(new MasterShippingEmbalageRepo(), new ConstantShippingEmbalageRepo()),
     method: 'createTransaction'
   },
-  // --- ENDPOINT V2 (Struktur Baru) ---
   'getBatchHistoryV2': {
     factory: () => new TransactionHistoryService(new TransactionHistoryRepo()),
     method: 'getHistory'
