@@ -1,0 +1,199 @@
+<!-- <style>
+  /* =======================================
+     RESPONSIVE GRID SCALING (Sama kaya Home.html)
+     ======================================= */
+  .fefo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; } /* Mobile: 2x2 Grid */
+  
+  .fefo-card { padding: 12px; }
+  .fefo-lbl { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fefo-val { font-size: 1.5rem; font-weight: 900; line-height: 1.1; margin: 4px 0; }
+  .fefo-desc { font-size: 0.6rem; font-weight: 600; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;}
+
+  @media (min-width: 768px) {
+    .fefo-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; } /* Desktop: 4 Horizontal */
+    .fefo-card { padding: 20px; }
+    .fefo-lbl { font-size: 0.75rem; margin-bottom: 8px; gap: 6px; }
+    .fefo-val { font-size: 2.2rem; }
+    .fefo-desc { font-size: 0.75rem; margin-top: 6px; }
+  }
+</style>
+
+<div class="ui-subheader">
+  <div class="ui-subheader-icon" style="background: #fff1f2; color: #e11d48;"><i data-lucide="calendar-clock"></i></div>
+  <div class="ui-subheader-text">
+    <h2>FEFO & Expiry Center</h2>
+    <p>Pemantauan umur simpan (Shelf Life) dan rotasi batch produk.</p>
+  </div>
+</div>
+
+<div class="fefo-grid">
+  
+  <div class="ui-card" style="border-bottom: 4px solid #ef4444; cursor:pointer;" onclick="filterTable('EXPIRED')">
+    <div class="ui-card-body fefo-card">
+      <div class="fefo-lbl" style="color: #ef4444;"><i data-lucide="alert-octagon" style="width:14px;"></i> Expired</div>
+      <div class="fefo-val" style="color: var(--text-main);" id="countExpired">0</div>
+      <div class="fefo-desc" style="color: var(--text-light);">Telah melewati masa edar</div>
+    </div>
+  </div>
+
+  <div class="ui-card" style="border-bottom: 4px solid #f97316; cursor:pointer;" onclick="filterTable('KRITIS')">
+    <div class="ui-card-body fefo-card">
+      <div class="fefo-lbl" style="color: #f97316;"><i data-lucide="siren" style="width:14px;"></i> Kritis (< 3 Bln)</div>
+      <div class="fefo-val" style="color: var(--text-main);" id="countKritis">0</div>
+      <div class="fefo-desc" style="color: var(--text-light);">Segera rotasi / retur</div>
+    </div>
+  </div>
+
+  <div class="ui-card" style="border-bottom: 4px solid #eab308; cursor:pointer;" onclick="filterTable('WASPADA')">
+    <div class="ui-card-body fefo-card">
+      <div class="fefo-lbl" style="color: #eab308;"><i data-lucide="triangle-alert" style="width:14px;"></i> Waspada (3-6 Bln)</div>
+      <div class="fefo-val" style="color: var(--text-main);" id="countWaspada">0</div>
+      <div class="fefo-desc" style="color: var(--text-light);">Prioritas distribusi</div>
+    </div>
+  </div>
+
+  <div class="ui-card" style="border-bottom: 4px solid #10b981; cursor:pointer;" onclick="filterTable('AMAN')">
+    <div class="ui-card-body fefo-card">
+      <div class="fefo-lbl" style="color: #10b981;"><i data-lucide="shield-check" style="width:14px;"></i> Aman (> 6 Bln)</div>
+      <div class="fefo-val" style="color: var(--text-main);" id="countAman">0</div>
+      <div class="fefo-desc" style="color: var(--text-light);">Stok jangka panjang</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="ui-card">
+  <div class="ui-card-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>Monitoring Umur Simpan (RSL)</span>
+    <button class="btn btn-secondary" style="padding:4px 10px; font-size:0.75rem;" onclick="filterTable('ALL')">Tampilkan Semua</button>
+  </div>
+  <div class="ui-card-body">
+    <div id="table-fefo-container"></div>
+  </div>
+</div>
+
+<script>
+  let globalFefoData = [];
+  let currentFilter = 'ALL';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadFefoData();
+    lucide.createIcons();
+  });
+
+  async function loadFefoData() {
+    const container = document.getElementById('table-fefo-container');
+    container.innerHTML = `<div style="padding:40px; text-align:center; color:var(--primary);"><i data-lucide="loader-2" class="lucide-spin" style="width:36px; height:36px;"></i><br><br>Menghitung Umur Simpan...</div>`;
+    lucide.createIcons();
+
+    try {
+      const batches = await GasApi.get('getShortBatchLookup', 1, 5000); 
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      let statExpired = 0;
+      let statKritis = 0;
+      let statWaspada = 0;
+      let statAman = 0;
+
+      globalFefoData = batches.map(b => {
+        let expDate = new Date(b.expiryDate);
+        let statusKondisi = 'UNKNOWN';
+        let sisaBulan = 0;
+        let sisaHari = 0;
+        let warnaHex = '#94a3b8';
+
+        if(!isNaN(expDate.getTime())) {
+            const diffTime = expDate - today;
+            sisaHari = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            sisaBulan = (sisaHari / 30.44).toFixed(1);
+
+            if(sisaHari < 0) {
+                statusKondisi = 'EXPIRED';
+                warnaHex = '#ef4444';
+                statExpired++;
+            } else if (sisaBulan < 3) {
+                statusKondisi = 'KRITIS';
+                warnaHex = '#f97316';
+                statKritis++;
+            } else if (sisaBulan <= 6) {
+                statusKondisi = 'WASPADA';
+                warnaHex = '#eab308';
+                statWaspada++;
+            } else {
+                statusKondisi = 'AMAN';
+                warnaHex = '#10b981';
+                statAman++;
+            }
+        }
+
+        return {
+            ...b,
+            sisaHari,
+            sisaBulan,
+            statusKondisi,
+            warnaHex
+        };
+      });
+
+      document.getElementById('countExpired').innerText = statExpired.toLocaleString('id-ID');
+      document.getElementById('countKritis').innerText = statKritis.toLocaleString('id-ID');
+      document.getElementById('countWaspada').innerText = statWaspada.toLocaleString('id-ID');
+      document.getElementById('countAman').innerText = statAman.toLocaleString('id-ID');
+
+      globalFefoData.sort((a, b) => a.sisaHari - b.sisaHari);
+
+      filterTable('ALL');
+
+    } catch (e) {
+      container.innerHTML = `<div style="padding:20px; text-align:center; color:#ef4444;">Gagal memuat data FEFO: ${e.message}</div>`;
+    }
+  }
+
+  function filterTable(statusFilter) {
+      currentFilter = statusFilter;
+      let dataToRender = globalFefoData;
+
+      if(statusFilter !== 'ALL') {
+          dataToRender = globalFefoData.filter(d => d.statusKondisi === statusFilter);
+      }
+
+      renderFefoTable(dataToRender);
+  }
+
+  function renderFefoTable(data) {
+    const container = document.getElementById('table-fefo-container');
+    
+    if(data.length === 0){
+      container.innerHTML = `<div style="padding:40px; text-align:center; color:var(--text-light); background:#f8fafc; border-radius:8px; border:1px dashed var(--border);">Tidak ada batch dengan status <b>${currentFilter}</b>.</div>`;
+      return;
+    }
+
+    const tableData = data.map((b) => ({
+      produk: `<div style="line-height:1.4;">
+                   <strong style="color:var(--text-main); font-size:0.95rem;">${b.namaBarangDagang}</strong><br>
+                   <span style="font-size:0.75rem; color:var(--text-light); font-family:monospace;">${b.kodeBarangNew !== '-' ? b.kodeBarangNew : b.kodeBarangOld}</span>
+                 </div>`,
+      batch: `<strong style="font-family:monospace; color:var(--primary); font-size:0.9rem;">${b.batch}</strong>`,
+      exp: `<div style="font-weight:700; color:${b.warnaHex};">${Formatter.date(b.expiryDate).split(',')[0]}</div>`,
+      rsl: `<div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:12px; height:12px; border-radius:50%; background:${b.warnaHex};"></div>
+                <div style="font-weight:800; color:var(--text-main);">${b.sisaHari < 0 ? '0' : b.sisaBulan} <span style="font-weight:500; color:var(--text-light); font-size:0.75rem;">Bulan</span></div>
+            </div>`,
+      aksi: `<a href="?page=detail&id=${b.id}" class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem; text-decoration:none;"><i data-lucide="eye" style="width:14px;"></i> Detail</a>`
+    }));
+
+    new DataTable({
+      containerId: 'table-fefo-container',
+      headers: [
+        { label: 'Produk', key: 'produk' },
+        { label: 'No. Batch', key: 'batch' },
+        { label: 'Exp. Date', key: 'exp' },
+        { label: 'Sisa RSL', key: 'rsl' },
+        { label: '', key: 'aksi' }
+      ],
+      data: tableData
+    });
+    lucide.createIcons();
+  }
+</script> -->

@@ -1,9 +1,13 @@
 <style>
   /* Filter Bar Styling */
   .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; background: var(--surface, #fff); padding: 15px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
-  .filter-item { display: flex; flex-direction: column; flex: 1; min-width: 150px; }
+  .filter-item { display: flex; flex-direction: column; flex: 1; min-width: 200px; position: relative; }
   .filter-item label { font-size: 0.7rem; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; }
-  .filter-item select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; outline: none; background: #fff; cursor: pointer; }
+  .filter-item select { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; outline: none; background: #fff; cursor: pointer; }
+  
+  /* THE FIX: Dropdown Wrapper & Search Icon Alignment */
+  .ui-dropdown-wrapper { position: relative; width: 100%; display: flex; align-items: center; }
+  .search-icon-fixed { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); width: 16px; pointer-events: none; }
   
   /* Interactive Card Styling */
   .metric-card { cursor: pointer; transition: 0.2s; user-select: none; border-bottom: 4px solid var(--border); }
@@ -12,11 +16,9 @@
   .metric-card.m-batch { border-bottom-color: #8b5cf6; }
   .metric-subtitle { font-size: 0.7rem; color: var(--text-light); font-weight: 600; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
   
-  /* Accordion Styling: 2 Grid Layout on Desktop */
+  /* Accordion Styling */
   .acc-container { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; align-items: start; }
-  @media (min-width: 1024px) { 
-    .acc-container { grid-template-columns: repeat(2, 1fr); } 
-  }
+  @media (min-width: 1024px) { .acc-container { grid-template-columns: repeat(2, 1fr); } }
   .acc-item { background: var(--surface, #fff); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: 0.3s; }
   .acc-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
   .acc-header:hover { background: #f8fafc; }
@@ -25,11 +27,29 @@
   
   .batch-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
   .batch-row:last-child { border-bottom: none; }
-
-  /* Utility: Truncate Text */
   .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 100%; }
 
   @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* =======================================
+     THE FIX: RESPONSIVE DASHBOARD GRID SCALING
+     ======================================= */
+  .dash-grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; } /* Mobile: 2x2 Grid */
+  .dash-grid-2 { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; } /* Mobile: 1x2 Grid */
+  
+  .dash-card { padding: 12px; }
+  .dash-lbl { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dash-val { font-size: 1.5rem; font-weight: 900; line-height: 1.1; margin: 4px 0; }
+  .dash-desc { font-size: 0.6rem; font-weight: 600; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;}
+
+  @media (min-width: 768px) {
+    .dash-grid-4 { grid-template-columns: repeat(4, 1fr); gap: 16px; } /* Desktop: 4 Horizontal */
+    .dash-grid-2 { grid-template-columns: repeat(2, 1fr); gap: 16px; } /* Desktop: 2 Horizontal */
+    .dash-card { padding: 20px; }
+    .dash-lbl { font-size: 0.75rem; margin-bottom: 8px; gap: 6px; }
+    .dash-val { font-size: 2.2rem; }
+    .dash-desc { font-size: 0.75rem; margin-top: 6px; }
+  }
 </style>
 
 <div class="ui-subheader">
@@ -40,54 +60,38 @@
   </div>
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+<div class="dash-grid-4">
 
   <div class="ui-card" style="border-bottom: 4px solid #3b82f6;">
-    <div class="ui-card-body" style="padding: 20px;">
-      <div style="color: #3b82f6; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
-        <i data-lucide="package" style="width:14px; vertical-align:text-bottom;"></i> Varian Produk
-      </div>
-      <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="dash-produk">
-        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
-      </div>
-      <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 6px;">Total item terdaftar</div>
+    <div class="ui-card-body dash-card">
+      <div class="dash-lbl" style="color: #3b82f6;"><i data-lucide="package" style="width:14px;"></i> Varian Produk</div>
+      <div class="dash-val" style="color: var(--text-main);" id="dash-produk"><i data-lucide="loader-2" class="lucide-spin" style="width:20px; color:#cbd5e1;"></i></div>
+      <div class="dash-desc" style="color: var(--text-light);">Total item terdaftar</div>
     </div>
   </div>
 
   <div class="ui-card" style="border-bottom: 4px solid #8b5cf6;">
-    <div class="ui-card-body" style="padding: 20px;">
-      <div style="color: #8b5cf6; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
-        <i data-lucide="layers" style="width:14px; vertical-align:text-bottom;"></i> Total Batch
-      </div>
-      <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="dash-batch">
-        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
-      </div>
-      <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 6px;">Batch aktif di gudang</div>
+    <div class="ui-card-body dash-card">
+      <div class="dash-lbl" style="color: #8b5cf6;"><i data-lucide="layers" style="width:14px;"></i> Total Batch</div>
+      <div class="dash-val" style="color: var(--text-main);" id="dash-batch"><i data-lucide="loader-2" class="lucide-spin" style="width:20px; color:#cbd5e1;"></i></div>
+      <div class="dash-desc" style="color: var(--text-light);">Batch aktif di gudang</div>
     </div>
   </div>
 
   <div class="ui-card" style="border-bottom: 4px solid #10b981;">
-    <div class="ui-card-body" style="padding: 20px;">
-      <div style="color: #10b981; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
-        <i data-lucide="users" style="width:14px; vertical-align:text-bottom;"></i> Klien / Konsumen
-      </div>
-      <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="dash-konsumen">
-        <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
-      </div>
-      <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 6px;">RS, Apotek & Distributor</div>
+    <div class="ui-card-body dash-card">
+      <div class="dash-lbl" style="color: #10b981;"><i data-lucide="users" style="width:14px;"></i> Klien PBF</div>
+      <div class="dash-val" style="color: var(--text-main);" id="dash-konsumen"><i data-lucide="loader-2" class="lucide-spin" style="width:20px; color:#cbd5e1;"></i></div>
+      <div class="dash-desc" style="color: var(--text-light);">RS, Apotek & Dist.</div>
     </div>
   </div>
 
   <a href="?page=fefo_center" style="text-decoration: none; color: inherit; display: block;">
     <div class="ui-card" style="border-bottom: 4px solid #ef4444; cursor:pointer;">
-      <div class="ui-card-body" style="padding: 20px; background:#fef2f2;">
-        <div style="color: #ef4444; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
-          <i data-lucide="alert-triangle" style="width:14px; vertical-align:text-bottom;"></i> FEFO (< 3 Bulan)
-        </div>
-        <div style="font-size: 2.2rem; font-weight: 900; color: #b91c1c; line-height: 1;" id="dash-fefo">
-          <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
-        </div>
-        <div style="font-size: 0.75rem; color: #ef4444; margin-top: 6px; font-weight:600;">Klik untuk detail &rarr;</div>
+      <div class="ui-card-body dash-card" style="background:#fef2f2;">
+        <div class="dash-lbl" style="color: #ef4444;"><i data-lucide="alert-triangle" style="width:14px;"></i> FEFO (< 3 Bln)</div>
+        <div class="dash-val" style="color: #b91c1c;" id="dash-fefo"><i data-lucide="loader-2" class="lucide-spin" style="width:20px; color:#cbd5e1;"></i></div>
+        <div class="dash-desc" style="color: #ef4444;">Klik untuk detail &rarr;</div>
       </div>
     </div>
   </a>
@@ -97,41 +101,27 @@
 <div style="border-top: 2px dashed var(--border); margin: 30px 0; padding-top: 20px;">
   <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 16px; font-weight: 800;">Analitik Distribusi & Stok Real-Time</h3>
   
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 20px;">
+  <div class="dash-grid-2">
     <div class="ui-card metric-card m-dist" onclick="toggleDistCard()" title="Klik untuk ubah rentang tahun">
-      <div class="ui-card-body" style="padding: 20px;">
-        <div style="color: #3b82f6; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
-          <i data-lucide="arrow-up-right" style="width:14px; vertical-align:text-bottom;"></i> Total Distribusi Keluar
-        </div>
-        <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="lblDistQty">
-          <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
-        </div>
-        <div class="metric-subtitle">
-          <span id="lblDistMode">Mode: Tahun Ini</span>
-          <i data-lucide="refresh-cw" style="width:12px;"></i>
-        </div>
+      <div class="ui-card-body dash-card">
+        <div class="dash-lbl" style="color: #3b82f6;"><i data-lucide="arrow-up-right" style="width:14px;"></i> Distribusi Keluar</div>
+        <div class="dash-val" style="color: var(--text-main);" id="lblDistQty"><i data-lucide="loader-2" class="lucide-spin" style="width:20px; color:#cbd5e1;"></i></div>
+        <div class="metric-subtitle"><span id="lblDistMode">Tahun Ini</span><i data-lucide="refresh-cw" style="width:12px;"></i></div>
       </div>
     </div>
 
     <div class="ui-card metric-card m-batch" onclick="toggleBatchCard()" title="Klik untuk ubah status batch">
-      <div class="ui-card-body" style="padding: 20px;">
-        <div style="color: #8b5cf6; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">
-          <i data-lucide="layers" style="width:14px; vertical-align:text-bottom;"></i> Status Akumulasi Batch
-        </div>
-        <div style="font-size: 2.2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="lblBatchQty">
-          <i data-lucide="loader-2" class="lucide-spin" style="width:24px; color:#cbd5e1;"></i>
-        </div>
-        <div class="metric-subtitle">
-          <span id="lblBatchMode">Mode: ACTIVE</span>
-          <i data-lucide="refresh-cw" style="width:12px;"></i>
-        </div>
+      <div class="ui-card-body dash-card">
+        <div class="dash-lbl" style="color: #8b5cf6;"><i data-lucide="layers" style="width:14px;"></i> Akumulasi Batch</div>
+        <div class="dash-val" style="color: var(--text-main);" id="lblBatchQty"><i data-lucide="loader-2" class="lucide-spin" style="width:20px; color:#cbd5e1;"></i></div>
+        <div class="metric-subtitle"><span id="lblBatchMode">ACTIVE</span><i data-lucide="refresh-cw" style="width:12px;"></i></div>
       </div>
     </div>
   </div>
 
   <div class="filter-bar">
-    <div class="filter-item">
-      <label>Rentang Waktu (Untuk Distribusi)</label>
+    <div class="filter-item" style="max-width: 250px;">
+      <label>Rentang Waktu</label>
       <select id="filterWaktu" onchange="processAnalyticsData()">
         <option value="ALL">Semua Waktu (Termasuk Thn Lalu)</option>
         <option value="THIS_YEAR" selected>Tahun Ini (Berjalan)</option>
@@ -140,10 +130,13 @@
       </select>
     </div>
     <div class="filter-item">
-      <label>Pilih Produk</label>
-      <select id="filterProduk" onchange="processAnalyticsData()">
-        <option value="ALL">Semua Produk</option>
-      </select>
+      <label>Pilih Produk (Ketik untuk mencari)</label>
+      <div class="ui-dropdown-wrapper">
+        <i data-lucide="search" class="search-icon-fixed"></i>
+        <input type="text" id="prodSearch" placeholder="Semua Produk" autocomplete="off" style="width:100%; padding:10px 14px 10px 36px; border:1px solid var(--border); border-radius:8px; outline:none; font-size:0.85rem; background:#fff; transition:0.2s;">
+        <button id="btnClearFilter" class="btn btn-secondary" style="display:none; position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:4px 8px; font-size:0.65rem;" onclick="clearProductFilter()">Reset</button>
+        <div id="prodDropdown" class="ui-dropdown-list"></div>
+      </div>
     </div>
   </div>
 
@@ -170,6 +163,7 @@
   
   let distState = 0; 
   let batchState = 0; 
+  let selectedFilterProductId = 'ALL';
 
   document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
@@ -185,15 +179,22 @@
       ]);
 
       populateBasicMetrics(activeBatches, customers);
-
       RAW_ANALYTICS = analyticsStats;
-      
-      const selProd = document.getElementById('filterProduk');
-      const uniqueProducts = new Map();
-      RAW_ANALYTICS.products.forEach(p => {
-        if (!uniqueProducts.has(p.kodeBarang)) {
-          uniqueProducts.set(p.kodeBarang, true);
-          selProd.innerHTML += `<option value="${p.kodeBarang}">${p.namaDagang} (${p.kodeBarang})</option>`;
+
+      new SearchDropdown({
+        inputId: 'prodSearch',
+        dropdownId: 'prodDropdown',
+        data: RAW_ANALYTICS.products,
+        searchKeys: ['kodeBarang', 'namaDagang'],
+        renderItem: (item) => `
+          <div style="font-weight:700; color:var(--text-main); font-size:0.85rem;">${item.namaDagang}</div>
+          <div style="font-size:0.75rem; color:var(--text-light); margin-top:2px; font-family:monospace;">Kode: ${item.kodeBarang}</div>
+        `,
+        onSelect: (item) => {
+          selectedFilterProductId = item.id;
+          document.getElementById('prodSearch').value = `${item.namaDagang} (${item.kodeBarang})`;
+          document.getElementById('btnClearFilter').style.display = 'block';
+          processAnalyticsData();
         }
       });
 
@@ -201,13 +202,15 @@
 
     } catch (e) {
       console.error("Gagal memuat data dashboard:", e);
-      document.getElementById('dash-produk').innerText = "ERR";
-      document.getElementById('dash-batch').innerText = "ERR";
-      document.getElementById('dash-konsumen').innerText = "ERR";
-      document.getElementById('dash-fefo').innerText = "ERR";
-      document.getElementById('accordion-container').innerHTML = `<div style="color:red; text-align:center; padding:20px; grid-column: 1 / -1;">Gagal memuat data analitik.</div>`;
-      ToastSystem.show("Gagal memuat data dashboard lengkap!", "error");
+      ToastSystem.show("Gagal memuat data analitik.", "error");
     }
+  }
+
+  function clearProductFilter() {
+    selectedFilterProductId = 'ALL';
+    document.getElementById('prodSearch').value = '';
+    document.getElementById('btnClearFilter').style.display = 'none';
+    processAnalyticsData();
   }
 
   function populateBasicMetrics(batches, customers) {
@@ -235,94 +238,75 @@
     document.getElementById('dash-fefo').innerText = fefoCount.toLocaleString('id-ID');
   }
 
-  // ==========================================
-  // CORE ENGINE ANALITIK (DISTRIBUSI & STOK ASLI)
-  // ==========================================
   function processAnalyticsData() {
     if (!RAW_ANALYTICS) return;
 
     const waktu = document.getElementById('filterWaktu').value;
-    const filterProduk = document.getElementById('filterProduk').value;
-
     const today = new Date();
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth();
 
-    const productGroup = new Map();
+    const batchMasterMap = new Map();
+    RAW_ANALYTICS.batches.forEach(b => batchMasterMap.set(String(b.batch).toUpperCase().trim(), b));
 
-    const initProduct = (kode) => {
-      if (!productGroup.has(kode)) {
-        const prodMaster = RAW_ANALYTICS.products.find(p => p.kodeBarang === kode);
-        productGroup.set(kode, { 
-          nama: prodMaster ? prodMaster.namaDagang : 'Produk Tidak Dikenal', 
-          kode: kode,
-          totalDistFilter: 0, 
-          totalStokAsli: 0,
-          batches: new Map() 
-        });
-      }
-      return productGroup.get(kode);
-    };
-
-    const initBatch = (pg, batchNo) => {
-      if (!pg.batches.has(batchNo)) {
-        const batchMaster = RAW_ANALYTICS.batches.find(b => b.batch === batchNo);
-        pg.batches.set(batchNo, {
-          batch: batchNo,
-          distFilter: 0,
-          stokAsli: 0,
-          status: batchMaster ? batchMaster.sysStatus : 'UNKNOWN'
-        });
-      }
-      return pg.batches.get(batchNo);
-    };
-
+    const productGroupMap = new Map();
     const allTrx = RAW_ANALYTICS.hotTransactions.concat(RAW_ANALYTICS.coldAggregations);
 
-    // LOOP 1: Hitung True Stock (Abaikan Filter Waktu)
     allTrx.forEach(trx => {
-      if (filterProduk !== 'ALL' && trx.kodeBarang !== filterProduk) return;
-      const pg = initProduct(trx.kodeBarang);
-      const bg = initBatch(pg, trx.batch);
-      
-      const net = (trx.in || 0) - (trx.out || 0);
-      pg.totalStokAsli += net;
-      bg.stokAsli += net;
-    });
+      const batchNo = String(trx.batch).toUpperCase().trim();
+      const masterBatchInfo = batchMasterMap.get(batchNo);
+      const prodId = masterBatchInfo ? masterBatchInfo.productId : 'ORPHAN';
+      const batchStatus = masterBatchInfo ? masterBatchInfo.sysStatus : 'UNKNOWN';
 
-    // LOOP 2: Hitung Distribusi (Ikutin Filter Waktu)
-    allTrx.forEach(trx => {
-      if (filterProduk !== 'ALL' && trx.kodeBarang !== filterProduk) return;
+      if (selectedFilterProductId !== 'ALL' && prodId !== selectedFilterProductId) return;
+
+      if (!productGroupMap.has(prodId)) {
+        const prodMaster = RAW_ANALYTICS.products.find(p => p.id === prodId);
+        productGroupMap.set(prodId, { 
+          nama: prodMaster ? prodMaster.namaDagang : 'Produk Tidak Dikenal', 
+          kode: prodMaster ? prodMaster.kodeBarang : '-',
+          totalStok: 0, totalDist: 0, batches: new Map() 
+        });
+      }
+
+      const prodData = productGroupMap.get(prodId);
+      if (!prodData.batches.has(batchNo)) {
+        prodData.batches.set(batchNo, { batch: batchNo, status: batchStatus, in: 0, out: 0, distWaktu: 0 });
+      }
+
+      const batchData = prodData.batches.get(batchNo);
+      batchData.in += (trx.in || 0);
+      batchData.out += (trx.out || 0);
+      prodData.totalStok += ((trx.in || 0) - (trx.out || 0));
 
       let isMatchWaktu = false;
       if (trx.tanggal) { 
         const trxDate = new Date(trx.tanggal);
         if (waktu === 'ALL' || waktu === 'THIS_YEAR') isMatchWaktu = true;
         else if (waktu === 'THIS_MONTH' && trxDate.getMonth() === currentMonth && trxDate.getFullYear() === currentYear) isMatchWaktu = true;
-        // Fix untuk pergantian tahun (Januari -> Desember)
         else if (waktu === 'LAST_MONTH' && trxDate.getMonth() === (currentMonth === 0 ? 11 : currentMonth - 1) && trxDate.getFullYear() === (currentMonth === 0 ? currentYear - 1 : currentYear)) isMatchWaktu = true;
       } else { 
         if (waktu === 'ALL') isMatchWaktu = true;
       }
 
       if (isMatchWaktu) {
-        const pg = initProduct(trx.kodeBarang);
-        const bg = initBatch(pg, trx.batch);
-        pg.totalDistFilter += (trx.out || 0);
-        bg.distFilter += (trx.out || 0);
+        batchData.distWaktu += (trx.out || 0);
+        prodData.totalDist += (trx.out || 0);
       }
     });
 
-    PROCESSED_DATA = Array.from(productGroup.values()).map(pg => {
-      pg.batchArray = Array.from(pg.batches.values());
-      // Urutkan batch dari distribusi terbanyak
-      pg.batchArray.sort((a, b) => b.distFilter - a.distFilter);
-      return pg;
+    PROCESSED_DATA = [];
+    productGroupMap.forEach(prod => {
+      const batchArray = Array.from(prod.batches.values()).map(b => ({
+        batch: b.batch, status: b.status, stok: b.in - b.out, out: b.distWaktu
+      }));
+      batchArray.sort((a, b) => b.out - a.out);
+      prod.batches = batchArray;
+      PROCESSED_DATA.push(prod);
     });
 
-    // Urutkan produk dari distribusi terbanyak
-    PROCESSED_DATA.sort((a, b) => b.totalDistFilter - a.totalDistFilter);
-    
+    PROCESSED_DATA.sort((a,b) => b.totalDist - a.totalDist);
+
     updateInteractiveCards();
     renderAccordion();
   }
@@ -333,32 +317,28 @@
   function updateInteractiveCards() {
     if (!RAW_ANALYTICS) return;
 
-    const distLabels = ['Tahun Ini (Hot)', 'Tahun Lalu (Cold)', 'Total Semua'];
+    const distLabels = ['Tahun Ini', 'Tahun Lalu', 'Total'];
     let totalDist = 0;
     
-    if (distState === 0 || distState === 2) {
-      totalDist += RAW_ANALYTICS.hotTransactions.reduce((sum, trx) => sum + trx.out, 0);
-    }
-    if (distState === 1 || distState === 2) {
-      totalDist += RAW_ANALYTICS.coldAggregations.reduce((sum, trx) => sum + trx.out, 0);
-    }
+    if (distState === 0 || distState === 2) totalDist += RAW_ANALYTICS.hotTransactions.reduce((sum, trx) => sum + trx.out, 0);
+    if (distState === 1 || distState === 2) totalDist += RAW_ANALYTICS.coldAggregations.reduce((sum, trx) => sum + trx.out, 0);
     
     document.getElementById('lblDistQty').innerText = totalDist.toLocaleString('id-ID');
-    document.getElementById('lblDistMode').innerText = `Mode: ${distLabels[distState]}`;
+    document.getElementById('lblDistMode').innerText = `${distLabels[distState]}`;
 
     const batchLabels = ['ACTIVE', 'INACTIVE', 'CLOSED'];
     const targetStatus = batchLabels[batchState];
     const countBatch = RAW_ANALYTICS.batches.filter(b => String(b.sysStatus).toUpperCase() === targetStatus).length;
 
     document.getElementById('lblBatchQty').innerText = countBatch.toLocaleString('id-ID');
-    document.getElementById('lblBatchMode').innerText = `Mode: ${targetStatus}`;
+    document.getElementById('lblBatchMode').innerText = `${targetStatus}`;
   }
 
   function renderAccordion() {
     const container = document.getElementById('accordion-container');
     
     if (PROCESSED_DATA.length === 0) {
-      container.innerHTML = `<div style="text-align:center; padding: 20px; background:var(--surface); border-radius:10px; border:1px dashed var(--border); color:var(--text-light); grid-column: 1 / -1;">Tidak ada data yang sesuai dengan filter.</div>`;
+      container.innerHTML = `<div style="text-align:center; padding: 30px; background:#fff; border-radius:10px; border:1px dashed var(--border); color:var(--text-light); grid-column: 1 / -1;">Tidak ada data mutasi yang sesuai filter.</div>`;
       return;
     }
 
@@ -367,19 +347,18 @@
       const id = `acc-${index}`;
       
       let batchHtml = '';
-      prod.batchArray.forEach(b => {
+      prod.batches.forEach(b => {
         let badgeColor = b.status === 'ACTIVE' ? 'success' : (b.status === 'CLOSED' ? 'neutral' : 'danger');
-        
         batchHtml += `
           <div class="batch-row">
             <div>
-              <span style="font-family:monospace; font-weight:800; color:var(--text-main);">${b.batch}</span>
+              <span style="font-family:monospace; font-weight:800; color:var(--primary);">${b.batch}</span>
               <span class="ui-badge ui-badge-${badgeColor}" style="font-size:0.6rem; padding:2px 6px; margin-left:8px;">${b.status}</span>
             </div>
-            <div style="text-align: right; font-weight:700;">
-              <span style="color:#3b82f6; font-size:0.95rem;" title="Distribusi Keluar">${b.distFilter.toLocaleString('id-ID')}</span>
+            <div style="font-weight:700;">
+              <span style="color:#3b82f6;" title="Distribusi Keluar (Sesuai Filter)">${b.out.toLocaleString('id-ID')}</span>
               <span style="color:#cbd5e1; margin:0 4px;">/</span>
-              <span style="color:#10b981; font-size:0.95rem;" title="Sisa Stok Asli">${b.stokAsli.toLocaleString('id-ID')}</span>
+              <span style="color:#10b981;" title="Sisa Stok Aktual">${b.stok.toLocaleString('id-ID')}</span>
             </div>
           </div>
         `;
@@ -390,15 +369,15 @@
           <div class="acc-header" onclick="toggleAccordion('${id}')">
             <div style="min-width: 0; flex: 1; padding-right: 12px;">
               <div class="text-truncate" style="font-weight:800; font-size:1rem; color:var(--text-main);" title="${prod.nama}">${prod.nama}</div>
-              <div style="font-size:0.75rem; color:var(--text-light); margin-top:2px;">Kode: ${prod.kode} • ${prod.batchArray.length} Batch</div>
+              <div style="font-size:0.75rem; color:var(--text-light); margin-top:2px; font-family:monospace;">Kode: ${prod.kode} • ${prod.batches.length} Batch</div>
             </div>
             <div style="display:flex; align-items:center; gap:16px; flex-shrink: 0;">
               <div style="text-align:right;">
-                <div style="font-size:0.6rem; color:var(--text-light); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Dist &nbsp;|&nbsp; Stok</div>
+                <div style="font-size:0.65rem; color:var(--text-light); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Dist &nbsp;|&nbsp; Stok</div>
                 <div style="font-size:1.1rem; font-weight:900; line-height:1; margin-top:2px;">
-                  <span style="color:#3b82f6;">${prod.totalDistFilter.toLocaleString('id-ID')}</span> 
+                  <span style="color:#3b82f6;">${prod.totalDist.toLocaleString('id-ID')}</span> 
                   <span style="color:#cbd5e1; font-size:0.9rem;">/</span> 
-                  <span style="color:#10b981;">${prod.totalStokAsli.toLocaleString('id-ID')}</span>
+                  <span style="color:#10b981;">${prod.totalStok.toLocaleString('id-ID')}</span>
                 </div>
               </div>
               <i data-lucide="chevron-down" style="color:var(--text-light);"></i>
@@ -416,7 +395,6 @@
   }
 
   function toggleAccordion(id) {
-    const body = document.getElementById(id);
-    body.classList.toggle('open');
+    document.getElementById(id).classList.toggle('open');
   }
 </script>

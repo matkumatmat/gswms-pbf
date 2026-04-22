@@ -27,6 +27,7 @@ const DomainRegistry = {
   },
   'getDashboardAnalytics': {
     factory: () => new AnalyticsService(),
+    cacheGroup: AppConfig.DB_BATCH_LOOKUP_SHEET_NAME,
     method: 'getDashboardAnalytics'
   },
   'getBatchLookup': {
