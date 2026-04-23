@@ -285,7 +285,8 @@ function fetchUiData(action, reqPage = 1, reqLimit = 50) {
     
     const service = route.factory();
     const pageNum = parseInt(reqPage) || 1;
-    const limitNum = parseInt(reqLimit) || 50;
+    // const limitNum = parseInt(reqLimit) || 50;
+    const limitNum = parseInt(reqLimit) || null;
     const methodName = route.method || 'getPaginatedData';
     const data = service[methodName](pageNum, limitNum);
     

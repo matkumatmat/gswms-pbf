@@ -23,7 +23,7 @@
   // ==========================================
   async function loadMasterCustomers() {
     try {
-      masterCustomers = await GasApi.get('getCustomers', 1, 100); 
+      masterCustomers = await GasApi.get('getCustomers', 1); 
       
       // MENGGUNAKAN KOMPONEN AGNOSTIK KITA!
       new SearchDropdown({
@@ -285,7 +285,7 @@
     lucide.createIcons();
 
     try {
-      const data = await GasApi.get('getShippingLabels', 1, 100); 
+      const data = await GasApi.get('getShippingLabels', 1, 5000); 
       
       const today = new Date();
       globalPrintQueue = data.filter(item => {

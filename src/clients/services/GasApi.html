@@ -1,7 +1,7 @@
 <script>
 const GasApi = {
   
-  get: (action, page = 1, limit = 50) => {
+  get: (action, page = 1, limit = null) => {
     return new Promise((resolve, reject) => {
       google.script.run
         .withSuccessHandler(response => {
