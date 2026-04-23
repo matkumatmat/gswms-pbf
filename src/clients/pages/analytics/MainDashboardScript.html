@@ -1,21 +1,17 @@
 <script>
-  // --- GLOBAL STATE ---
-  let OLAP_RAW_DATA = null; 
-  let filteredBatches = []; 
+  let OLAP_RAW_DATA = null;
+  let filteredBatches = [];
+  let selectedFilterProductId = 'ALL';
 
   let compChartInstance = null;
   let catChartInstance = null;
 
-  // State Card Metrik & Warning
+  // State Card Warning (Bisa Di-klik muter)
   const cardState = {
-    ed: { index: 0, options: [3, 6, 1] }, 
-    slow: { index: 0, options: [60, 30, 90] }, 
-    in: { index: 0, options: ['Tahun Ini', 'Bulan Ini', 'Bulan Lalu', 'Semua Periode'] },
-    out: { index: 0, options: ['Tahun Ini', 'Bulan Ini', 'Bulan Lalu', 'Semua Periode'] },
-    stock: { index: 0, options: ['Semua Periode'] }
+    ed: { index: 0, options: [3, 6, 1] },
+    slow: { index: 0, options: [60, 30, 90] }
   };
 
-  // State Sorting List (PERSIS KAYA PUNYA LU)
   const listStates = {
     'listAscContainer': { sortType: 'qty', dir: 'asc', data: [], metricType: 'in' },
     'listDescContainer': { sortType: 'qty', dir: 'desc', data: [], metricType: 'out' },
@@ -24,52 +20,183 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
-    initDashboard();
+    initCharts();
+    loadOlapData();
   });
 
-  async function initDashboard() {
-    try {
-      // 1. Tarik Data OLAP
-      const response = await GasApi.get('getDashboardAnalytics');
-      if (!response || !response.batchMart) throw new Error("Data mart kosong!");
-      
-      OLAP_RAW_DATA = response;
-      filteredBatches = OLAP_RAW_DATA.batchMart;
-      
-      initCompositionChart();
-      initCategoryChart();
+  function initCharts() {
+    // PIE CHART: Distribusi vs Stok Aktif
+    const pieOptions = { 
+      series: [0, 0], 
+      chart: { type: 'pie', height: 250, animations: { speed: 800 } }, 
+      labels: ['Distribusi Keluar', 'Stok Gudang'], 
+      colors: ['#f43f5e', '#10b981'], 
+      stroke: { width: 3, colors: ['#ffffff'] }, 
+      dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 'bold' } }, 
+      legend: { position: 'bottom', markers: { radius: 12 } } 
+    };
+    compChartInstance = new ApexCharts(document.querySelector("#chartComposition"), pieOptions);
+    compChartInstance.render();
 
-      refreshDataAndUI();
+    // BAR CHART: 5 Kategori Terbesar
+    const barOptions = { 
+      series: [{ name: 'Stok', data: [] }], 
+      chart: { type: 'bar', height: 220, toolbar: { show: false } }, 
+      plotOptions: { bar: { borderRadius: 6, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } }, 
+      colors: ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4'], 
+      dataLabels: { enabled: true, offsetY: -20, style: { fontSize: '10px', colors: ["#475569"] } }, 
+      xaxis: { categories: [], labels: { style: { fontSize: '10px', fontWeight: 600 } }, axisBorder: { show: false }, axisTicks: { show: false } }, 
+      yaxis: { show: false }, grid: { borderColor: '#e2e8f0', strokeDashArray: 4 }, legend: { show: false } 
+    };
+    catChartInstance = new ApexCharts(document.querySelector("#chartCategory"), barOptions);
+    catChartInstance.render();
+  }
+
+  async function loadOlapData() {
+    try {
+      OLAP_RAW_DATA = await GasApi.get('getDashboardAnalytics');
+      if (!OLAP_RAW_DATA || !OLAP_RAW_DATA.batchMart) throw new Error("Data mart OLAP kosong!");
+
+      // Populate Kategori di Select "Semua Sektor" lu
+      const katSet = new Set();
+      OLAP_RAW_DATA.masterProducts.forEach(p => katSet.add(p.kat));
+      const selKat = document.getElementById('filterKategori');
+      Array.from(katSet).sort().forEach(k => {
+        selKat.innerHTML += `<option value="${k}">${k}</option>`;
+      });
+
+      // Init Autocomplete Produk
+      new SearchDropdown({
+        inputId: 'prodSearch',
+        dropdownId: 'prodDropdown',
+        data: OLAP_RAW_DATA.masterProducts,
+        searchKeys: ['kode', 'nama'],
+        renderItem: (item) => `<div style="font-weight:700; font-size:0.85rem;">${item.nama}</div><div style="font-size:0.75rem; color:var(--text-light);">Kode: ${item.kode} | Kat: ${item.kat}</div>`,
+        onSelect: (item) => {
+          selectedFilterProductId = item.pId;
+          document.getElementById('prodSearch').value = `${item.nama} (${item.kode})`;
+          document.getElementById('btnClearFilter').style.display = 'block';
+          processData();
+        }
+      });
+
+      processData();
     } catch (e) {
-      console.error("Gagal inisialisasi dashboard:", e);
-      ToastSystem.show("Gagal memuat data analitik", "error");
+      console.error("Gagal load OLAP:", e);
+      ToastSystem.show("Gagal memuat data analitik: " + e.message, "error");
     }
   }
 
+  function clearProductFilter() {
+    selectedFilterProductId = 'ALL';
+    document.getElementById('prodSearch').value = '';
+    document.getElementById('btnClearFilter').style.display = 'none';
+    processData();
+  }
+
   // --- CORE ENGINE ---
-  function refreshDataAndUI() {
+  function processData() {
     if (!OLAP_RAW_DATA) return;
 
-    // 1. Update Warning Cards
+    // Ambil Filter dari UI
+    const filterWaktu = document.getElementById('filterWaktu').value;
+    const filterStatus = document.getElementById('filterStatus').value;
+    const filterKat = document.getElementById('filterKategori').value;
+    const filterBatchSearch = document.getElementById('filterBatch').value.toUpperCase().trim();
+
+    // Setup Waktu (Tahun / Bulan)
+    const today = new Date();
+    const cYear = today.getFullYear().toString();
+    const cMonthKey = `${cYear}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    let lYear = today.getFullYear(), lMonth = today.getMonth(); 
+    if (lMonth === 0) { lYear--; lMonth = 12; }
+    const lMonthKey = `${lYear}-${String(lMonth).padStart(2, '0')}`;
+
+    filteredBatches = [];
+    const kategoriMap = {};
+
+    // Mulai Saring Data
+    OLAP_RAW_DATA.batchMart.forEach(bm => {
+      const pm = OLAP_RAW_DATA.masterProducts.find(p => p.pId === bm.pId);
+      if (!pm) return;
+      
+      // Terapkan Filter
+      if (selectedFilterProductId !== 'ALL' && bm.pId !== selectedFilterProductId) return;
+      if (filterKat !== 'ALL' && pm.kat !== filterKat) return;
+      if (filterStatus !== 'ALL' && String(bm.sys).toUpperCase() !== filterStatus) return;
+      if (filterBatchSearch !== '' && !bm.b.includes(filterBatchSearch)) return;
+
+      // Kalkulasi Waktu Dinamis
+      let qtyIn = 0, qtyOut = 0;
+      let lastPeriodIn = 0, lastPeriodOut = 0; // Buat ngitung Trend
+
+      if (filterWaktu === 'ALL') { 
+        qtyIn = bm.in; qtyOut = bm.out; 
+      }
+      else if (filterWaktu === 'THIS_YEAR') {
+        Object.keys(bm.trxByMonth).forEach(k => { 
+          if (k.startsWith(cYear)) { qtyIn += bm.trxByMonth[k].in; qtyOut += bm.trxByMonth[k].out; } 
+        });
+      }
+      else if (filterWaktu === 'THIS_MONTH') { 
+        qtyIn = bm.trxByMonth[cMonthKey]?.in || 0; 
+        qtyOut = bm.trxByMonth[cMonthKey]?.out || 0; 
+        lastPeriodIn = bm.trxByMonth[lMonthKey]?.in || 0;
+        lastPeriodOut = bm.trxByMonth[lMonthKey]?.out || 0;
+      }
+      else if (filterWaktu === 'LAST_MONTH') { 
+        qtyIn = bm.trxByMonth[lMonthKey]?.in || 0; 
+        qtyOut = bm.trxByMonth[lMonthKey]?.out || 0; 
+      }
+
+      // Hitung Umur Slow Moving
+      let diffHari = 0;
+      if (bm.stok > 0) {
+        const lastDate = bm.lastTrxDate ? new Date(bm.lastTrxDate) : new Date(bm.rcv);
+        diffHari = Math.ceil((today - lastDate) / (1000 * 60 * 60 * 24));
+      }
+
+      kategoriMap[pm.kat] = (kategoriMap[pm.kat] || 0) + bm.stok;
+
+      filteredBatches.push({
+        b: bm.b,
+        namaProduk: pm.nama,
+        stok: bm.stok,
+        in: qtyIn,
+        out: qtyOut,
+        lastIn: lastPeriodIn,
+        lastOut: lastPeriodOut,
+        ed: bm.ed,
+        rslBln: bm.rslBln,
+        slowDays: diffHari
+      });
+    });
+
     updateWarnings();
+    
+    // MAPPING TABEL (GABUNGAN NAMA PRODUK + BATCH)
+    listStates.listAscContainer.data = filteredBatches.map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: b.ed ? b.ed.split('T')[0] : '-', qty: b.stok }));
+    listStates.listDescContainer.data = filteredBatches.map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: 'Distribusi Keluar', qty: b.out }));
+    listStates.listAzContainer.data = filteredBatches.map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: 'Penerimaan Masuk', qty: b.in }));
 
-    // 2. Mapping Data buat Tabel (Sesuai Konsep Lu)
-    listStates.listAscContainer.data = filteredBatches.map(b => ({ name: b.b, date: b.ed ? b.ed.split('T')[0] : '-', qty: b.in }));
-    listStates.listDescContainer.data = filteredBatches.map(b => ({ name: b.b, date: b.lastTrxDate ? b.lastTrxDate.split('T')[0] : '-', qty: b.out }));
-    listStates.listAzContainer.data = filteredBatches.map(b => ({ name: b.b, date: '-', qty: b.stok }));
-
-    // 3. Render List DULUAN (Biar elemen Mobile Header-nya ke-inject ke HTML)
     applySortAndRender('listAscContainer');
     applySortAndRender('listDescContainer');
     applySortAndRender('listAzContainer');
 
-    // 4. Update Angka Metrik (Biar nimpa angka 0 di Desktop & Mobile)
+    // METRICS
     calculateMetric('in');
     calculateMetric('out');
     calculateMetric('stock');
 
-    // 5. Update Charts
-    updateCharts();
+    // CHARTS (Pie: Dist vs Stok Aktif)
+    const totalOut = filteredBatches.reduce((s, b) => s + b.out, 0);
+    const totalStok = filteredBatches.reduce((s, b) => s + b.stok, 0);
+    compChartInstance.updateSeries([totalOut, totalStok]);
+
+    // CHARTS (Bar: 5 Kategori Terbesar)
+    const sortedKat = Object.keys(kategoriMap).sort((a,b) => kategoriMap[b] - kategoriMap[a]).slice(0, 5);
+    catChartInstance.updateSeries([{ name: 'Stok', data: sortedKat.map(k => kategoriMap[k]) }]);
+    catChartInstance.updateOptions({ xaxis: { categories: sortedKat } });
   }
 
   function updateWarnings() {
@@ -79,89 +206,58 @@
     document.getElementById('advDescED').innerText = `Masa simpan < ${limitBulan} bulan`;
 
     const limitHari = cardState.slow.options[cardState.slow.index];
-    const today = new Date();
-    const slowList = filteredBatches.filter(b => {
-      if (!b.lastTrxDate) return true; 
-      const last = new Date(b.lastTrxDate);
-      const diffDays = Math.ceil((today - last) / (1000 * 60 * 60 * 24));
-      return diffDays > limitHari;
-    });
+    const slowList = filteredBatches.filter(b => b.stok > 0 && b.slowDays > limitHari);
     document.getElementById('advCountSlow').innerText = slowList.length;
     document.getElementById('advDescSlow').innerText = `Tanpa mutasi > ${limitHari} hari`;
   }
 
   function calculateMetric(type) {
-    const period = cardState[type].options[cardState[type].index];
-    let total = 0;
-    let lastPeriodTotal = 0;
-
-    const today = new Date();
-    const cYear = today.getFullYear().toString();
-    const cMonthKey = `${cYear}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    
-    let lYear = today.getFullYear();
-    let lMonth = today.getMonth(); 
-    if (lMonth === 0) { lYear--; lMonth = 12; }
-    const lMonthKey = `${lYear}-${String(lMonth).padStart(2, '0')}`;
-
-    // Looping & Cross-Check Waktu dari OLAP
-    filteredBatches.forEach(b => {
-      if (type === 'stock') {
-        total += b.stok;
-      } else {
-        if (period === 'Semua Periode') {
-          total += b[type];
-        } else if (period === 'Tahun Ini') {
-          Object.keys(b.trxByMonth).forEach(k => { if (k.startsWith(cYear)) total += b.trxByMonth[k][type]; });
-        } else if (period === 'Bulan Ini') {
-          if (b.trxByMonth[cMonthKey]) total += b.trxByMonth[cMonthKey][type];
-          if (b.trxByMonth[lMonthKey]) lastPeriodTotal += b.trxByMonth[lMonthKey][type];
-        } else if (period === 'Bulan Lalu') {
-          if (b.trxByMonth[lMonthKey]) total += b.trxByMonth[lMonthKey][type];
-        }
-      }
-    });
-
-    // Kalkulasi Trend
-    let trendClass = 'trend-neutral';
-    let trendHtml = `<i data-lucide="minus" style="width:10px;"></i> -`;
-    
-    if (type !== 'stock' && period === 'Bulan Ini' && lastPeriodTotal > 0) {
-      const pct = Math.round(((total - lastPeriodTotal) / lastPeriodTotal) * 100);
-      if (pct > 0) {
-        trendClass = 'trend-up'; trendHtml = `<i data-lucide="trending-up" style="width:10px;"></i> ${pct}%`;
-      } else if (pct < 0) {
-        trendClass = 'trend-down'; trendHtml = `<i data-lucide="trending-down" style="width:10px;"></i> ${Math.abs(pct)}%`;
-      }
+    if(type === 'stock') {
+      const total = filteredBatches.reduce((s, b) => s + b.stok, 0);
+      document.getElementById('advValStock').innerText = total.toLocaleString('id-ID');
+      return;
     }
 
-    // Tembak ke Desktop & Mobile!
-    const valStr = total.toLocaleString('id-ID');
-    const perStr = `(${period})`;
-
-    ['', 'Mob'].forEach(suffix => {
-      const valEl = document.getElementById(`advVal${type.charAt(0).toUpperCase() + type.slice(1)}${suffix}`);
-      const perEl = document.getElementById(`advPeriod${type.charAt(0).toUpperCase() + type.slice(1)}${suffix}`);
-      const trEl = document.getElementById(`advTrend${type.charAt(0).toUpperCase() + type.slice(1)}${suffix}`);
-
-      if (valEl) valEl.innerText = valStr;
-      if (perEl) perEl.innerText = perStr;
-      if (trEl) {
-        trEl.className = trendClass;
-        trEl.innerHTML = trendHtml;
-      }
+    let total = 0;
+    let totalLastPeriod = 0;
+    
+    filteredBatches.forEach(b => {
+      total += b[type];
+      totalLastPeriod += (type === 'in' ? b.lastIn : b.lastOut);
     });
+
+    const filterWaktu = document.getElementById('filterWaktu').value;
+    const wText = document.getElementById('filterWaktu').options[document.getElementById('filterWaktu').selectedIndex].text;
+
+    const valEl = document.getElementById(`advVal${type.charAt(0).toUpperCase() + type.slice(1)}`);
+    const periodEl = document.getElementById(`advPeriod${type.charAt(0).toUpperCase() + type.slice(1)}`);
+    const trendEl = document.getElementById(`advTrend${type.charAt(0).toUpperCase() + type.slice(1)}`);
+    
+    if (valEl) valEl.innerText = total.toLocaleString('id-ID');
+    if (periodEl) periodEl.innerText = `(${wText})`;
+
+    // Logic Hitung Trend (Ijo/Merah) KHUSUS untuk 'Bulan Ini'
+    if (trendEl) {
+      if (filterWaktu === 'THIS_MONTH' && totalLastPeriod > 0) {
+        const pct = Math.round(((total - totalLastPeriod) / totalLastPeriod) * 100);
+        if (pct > 0) {
+          trendEl.className = 'trend-up'; trendEl.innerHTML = `<i data-lucide="trending-up" style="width:10px;"></i> ${pct}%`;
+        } else if (pct < 0) {
+          trendEl.className = 'trend-down'; trendEl.innerHTML = `<i data-lucide="trending-down" style="width:10px;"></i> ${Math.abs(pct)}%`;
+        } else {
+          trendEl.className = 'trend-neutral'; trendEl.innerHTML = `<i data-lucide="minus" style="width:10px;"></i> 0%`;
+        }
+      } else {
+        trendEl.className = 'trend-neutral'; trendEl.innerHTML = `<i data-lucide="minus" style="width:10px;"></i> -`;
+      }
+    }
   }
 
-  // --- ACTION HANDLERS ---
   window.cycleCard = function(type) {
+    if (type === 'in' || type === 'out' || type === 'stock') return; // Matikan klik card metrik
     const state = cardState[type];
     state.index = (state.index + 1) % state.options.length;
-    if (type === 'ed' || type === 'slow') {
-      updateWarnings();
-    } else {
-      calculateMetric(type);
-    }
+    updateWarnings();
     lucide.createIcons();
   };
 
@@ -199,11 +295,11 @@
 
     container.innerHTML = `
       <div class="adv-list-top">
-        <div class="mobile-metric" onclick="cycleCard('${metricType}')">
-          <div style="font-size:0.65rem; color:var(--text-light); font-weight:800; text-transform:uppercase;">${mTitle} <span id="advPeriod${capType}Mob" style="color:#94a3b8; font-weight:600;">(Loading)</span></div>
+        <div class="mobile-metric">
+          <div style="font-size:0.65rem; color:var(--text-light); font-weight:800; text-transform:uppercase;">${mTitle}</div>
           <div style="display:flex; align-items:center; gap:6px;">
             <span style="font-size:1.2rem; font-weight:900; color:var(--text-main);" id="advVal${capType}Mob">0</span>
-            <span id="advTrend${capType}Mob" class="trend-neutral" style="margin:0;"><i data-lucide="minus" style="width:10px;"></i> -</span>
+            <span id="advTrend${capType}Mob" class="trend-neutral" style="margin:0;"><i data-lucide="minus" style="width:10px;"></i></span>
           </div>
         </div>
         <button class="btn-sort-toggle" onclick="toggleListSort('${containerId}')">
@@ -213,37 +309,5 @@
       <div class="adv-list-thead"><div class="th-title">Nama produk - batch</div><div class="th-sub"><span>Info</span><span>Jumlah</span></div></div>
       <div class="adv-list-body">${itemsHtml}</div>
     `;
-  }
-
-  function updateCharts() {
-    const totalIn = filteredBatches.reduce((s, b) => s + b.in, 0);
-    const totalOut = filteredBatches.reduce((s, b) => s + b.out, 0);
-    const totalStok = filteredBatches.reduce((s, b) => s + b.stok, 0);
-    compChartInstance.updateSeries([totalIn, totalOut, totalStok]);
-
-    // Dinamis Chart Kategori berdasarkan 5 Sektor Terbesar
-    const sektorMap = {};
-    filteredBatches.forEach(b => {
-      const p = OLAP_RAW_DATA.masterProducts.find(x => x.pId === b.pId);
-      const sektor = p ? p.sektor : 'LAINNYA';
-      sektorMap[sektor] = (sektorMap[sektor] || 0) + b.stok;
-    });
-    const sortedSektor = Object.keys(sektorMap).sort((a,b) => sektorMap[b] - sektorMap[a]).slice(0, 5);
-    const catData = sortedSektor.map(k => sektorMap[k]);
-
-    catChartInstance.updateSeries([{ name: 'Stok', data: catData }]);
-    catChartInstance.updateOptions({ xaxis: { categories: sortedSektor } });
-  }
-
-  function initCompositionChart() {
-    const options = { series: [0, 0, 0], chart: { type: 'pie', height: 250, animations: { speed: 800, dynamicAnimation: { speed: 800 } } }, labels: ['Penerimaan', 'Distribusi', 'Stok Aktif'], colors: ['#0ea5e9', '#f43f5e', '#10b981'], stroke: { width: 3, colors: ['#ffffff'] }, dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 'bold' }, dropShadow: { enabled: true, top: 1, left: 1, blur: 1, opacity: 0.5 } }, legend: { position: 'bottom', markers: { radius: 12 } } };
-    compChartInstance = new ApexCharts(document.querySelector("#chartComposition"), options);
-    compChartInstance.render();
-  }
-
-  function initCategoryChart() {
-    const options = { series: [{ name: 'Vol', data: [0,0,0,0,0] }], chart: { type: 'bar', height: 220, toolbar: { show: false }, animations: { speed: 800, dynamicAnimation: { speed: 800 } } }, plotOptions: { bar: { borderRadius: 6, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } }, colors: ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4'], dataLabels: { enabled: true, formatter: function (val) { return val; }, offsetY: -20, style: { fontSize: '10px', colors: ["#475569"] } }, xaxis: { categories: ['Sektor 1', 'Sektor 2', 'Sektor 3', 'Sektor 4', 'Sektor 5'], labels: { style: { fontSize: '10px', fontWeight: 600, colors: '#64748b' } }, axisBorder: { show: false }, axisTicks: { show: false }, crosshairs: { width: 1 } }, yaxis: { show: false }, grid: { borderColor: '#e2e8f0', strokeDashArray: 4, yaxis: { lines: { show: true } } }, legend: { show: false }, tooltip: { theme: 'light' } };
-    catChartInstance = new ApexCharts(document.querySelector("#chartCategory"), options);
-    catChartInstance.render();
   }
 </script>
