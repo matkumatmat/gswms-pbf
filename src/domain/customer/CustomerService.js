@@ -3,7 +3,7 @@
 class CustomerService {
   constructor(customerRepo) {
     this.repo = customerRepo;
-    this.defaultLimit = 500; 
+    this.defaultLimit = 5000; 
 
     // THE FIX: Urutan 14 Kolom sesuai CSV lu!
     // ID | NAMA KONSUMEN | KOTA/CABANG | NAMA SINGKAT | TIPE | PROVINSI | KOTA | ALAMAT | PIC | KONTAK | MAPS | STATUS | UPDATED AT | UPDATED BY

@@ -51,12 +51,12 @@
     }
   }
 
-  function splitAddress15(fullAddress) {
+  function splitAddress60(fullAddress) {
     if (!fullAddress) return { line1: '', line2: '' };
     let text = fullAddress.trim();
-    if (text.length <= 15) return { line1: text, line2: '' };
-    let splitIndex = text.lastIndexOf(' ', 15);
-    if (splitIndex === -1 || splitIndex === 0) splitIndex = 15; 
+    if (text.length <= 60) return { line1: text, line2: '' };
+    let splitIndex = text.lastIndexOf(' ', 60);
+    if (splitIndex === -1 || splitIndex === 0) splitIndex = 60; 
     return { 
       line1: text.substring(0, splitIndex).trim(), 
       line2: text.substring(splitIndex).trim().substring(0, 15).trim() 
@@ -225,7 +225,7 @@
     Loader.show('Merakit Data & Menyimpan ke Database...'); // PAKE GLOBAL LOADER KEREN LU!
 
     const alamatLengkap = `${selectedCustomerPayload.alamat || ''}, ${selectedCustomerPayload.kota || ''}`;
-    const finalAlamat = splitAddress15(alamatLengkap);
+    const finalAlamat = splitAddress60(alamatLengkap);
     
     const recipient = {
       customer: selectedCustomerPayload.namaKonsumen,

@@ -79,7 +79,7 @@ getActiveReceivedBatches(page = 1, limit = null, schema = 'short') {
 
     getShortBatchLookup(page = 1, limit = null) {
         const filterConfig = {
-            allowedStatuses: ['ACTIVE', 'INACTIVE', 'NTC', 'ANOMALI']
+            allowedStatuses: ['ACTIVE', 'INACTIVE', 'CLOSED', 'NTC','EXPIRED']
         };
         return this.getPaginatedData(page, limit, 'short', filterConfig);
     }
@@ -87,22 +87,6 @@ getActiveReceivedBatches(page = 1, limit = null, schema = 'short') {
     getTableData(page = 1, limit = null, filterConfig = null) {
         return this.getPaginatedData(page, limit, 'table', filterConfig);
     }
-
-    // getDetail(payload, schemaName = 'detail') {
-    //     const rawData = this.repo.getAllBatchLookupRaw();
-    //     const joinedData = this._joinBatchWithProduct(rawData);
-        
-    //     let found = null;
-    //     if (payload && payload.id) {
-    //         found = joinedData.find(e => e.id === payload.id);
-    //     } else if (payload && payload.batch) {
-    //         found = joinedData.find(e => e.batch === payload.batch);
-    //     }
-
-    //     if (!found) return null;
-    //     const processed = this._processJsonFields([found])[0];
-    //     return this._project(processed, schemaName);
-    // }
 
     getDetail(payload) {
         const rawData = this.repo.getAllBatchLookupRaw();

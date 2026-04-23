@@ -78,13 +78,15 @@
     </div>
   </div>
 
-  <div class="ui-card" style="border-bottom: 4px solid #10b981;">
-    <div class="ui-card-body dash-card">
-      <div class="dash-lbl" style="color: #10b981;"><i data-lucide="users" style="width:14px;"></i> Klien PBF</div>
-      <div class="dash-val" style="color: var(--text-main);" id="dash-konsumen"><i data-lucide="loader-2" class="lucide-spin" style="width:20px; color:#cbd5e1;"></i></div>
-      <div class="dash-desc" style="color: var(--text-light);">RS, Apotek & Dist.</div>
+  <a href="?page=master_customer" style="text-decoration: none; color: inherit; display: block;">
+    <div class="ui-card" style="border-bottom: 4px solid #10b981;">
+      <div class="ui-card-body dash-card">
+        <div class="dash-lbl" style="color: #10b981;"><i data-lucide="users" style="width:14px;"></i> Klien PBF</div>
+        <div class="dash-val" style="color: var(--text-main);" id="dash-konsumen"><i data-lucide="loader-2" class="lucide-spin" style="width:20px; color:#cbd5e1;"></i></div>
+        <div class="dash-desc" style="color: var(--text-light);">RS, Apotek & Dist.</div>
+      </div>
     </div>
-  </div>
+  </a>
 
   <a href="?page=fefo_center" style="text-decoration: none; color: inherit; display: block;">
     <div class="ui-card" style="border-bottom: 4px solid #ef4444; cursor:pointer;">
@@ -174,6 +176,7 @@
     try {
       const [activeBatches, customers, analyticsStats] = await Promise.all([
         GasApi.get('getActiveReceivedBatches', 1, 5000),
+        // GasApi.get('getShortBatchLookup', 1, 5000),
         GasApi.get('getCustomers', 1, 2000),
         GasApi.get('getDashboardAnalytics')
       ]);
@@ -326,7 +329,7 @@
     document.getElementById('lblDistQty').innerText = totalDist.toLocaleString('id-ID');
     document.getElementById('lblDistMode').innerText = `${distLabels[distState]}`;
 
-    const batchLabels = ['ACTIVE', 'INACTIVE', 'CLOSED'];
+    const batchLabels = ['ACTIVE', 'INACTIVE', 'CLOSED','EXPIRED'];
     const targetStatus = batchLabels[batchState];
     const countBatch = RAW_ANALYTICS.batches.filter(b => String(b.sysStatus).toUpperCase() === targetStatus).length;
 

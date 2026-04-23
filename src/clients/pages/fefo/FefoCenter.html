@@ -1,3 +1,23 @@
+<style>
+  /* =======================================
+     RESPONSIVE GRID SCALING (Sama kaya Home.html)
+     ======================================= */
+  .fefo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; } /* Mobile: 2x2 Grid */
+  
+  .fefo-card { padding: 12px; }
+  .fefo-lbl { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fefo-val { font-size: 1.5rem; font-weight: 900; line-height: 1.1; margin: 4px 0; }
+  .fefo-desc { font-size: 0.6rem; font-weight: 600; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;}
+
+  @media (min-width: 768px) {
+    .fefo-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; } /* Desktop: 4 Horizontal */
+    .fefo-card { padding: 20px; }
+    .fefo-lbl { font-size: 0.75rem; margin-bottom: 8px; gap: 6px; }
+    .fefo-val { font-size: 2.2rem; }
+    .fefo-desc { font-size: 0.75rem; margin-top: 6px; }
+  }
+</style>
+
 <div class="ui-subheader">
   <div class="ui-subheader-icon" style="background: #fff1f2; color: #e11d48;"><i data-lucide="calendar-clock"></i></div>
   <div class="ui-subheader-text">
@@ -6,37 +26,37 @@
   </div>
 </div>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+<div class="fefo-grid">
   
   <div class="ui-card" style="border-bottom: 4px solid #ef4444; cursor:pointer;" onclick="filterTable('EXPIRED')">
-    <div class="ui-card-body" style="padding: 16px;">
-      <div style="color: #ef4444; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;"><i data-lucide="alert-octagon" style="width:14px; vertical-align:text-bottom;"></i> Expired</div>
-      <div style="font-size: 2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="countExpired">0</div>
-      <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px;">Telah melewati masa edar</div>
+    <div class="ui-card-body fefo-card">
+      <div class="fefo-lbl" style="color: #ef4444;"><i data-lucide="alert-octagon" style="width:14px;"></i> Expired</div>
+      <div class="fefo-val" style="color: var(--text-main);" id="countExpired">0</div>
+      <div class="fefo-desc" style="color: var(--text-light);">Telah melewati masa edar</div>
     </div>
   </div>
 
   <div class="ui-card" style="border-bottom: 4px solid #f97316; cursor:pointer;" onclick="filterTable('KRITIS')">
-    <div class="ui-card-body" style="padding: 16px;">
-      <div style="color: #f97316; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;"><i data-lucide="siren" style="width:14px; vertical-align:text-bottom;"></i> Kritis (< 3 Bln)</div>
-      <div style="font-size: 2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="countKritis">0</div>
-      <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px;">Segera rotasi / retur</div>
+    <div class="ui-card-body fefo-card">
+      <div class="fefo-lbl" style="color: #f97316;"><i data-lucide="siren" style="width:14px;"></i> Kritis (< 3 Bln)</div>
+      <div class="fefo-val" style="color: var(--text-main);" id="countKritis">0</div>
+      <div class="fefo-desc" style="color: var(--text-light);">Segera rotasi / retur</div>
     </div>
   </div>
 
   <div class="ui-card" style="border-bottom: 4px solid #eab308; cursor:pointer;" onclick="filterTable('WASPADA')">
-    <div class="ui-card-body" style="padding: 16px;">
-      <div style="color: #eab308; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;"><i data-lucide="triangle-alert" style="width:14px; vertical-align:text-bottom;"></i> Waspada (3-6 Bln)</div>
-      <div style="font-size: 2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="countWaspada">0</div>
-      <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px;">Prioritas distribusi</div>
+    <div class="ui-card-body fefo-card">
+      <div class="fefo-lbl" style="color: #eab308;"><i data-lucide="triangle-alert" style="width:14px;"></i> Waspada (3-6 Bln)</div>
+      <div class="fefo-val" style="color: var(--text-main);" id="countWaspada">0</div>
+      <div class="fefo-desc" style="color: var(--text-light);">Prioritas distribusi</div>
     </div>
   </div>
 
   <div class="ui-card" style="border-bottom: 4px solid #10b981; cursor:pointer;" onclick="filterTable('AMAN')">
-    <div class="ui-card-body" style="padding: 16px;">
-      <div style="color: #10b981; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;"><i data-lucide="shield-check" style="width:14px; vertical-align:text-bottom;"></i> Aman (> 6 Bln)</div>
-      <div style="font-size: 2rem; font-weight: 900; color: var(--text-main); line-height: 1;" id="countAman">0</div>
-      <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 4px;">Stok jangka panjang</div>
+    <div class="ui-card-body fefo-card">
+      <div class="fefo-lbl" style="color: #10b981;"><i data-lucide="shield-check" style="width:14px;"></i> Aman (> 6 Bln)</div>
+      <div class="fefo-val" style="color: var(--text-main);" id="countAman">0</div>
+      <div class="fefo-desc" style="color: var(--text-light);">Stok jangka panjang</div>
     </div>
   </div>
 
@@ -67,7 +87,6 @@
     lucide.createIcons();
 
     try {
-      // Narik semua batch yg ada (limit digedein biar narik semua)
       const batches = await GasApi.get('getShortBatchLookup', 1, 5000); 
       const today = new Date();
       today.setHours(0,0,0,0);
@@ -77,7 +96,6 @@
       let statWaspada = 0;
       let statAman = 0;
 
-      // Olah kalkulasi tanggal di Frontend
       globalFefoData = batches.map(b => {
         let expDate = new Date(b.expiryDate);
         let statusKondisi = 'UNKNOWN';
@@ -118,13 +136,11 @@
         };
       });
 
-      // Update Dashboard Widget
-      document.getElementById('countExpired').innerText = statExpired;
-      document.getElementById('countKritis').innerText = statKritis;
-      document.getElementById('countWaspada').innerText = statWaspada;
-      document.getElementById('countAman').innerText = statAman;
+      document.getElementById('countExpired').innerText = statExpired.toLocaleString('id-ID');
+      document.getElementById('countKritis').innerText = statKritis.toLocaleString('id-ID');
+      document.getElementById('countWaspada').innerText = statWaspada.toLocaleString('id-ID');
+      document.getElementById('countAman').innerText = statAman.toLocaleString('id-ID');
 
-      // Sort Default: Yang paling cepet Expired di atas!
       globalFefoData.sort((a, b) => a.sisaHari - b.sisaHari);
 
       filterTable('ALL');
