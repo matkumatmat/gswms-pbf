@@ -45,39 +45,53 @@ class AnalyticsService {
     }
   }
 
-  // ====================================================================
+// ====================================================================
   // WRITE: Ngitung, Mutilasi (Chunking), & Simpan JSON (The Worker 👷)
   // ====================================================================
   buildAndSaveDashboardSummary() {
     console.log("Memulai kompilasi Data Mart...");
     
+    // 1. Master Produk (Ganti Sektor jadi Kategori)
     const rawProducts = this.productRepo.getAllProductRaw();
     const productsMapped = AppUtils.mapArrayToObject(rawProducts, ProductRepo.TABLE_KEYS);
     const masterProducts = productsMapped.map(p => ({
       pId: p.id,
       kode: (p.kodeBarangNew && p.kodeBarangNew !== '-') ? p.kodeBarangNew : p.kodeBarang,
       nama: p.namaDagang,
-      sektor: p.sektor || 'LAINNYA'
+      kat: p.kategori && p.kategori !== '-' ? p.kategori : 'TIDAK ADA KATEGORI' // PAKE KATEGORI!
     }));
 
+    // 2. Mapping Batch pakai ID (Biar 434 baris masuk semua, anti ke-skip!)
     const rawBatches = this.batchRepo.getAllBatchLookupRaw();
     const batches = AppUtils.mapArrayToObject(rawBatches, BatchRepo.TABLE_KEYS);
-    const batchMartMap = new Map();
+    
+    const batchMartMap = new Map(); // Key sekarang adalah b.id
+    const batchSearchIndex = new Map(); // Buat nyari waktu cocokin transaksi
     
     batches.forEach(b => {
-      if (!b.batch) return;
-      batchMartMap.set(String(b.batch).toUpperCase().trim(), {
-        b: String(b.batch).toUpperCase().trim(),
+      const batchObj = {
+        id: b.id,
+        b: String(b.batch || '-').toUpperCase().trim(),
         pId: b.productId,
         sys: b.sysStatus || 'UNKNOWN',
         ed: b.expiryDate || null,
+        rcv: b.createdAt || new Date().toISOString(), // TANGGAL MASUK GUDANG!
         rslBln: b.rslBulan || 0,
         in: 0, out: 0, stok: 0,
         lastTrxDate: null, 
         trxByMonth: {} 
-      });
+      };
+      
+      batchMartMap.set(b.id, batchObj);
+      
+      // Indexing buat nyari saat baca transaksi (KodeBarang_Batch)
+      const prod = masterProducts.find(p => p.pId === b.productId);
+      const kode = prod ? prod.kode : '';
+      batchSearchIndex.set(`${kode}_${batchObj.b}`.toUpperCase(), b.id);
+      if (!batchSearchIndex.has(batchObj.b)) batchSearchIndex.set(batchObj.b, b.id); // Fallback
     });
 
+    // 3. Transaksi Hot
     const ssHot = SpreadsheetApp.openById(this.hotConfig.DB_DISTRIBUSI_CURRENT_ID);
     const sheetHot = ssHot.getSheetByName(this.hotConfig.DB_DISTRIBUSI_CURRENT_SHEET_NAME);
     const rawHot = sheetHot.getRange(this.hotConfig.DB_DISTRIBUSI_CURRENT_START_ROW, 1, sheetHot.getLastRow(), sheetHot.getLastColumn()).getValues();
@@ -85,9 +99,13 @@ class AnalyticsService {
 
     for (let row of rawHot) {
       const bNo = String(row[map.batch - 1] || '').trim().toUpperCase();
-      if (!batchMartMap.has(bNo)) continue;
+      const kBrg = String(row[map.kodeBarang - 1] || '').trim().toUpperCase();
+      
+      // Cari ID Batch-nya
+      let targetId = batchSearchIndex.get(`${kBrg}_${bNo}`) || batchSearchIndex.get(bNo);
+      if (!targetId || !batchMartMap.has(targetId)) continue;
 
-      const bm = batchMartMap.get(bNo);
+      const bm = batchMartMap.get(targetId);
       const qIn = this._parseIdn(row[map.penerimaan - 1]);
       const qOut = this._parseIdn(row[map.distribusi - 1]);
       const tglRaw = row[map.tanggal - 1];
@@ -108,14 +126,18 @@ class AnalyticsService {
       }
     }
 
+    // 4. Merge Cold Storage
     const ssMaster = SpreadsheetApp.openById(AppConfig.DB_BATCH_LOOKUP_ID);
     const sheetCold = ssMaster.getSheetByName(AppConfig.DB_STOK_COLD_REKAP_SHEET_NAME);
     if (sheetCold && sheetCold.getLastRow() > 1) {
       const rawCold = sheetCold.getRange(2, 1, sheetCold.getLastRow() - 1, 4).getValues();
       for(let row of rawCold) {
         const bNo = String(row[0] || '').trim().toUpperCase();
-        if (batchMartMap.has(bNo)) {
-          const bm = batchMartMap.get(bNo);
+        const kBrg = String(row[1] || '').trim().toUpperCase();
+        
+        let targetId = batchSearchIndex.get(`${kBrg}_${bNo}`) || batchSearchIndex.get(bNo);
+        if (targetId && batchMartMap.has(targetId)) {
+          const bm = batchMartMap.get(targetId);
           bm.in += this._parseIdn(row[2]);
           bm.out += this._parseIdn(row[3]);
           bm.stok = bm.in - bm.out;
@@ -123,18 +145,18 @@ class AnalyticsService {
       }
     }
 
+    // 5. Build Payload Final
     const payload = {
       lastSync: new Date().toISOString(),
       masterProducts: masterProducts,
       batchMart: Array.from(batchMartMap.values())
     };
 
-    // --- TEKNIK MUTILASI (CHUNKING) ANTI LIMIT 50k ---
+    // 6. Teknik Chunking Mutilasi Limit 50k
     const jsonString = JSON.stringify(payload);
-    const chunkSize = 45000; // Aman di bawah 50.000
+    const chunkSize = 45000; 
     const chunkArray = [];
 
-    // Potong-potong jsonString jadi array of arrays (karena setValues butuh 2D array)
     for (let i = 0; i < jsonString.length; i += chunkSize) {
       chunkArray.push([jsonString.substring(i, i + chunkSize)]);
     }
@@ -142,10 +164,7 @@ class AnalyticsService {
     const ssOlap = SpreadsheetApp.openById(AppConfig.DB_OLAP_DATA_ID);
     const sheetOlap = ssOlap.getSheetByName(AppConfig.DB_OLAP_DATA_SHEET_NAME);
     
-    // Bersihin data lama sampe ke akar-akarnya
     sheetOlap.clearContents();
-    
-    // Tulis ulang hasil mutilasi secara vertikal (A1, A2, A3...)
     sheetOlap.getRange(1, 1, chunkArray.length, 1).setValues(chunkArray);
     
     console.log(`Data Mart OLAP sukses di-update! (Terpecah jadi ${chunkArray.length} sel)`);

@@ -1,161 +1,248 @@
 <script>
+  // --- GLOBAL STATE ---
+  let OLAP_RAW_DATA = null; 
+  let filteredBatches = []; 
+
   let compChartInstance = null;
   let catChartInstance = null;
 
+  // State Card Metrik & Warning
   const cardState = {
-    ed: { index: 0, options: ['< 3 bulan', '< 6 bulan', '< 1 bulan'] },
-    slow: { index: 0, options: ['> 60 hari', '> 30 hari', '> 90 hari'] },
-    in: { index: 0, options: ['Tahun Ini', 'Bulan Ini', 'Bulan Lalu', 'Tahun Lalu', 'Semua Periode'] },
-    out: { index: 0, options: ['Tahun Ini', 'Bulan Ini', 'Bulan Lalu', 'Tahun Lalu', 'Semua Periode'] },
-    stock: { index: 0, options: ['Tahun Ini', 'Bulan Ini', 'Bulan Lalu', 'Tahun Lalu', 'Semua Periode'] }
+    ed: { index: 0, options: [3, 6, 1] }, 
+    slow: { index: 0, options: [60, 30, 90] }, 
+    in: { index: 0, options: ['Tahun Ini', 'Bulan Ini', 'Bulan Lalu', 'Semua Periode'] },
+    out: { index: 0, options: ['Tahun Ini', 'Bulan Ini', 'Bulan Lalu', 'Semua Periode'] },
+    stock: { index: 0, options: ['Semua Periode'] }
   };
 
+  // State Sorting List (PERSIS KAYA PUNYA LU)
   const listStates = {
-    'listAscContainer': { sortType: 'qty', dir: 'asc', data: [] },
-    'listDescContainer': { sortType: 'qty', dir: 'desc', data: [] },
-    'listAzContainer': { sortType: 'name', dir: 'asc', data: [] }
+    'listAscContainer': { sortType: 'qty', dir: 'asc', data: [], metricType: 'in' },
+    'listDescContainer': { sortType: 'qty', dir: 'desc', data: [], metricType: 'out' },
+    'listAzContainer': { sortType: 'name', dir: 'asc', data: [], metricType: 'stock' }
   };
 
   document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
-    renderAdvancedDashboard();
+    initDashboard();
   });
 
-  function renderAdvancedDashboard() {
-    listStates.listAscContainer.data = Array.from({length: 10}, (_, i) => ({ name: `Vaksin Polio Dummy Extra Panjang Sekali Namanya ${i+1} - BCH00${i+1}`, date: '20 Sep 26', qty: Math.floor(Math.random() * 500 + 100) }));
-    listStates.listDescContainer.data = Array.from({length: 10}, (_, i) => ({ name: `Serum Anti Bisa Ular Dummy Panjang Bet Dah ${i+1} - BCH00${i+1}`, date: '20 Sep 26', qty: Math.floor(Math.random() * 500 + 100) }));
-    listStates.listAzContainer.data = Array.from({length: 10}, (_, i) => ({ name: `Alat Suntik Sekali Pakai Dummy Nomer ${i+1} - BCH00${i+1}`, date: '20 Sep 26', qty: Math.floor(Math.random() * 500 + 100) }));
+  async function initDashboard() {
+    try {
+      // 1. Tarik Data OLAP
+      const response = await GasApi.get('getDashboardAnalytics');
+      if (!response || !response.batchMart) throw new Error("Data mart kosong!");
+      
+      OLAP_RAW_DATA = response;
+      filteredBatches = OLAP_RAW_DATA.batchMart;
+      
+      initCompositionChart();
+      initCategoryChart();
 
-    applySortAndRender('listAscContainer', 'in');    // Inject Metrik Penerimaan
-    applySortAndRender('listDescContainer', 'out');  // Inject Metrik Distribusi
-    applySortAndRender('listAzContainer', 'stock');  // Inject Metrik Stok
-
-    // Sync Angka Awal
-    document.getElementById('advValIn').innerText = '24,850'; document.getElementById('advValInMob').innerText = '24,850';
-    document.getElementById('advValOut').innerText = '18,200'; document.getElementById('advValOutMob').innerText = '18,200';
-    document.getElementById('advValStock').innerText = '52,400'; document.getElementById('advValStockMob').innerText = '52,400';
-
-    initCompositionChart();
-    initCategoryChart();
+      refreshDataAndUI();
+    } catch (e) {
+      console.error("Gagal inisialisasi dashboard:", e);
+      ToastSystem.show("Gagal memuat data analitik", "error");
+    }
   }
+
+  // --- CORE ENGINE ---
+  function refreshDataAndUI() {
+    if (!OLAP_RAW_DATA) return;
+
+    // 1. Update Warning Cards
+    updateWarnings();
+
+    // 2. Mapping Data buat Tabel (Sesuai Konsep Lu)
+    listStates.listAscContainer.data = filteredBatches.map(b => ({ name: b.b, date: b.ed ? b.ed.split('T')[0] : '-', qty: b.in }));
+    listStates.listDescContainer.data = filteredBatches.map(b => ({ name: b.b, date: b.lastTrxDate ? b.lastTrxDate.split('T')[0] : '-', qty: b.out }));
+    listStates.listAzContainer.data = filteredBatches.map(b => ({ name: b.b, date: '-', qty: b.stok }));
+
+    // 3. Render List DULUAN (Biar elemen Mobile Header-nya ke-inject ke HTML)
+    applySortAndRender('listAscContainer');
+    applySortAndRender('listDescContainer');
+    applySortAndRender('listAzContainer');
+
+    // 4. Update Angka Metrik (Biar nimpa angka 0 di Desktop & Mobile)
+    calculateMetric('in');
+    calculateMetric('out');
+    calculateMetric('stock');
+
+    // 5. Update Charts
+    updateCharts();
+  }
+
+  function updateWarnings() {
+    const limitBulan = cardState.ed.options[cardState.ed.index];
+    const edList = filteredBatches.filter(b => b.rslBln > 0 && b.rslBln <= limitBulan);
+    document.getElementById('advCountED').innerText = edList.length;
+    document.getElementById('advDescED').innerText = `Masa simpan < ${limitBulan} bulan`;
+
+    const limitHari = cardState.slow.options[cardState.slow.index];
+    const today = new Date();
+    const slowList = filteredBatches.filter(b => {
+      if (!b.lastTrxDate) return true; 
+      const last = new Date(b.lastTrxDate);
+      const diffDays = Math.ceil((today - last) / (1000 * 60 * 60 * 24));
+      return diffDays > limitHari;
+    });
+    document.getElementById('advCountSlow').innerText = slowList.length;
+    document.getElementById('advDescSlow').innerText = `Tanpa mutasi > ${limitHari} hari`;
+  }
+
+  function calculateMetric(type) {
+    const period = cardState[type].options[cardState[type].index];
+    let total = 0;
+    let lastPeriodTotal = 0;
+
+    const today = new Date();
+    const cYear = today.getFullYear().toString();
+    const cMonthKey = `${cYear}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    
+    let lYear = today.getFullYear();
+    let lMonth = today.getMonth(); 
+    if (lMonth === 0) { lYear--; lMonth = 12; }
+    const lMonthKey = `${lYear}-${String(lMonth).padStart(2, '0')}`;
+
+    // Looping & Cross-Check Waktu dari OLAP
+    filteredBatches.forEach(b => {
+      if (type === 'stock') {
+        total += b.stok;
+      } else {
+        if (period === 'Semua Periode') {
+          total += b[type];
+        } else if (period === 'Tahun Ini') {
+          Object.keys(b.trxByMonth).forEach(k => { if (k.startsWith(cYear)) total += b.trxByMonth[k][type]; });
+        } else if (period === 'Bulan Ini') {
+          if (b.trxByMonth[cMonthKey]) total += b.trxByMonth[cMonthKey][type];
+          if (b.trxByMonth[lMonthKey]) lastPeriodTotal += b.trxByMonth[lMonthKey][type];
+        } else if (period === 'Bulan Lalu') {
+          if (b.trxByMonth[lMonthKey]) total += b.trxByMonth[lMonthKey][type];
+        }
+      }
+    });
+
+    // Kalkulasi Trend
+    let trendClass = 'trend-neutral';
+    let trendHtml = `<i data-lucide="minus" style="width:10px;"></i> -`;
+    
+    if (type !== 'stock' && period === 'Bulan Ini' && lastPeriodTotal > 0) {
+      const pct = Math.round(((total - lastPeriodTotal) / lastPeriodTotal) * 100);
+      if (pct > 0) {
+        trendClass = 'trend-up'; trendHtml = `<i data-lucide="trending-up" style="width:10px;"></i> ${pct}%`;
+      } else if (pct < 0) {
+        trendClass = 'trend-down'; trendHtml = `<i data-lucide="trending-down" style="width:10px;"></i> ${Math.abs(pct)}%`;
+      }
+    }
+
+    // Tembak ke Desktop & Mobile!
+    const valStr = total.toLocaleString('id-ID');
+    const perStr = `(${period})`;
+
+    ['', 'Mob'].forEach(suffix => {
+      const valEl = document.getElementById(`advVal${type.charAt(0).toUpperCase() + type.slice(1)}${suffix}`);
+      const perEl = document.getElementById(`advPeriod${type.charAt(0).toUpperCase() + type.slice(1)}${suffix}`);
+      const trEl = document.getElementById(`advTrend${type.charAt(0).toUpperCase() + type.slice(1)}${suffix}`);
+
+      if (valEl) valEl.innerText = valStr;
+      if (perEl) perEl.innerText = perStr;
+      if (trEl) {
+        trEl.className = trendClass;
+        trEl.innerHTML = trendHtml;
+      }
+    });
+  }
+
+  // --- ACTION HANDLERS ---
+  window.cycleCard = function(type) {
+    const state = cardState[type];
+    state.index = (state.index + 1) % state.options.length;
+    if (type === 'ed' || type === 'slow') {
+      updateWarnings();
+    } else {
+      calculateMetric(type);
+    }
+    lucide.createIcons();
+  };
 
   window.toggleListSort = function(containerId) {
     const state = listStates[containerId];
     state.dir = state.dir === 'asc' ? 'desc' : 'asc';
-    
-    // Pass kembali tipe metriknya berdasarkan container
-    let mType = containerId === 'listAscContainer' ? 'in' : (containerId === 'listDescContainer' ? 'out' : 'stock');
-    applySortAndRender(containerId, mType);
-  }
+    applySortAndRender(containerId);
+  };
 
-  function applySortAndRender(containerId, metricType) {
+  function applySortAndRender(containerId) {
     const state = listStates[containerId];
-    if (state.sortType === 'qty') { state.data.sort((a,b) => state.dir === 'asc' ? a.qty - b.qty : b.qty - a.qty); } 
-    else { state.data.sort((a,b) => state.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)); }
-    
+    if (state.sortType === 'qty') {
+      state.data.sort((a,b) => state.dir === 'asc' ? a.qty - b.qty : b.qty - a.qty);
+    } else {
+      state.data.sort((a,b) => state.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+    }
     let label = state.sortType === 'qty' ? (state.dir === 'asc' ? 'Ascending' : 'Descending') : (state.dir === 'asc' ? 'A - Z' : 'Z - A');
-    renderSingleList(containerId, label, state.data, metricType);
+    renderSingleList(containerId, label, state.data.slice(0, 15), state.metricType);
     lucide.createIcons();
   }
 
-  // MAGIC INJECTION MOBILE METRICS
   function renderSingleList(containerId, sortLabel, data, metricType) {
     const container = document.getElementById(containerId);
     let iconDir = (sortLabel === 'Ascending' || sortLabel === 'A - Z') ? 'arrow-down-up' : 'arrow-up-down';
-    
+
     let itemsHtml = data.map(item => `
       <div class="adv-list-item">
         <div class="li-left"><div class="li-info" title="${item.name}">${item.name}</div><div class="li-date">${item.date}</div></div>
-        <div class="li-qty">${item.qty}</div>
+        <div class="li-qty">${item.qty.toLocaleString('id-ID')}</div>
       </div>
     `).join('');
 
-    // Setup Teks & Icon buat Mobile Header
     let mTitle = metricType === 'in' ? 'Penerimaan' : (metricType === 'out' ? 'Distribusi' : 'Stok');
-    let mColor = metricType === 'in' ? '#10b981' : (metricType === 'out' ? '#ef4444' : '#0ea5e9');
-    
+    let capType = metricType.charAt(0).toUpperCase() + metricType.slice(1);
+
     container.innerHTML = `
       <div class="adv-list-top">
         <div class="mobile-metric" onclick="cycleCard('${metricType}')">
-          <div style="font-size:0.65rem; color:var(--text-light); font-weight:800; text-transform:uppercase;">${mTitle} <span id="advPeriod${metricType === 'in' ? 'In' : (metricType === 'out' ? 'Out' : 'Stock')}Mob" style="color:#94a3b8; font-weight:600;">(Tahun Ini)</span></div>
+          <div style="font-size:0.65rem; color:var(--text-light); font-weight:800; text-transform:uppercase;">${mTitle} <span id="advPeriod${capType}Mob" style="color:#94a3b8; font-weight:600;">(Loading)</span></div>
           <div style="display:flex; align-items:center; gap:6px;">
-            <span style="font-size:1.2rem; font-weight:900; color:var(--text-main);" id="advVal${metricType === 'in' ? 'In' : (metricType === 'out' ? 'Out' : 'Stock')}Mob">0</span>
-            <span id="advTrend${metricType === 'in' ? 'In' : (metricType === 'out' ? 'Out' : 'Stock')}Mob" class="trend-${metricType === 'in' ? 'up' : (metricType === 'out' ? 'down' : 'neutral')}" style="margin:0;">
-              <i data-lucide="${metricType === 'in' ? 'trending-up' : (metricType === 'out' ? 'trending-down' : 'minus')}" style="width:10px;"></i> ${metricType === 'in' ? '12%' : (metricType === 'out' ? '4%' : '0%')}
-            </span>
+            <span style="font-size:1.2rem; font-weight:900; color:var(--text-main);" id="advVal${capType}Mob">0</span>
+            <span id="advTrend${capType}Mob" class="trend-neutral" style="margin:0;"><i data-lucide="minus" style="width:10px;"></i> -</span>
           </div>
         </div>
         <button class="btn-sort-toggle" onclick="toggleListSort('${containerId}')">
           <i data-lucide="${iconDir}" style="width:14px;"></i> ${sortLabel}
         </button>
       </div>
-      <div class="adv-list-thead"><div class="th-title">Nama produk - batch</div><div class="th-sub"><span>Tanggal</span><span>Jumlah</span></div></div>
+      <div class="adv-list-thead"><div class="th-title">Nama produk - batch</div><div class="th-sub"><span>Info</span><span>Jumlah</span></div></div>
       <div class="adv-list-body">${itemsHtml}</div>
     `;
   }
 
-  // UPDATE STATE (Mencakup Desktop & Mobile)
-  window.cycleCard = function(type) {
-    const state = cardState[type];
-    state.index = (state.index + 1) % state.options.length; 
-    const selectedOption = state.options[state.index];
+  function updateCharts() {
+    const totalIn = filteredBatches.reduce((s, b) => s + b.in, 0);
+    const totalOut = filteredBatches.reduce((s, b) => s + b.out, 0);
+    const totalStok = filteredBatches.reduce((s, b) => s + b.stok, 0);
+    compChartInstance.updateSeries([totalIn, totalOut, totalStok]);
 
-    if (type === 'ed') {
-      document.getElementById('advDescED').innerText = `Masa simpan ${selectedOption}`;
-      document.getElementById('advCountED').innerText = Math.floor(Math.random() * 50) + 1;
-    } 
-    else if (type === 'slow') {
-      document.getElementById('advDescSlow').innerText = `Tanpa mutasi ${selectedOption}`;
-      document.getElementById('advCountSlow').innerText = Math.floor(Math.random() * 30) + 1;
-    } 
-    else {
-      // Tangkep Elemen Desktop
-      const periodEl = document.getElementById(type === 'in' ? 'advPeriodIn' : type === 'out' ? 'advPeriodOut' : 'advPeriodStock');
-      const valEl = document.getElementById(type === 'in' ? 'advValIn' : type === 'out' ? 'advValOut' : 'advValStock');
-      const trendEl = document.getElementById(type === 'in' ? 'advTrendIn' : type === 'out' ? 'advTrendOut' : 'advTrendStock');
-      
-      // Tangkep Elemen Mobile
-      const periodElMob = document.getElementById(type === 'in' ? 'advPeriodInMob' : type === 'out' ? 'advPeriodOutMob' : 'advPeriodStockMob');
-      const valElMob = document.getElementById(type === 'in' ? 'advValInMob' : type === 'out' ? 'advValOutMob' : 'advValStockMob');
-      const trendElMob = document.getElementById(type === 'in' ? 'advTrendInMob' : type === 'out' ? 'advTrendOutMob' : 'advTrendStockMob');
+    // Dinamis Chart Kategori berdasarkan 5 Sektor Terbesar
+    const sektorMap = {};
+    filteredBatches.forEach(b => {
+      const p = OLAP_RAW_DATA.masterProducts.find(x => x.pId === b.pId);
+      const sektor = p ? p.sektor : 'LAINNYA';
+      sektorMap[sektor] = (sektorMap[sektor] || 0) + b.stok;
+    });
+    const sortedSektor = Object.keys(sektorMap).sort((a,b) => sektorMap[b] - sektorMap[a]).slice(0, 5);
+    const catData = sortedSektor.map(k => sektorMap[k]);
 
-      const newVal = Math.floor(Math.random() * 80000) + 5000;
-      const formattedVal = newVal.toLocaleString('id-ID');
-
-      if(periodEl) periodEl.innerText = `(${selectedOption})`;
-      if(periodElMob) periodElMob.innerText = `(${selectedOption})`;
-      if(valEl) valEl.innerText = formattedVal;
-      if(valElMob) valElMob.innerText = formattedVal;
-
-      let trendClass = 'trend-neutral';
-      let trendHtml = `<i data-lucide="minus" style="width:10px;"></i> -`;
-
-      if (selectedOption !== 'Semua Periode') {
-        const isUp = Math.random() > 0.5;
-        const pct = Math.floor(Math.random() * 25) + 1;
-        if (isUp) { trendClass = 'trend-up'; trendHtml = `<i data-lucide="trending-up" style="width:10px;"></i> ${pct}%`; } 
-        else { trendClass = 'trend-down'; trendHtml = `<i data-lucide="trending-down" style="width:10px;"></i> ${pct}%`; }
-      }
-
-      if(trendEl) { trendEl.className = trendClass; trendEl.innerHTML = trendHtml; }
-      if(trendElMob) { trendElMob.className = trendClass; trendElMob.innerHTML = trendHtml; }
-    }
-
-    lucide.createIcons();
-
-    // Animasi Update Chart
-    if (compChartInstance) { compChartInstance.updateSeries([ Math.floor(Math.random() * 50000) + 10000, Math.floor(Math.random() * 30000) + 5000, Math.floor(Math.random() * 60000) + 20000 ]); }
-    if (catChartInstance) { catChartInstance.updateSeries([{ name: 'Vol', data: Array.from({length: 5}, () => Math.floor(Math.random() * 1000) + 100) }]); }
+    catChartInstance.updateSeries([{ name: 'Stok', data: catData }]);
+    catChartInstance.updateOptions({ xaxis: { categories: sortedSektor } });
   }
 
   function initCompositionChart() {
-    const options = { series: [45000, 18000, 52000], chart: { type: 'pie', height: 250, animations: { speed: 800, dynamicAnimation: { speed: 800 } } }, labels: ['Penerimaan', 'Distribusi', 'Stok Aktif'], colors: ['#0ea5e9', '#f43f5e', '#10b981'], stroke: { width: 3, colors: ['#ffffff'] }, dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 'bold' }, dropShadow: { enabled: true, top: 1, left: 1, blur: 1, opacity: 0.5 } }, legend: { position: 'bottom', markers: { radius: 12 } } };
+    const options = { series: [0, 0, 0], chart: { type: 'pie', height: 250, animations: { speed: 800, dynamicAnimation: { speed: 800 } } }, labels: ['Penerimaan', 'Distribusi', 'Stok Aktif'], colors: ['#0ea5e9', '#f43f5e', '#10b981'], stroke: { width: 3, colors: ['#ffffff'] }, dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 'bold' }, dropShadow: { enabled: true, top: 1, left: 1, blur: 1, opacity: 0.5 } }, legend: { position: 'bottom', markers: { radius: 12 } } };
     compChartInstance = new ApexCharts(document.querySelector("#chartComposition"), options);
     compChartInstance.render();
   }
 
   function initCategoryChart() {
-    const options = { series: [{ name: 'Vol', data: [440, 550, 410, 670, 220] }], chart: { type: 'bar', height: 220, toolbar: { show: false }, animations: { speed: 800, dynamicAnimation: { speed: 800 } } }, plotOptions: { bar: { borderRadius: 6, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } }, colors: ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4'], dataLabels: { enabled: true, formatter: function (val) { return val; }, offsetY: -20, style: { fontSize: '10px', colors: ["#475569"] } }, xaxis: { categories: ['Vaksin', 'Serum', 'Alkes', 'Obat', 'Lainnya'], labels: { style: { fontSize: '10px', fontWeight: 600, colors: '#64748b' } }, axisBorder: { show: false }, axisTicks: { show: false }, crosshairs: { width: 1 } }, yaxis: { show: false }, grid: { borderColor: '#e2e8f0', strokeDashArray: 4, yaxis: { lines: { show: true } } }, legend: { show: false }, tooltip: { theme: 'light' } };
+    const options = { series: [{ name: 'Vol', data: [0,0,0,0,0] }], chart: { type: 'bar', height: 220, toolbar: { show: false }, animations: { speed: 800, dynamicAnimation: { speed: 800 } } }, plotOptions: { bar: { borderRadius: 6, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } }, colors: ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4'], dataLabels: { enabled: true, formatter: function (val) { return val; }, offsetY: -20, style: { fontSize: '10px', colors: ["#475569"] } }, xaxis: { categories: ['Sektor 1', 'Sektor 2', 'Sektor 3', 'Sektor 4', 'Sektor 5'], labels: { style: { fontSize: '10px', fontWeight: 600, colors: '#64748b' } }, axisBorder: { show: false }, axisTicks: { show: false }, crosshairs: { width: 1 } }, yaxis: { show: false }, grid: { borderColor: '#e2e8f0', strokeDashArray: 4, yaxis: { lines: { show: true } } }, legend: { show: false }, tooltip: { theme: 'light' } };
     catChartInstance = new ApexCharts(document.querySelector("#chartCategory"), options);
     catChartInstance.render();
   }
