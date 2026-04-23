@@ -56,7 +56,6 @@ class TransactionHistoryRepo {
             tanggal: row[map.tanggal - 1],
             namaKonsumen: String(row[map.namaKonsumen - 1] || ''),
             kotaCabang: String(row[map.kotaCabang - 1] || ''),
-            // THE FIX: Ini dia mapping yang kemaren ketinggalan wkwkwk!
             kodeBarang: String(row[map.kodeBarang - 1] || ''),
             batch: currentBatch,
             penerimaan: parseFloat(row[map.penerimaan - 1]) || 0,

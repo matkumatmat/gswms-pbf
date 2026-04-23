@@ -112,7 +112,8 @@ const PageRegistry = {
   'master_customer': 'src/clients/pages/customer/CustomerList',
   'add_customer': 'src/clients/pages/customer/CustomerForm',
   'fefo_center': 'src/clients/pages/fefo/FefoCenter',
-  'embalage': 'src/clients/pages/embalage/ShippingEmbalage'
+  'embalage': 'src/clients/pages/embalage/ShippingEmbalage',
+  'maindashboard': 'src/clients/pages/analytics/MainDashboard'
 };
 
 // ============================================================================

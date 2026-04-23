@@ -1,0 +1,123 @@
+<style>
+  /* =======================================
+     VAKSIN ANTI OVERFLOW KELAS DEWA
+     ======================================= */
+  .adv-master-wrapper, .adv-master-wrapper * {
+    box-sizing: border-box !important;
+    min-width: 0; /* Paksa semua elemen mau menciut! */
+  }
+
+  /* =======================================
+     ABSOLUTE 4-COLUMN GRID (DESKTOP)
+     ======================================= */
+  .adv-master-wrapper {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 16px;
+    padding-top: 10px;
+    align-items: start;
+    width: 100%;
+  }
+
+  .left-panel, .right-panel { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+
+  /* Top Row Desktop */
+  .lp-top-row { display: grid; grid-template-columns: 2fr 3fr; gap: 16px; width: 100%; }
+  .adv-warn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .adv-filter-block { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; order: -1 !important; }
+
+  /* Metrics & Lists */
+  .lp-metrics-row, .lp-lists-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; }
+
+  /* =======================================
+     STYLING KOMPONEN
+     ======================================= */
+  /* Warnings */
+  .adv-warn-card { border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: center; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; }
+  .adv-warn-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.08); }
+  .bg-ed { background: linear-gradient(135deg, #fef08a 0%, #fde047 100%); }
+  .bg-slow { background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); }
+  .warn-lbl { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; color: #475569; display: flex; align-items: flex-start; gap: 6px; line-height: 1.2; word-wrap: break-word; }
+  .warn-val { font-size: 2.5rem; font-weight: 900; color: #1e293b; line-height: 1; }
+  .warn-desc { font-size: 0.65rem; font-weight: 700; color: rgba(0,0,0,0.5); margin-top: 6px; line-height: 1.2; }
+
+  /* Filters */
+  .input-wrap { position: relative; width: 100%; }
+  .input-wrap .lucide { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; width: 14px; height: 14px; pointer-events: none; }
+  .input-wrap input, .input-wrap select { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px 8px 30px; font-size: 0.75rem; font-weight: 600; color: var(--text-main); width: 100%; outline: none; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02); text-overflow: ellipsis; }
+  .f-span-3 { grid-column: span 3; } .f-span-2 { grid-column: span 2; } .f-span-1 { grid-column: span 1; }
+
+  /* Metrics */
+  .adv-met-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
+  .adv-met-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.08); }
+  .met-icon-box { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .met-icon-in { background: #d1fae5; color: #10b981; } .met-icon-out { background: #fee2e2; color: #ef4444; } .met-icon-stok { background: #e0f2fe; color: #0ea5e9; }
+  .met-info { display: flex; flex-direction: column; flex: 1; }
+  .m-lbl { font-size: 0.8rem; font-weight: 800; color: var(--text-main); margin-bottom: 2px; display: flex; align-items: center; flex-wrap: wrap; }
+  .m-val { font-size: 1.4rem; font-weight: 900; color: var(--text-main); line-height: 1; }
+  .trend-up { display: inline-flex; align-items: center; gap: 2px; color: #10b981; font-size: 0.6rem; font-weight: 800; background: #ecfdf5; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+  .trend-down { display: inline-flex; align-items: center; gap: 2px; color: #ef4444; font-size: 0.6rem; font-weight: 800; background: #fef2f2; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+  .trend-neutral { display: inline-flex; align-items: center; gap: 2px; color: #64748b; font-size: 0.6rem; font-weight: 800; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+
+  /* Lists */
+  .adv-list-card { background: #e2e8f0; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+  .adv-list-top { padding: 10px; display: flex; justify-content: flex-end; align-items: center; }
+  .mobile-metric { display: none; cursor: pointer; user-select: none; }
+  .btn-sort-toggle { background: #cbd5e1; border: none; border-radius: 6px; padding: 6px 10px; font-size: 0.7rem; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .adv-list-thead { background: #cbd5e1; padding: 8px 12px; border-bottom: 2px solid #94a3b8; }
+  .th-title { font-size: 0.75rem; font-weight: 800; color: #334155; margin-bottom: 4px; }
+  .th-sub { display: flex; justify-content: space-between; font-size: 0.65rem; color: #475569; font-weight: 700; text-transform: uppercase; }
+  .adv-list-body { background: #f8fafc; height: 250px; overflow-y: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%); mask-image: linear-gradient(to bottom, black 80%, transparent 100%); }
+  .adv-list-body::-webkit-scrollbar { display: none; }
+  .adv-list-item { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+  .li-left { flex: 1; min-width: 0; padding-right: 12px; }
+  .li-info { font-size: 0.75rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .li-date { font-size: 0.65rem; color: var(--text-light); margin-top: 2px; }
+  .li-qty { font-size: 0.85rem; font-weight: 800; color: var(--text-main); width: 45px; text-align: right; flex-shrink: 0; }
+
+  /* Charts */
+  .adv-chart-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; display: flex; align-items: center; justify-content: center; width: 100%; overflow: hidden; }
+
+  /* =======================================
+     MODE HP (MOBILE LOCKDOWN)
+     ======================================= */
+  @media (max-width: 1023px) {
+    .adv-master-wrapper {
+      display: flex !important;
+      flex-direction: column !important;
+      padding: 0 0 100px 0 !important; /* Hilangin padding kiri kanan karena app-main udah ngasih 15px */
+      gap: 20px !important;
+      width: 100% !important;
+      overflow-x: hidden !important;
+    }
+    .lp-top-row { display: flex !important; flex-direction: column !important; gap: 16px !important; }
+    
+    /* Warnings di-flex biar pasti bagi 2 dengan adil */
+    .adv-warn-group { display: flex !important; gap: 12px !important; width: 100% !important; }
+    .adv-warn-card { flex: 1; padding: 12px !important; }
+    
+    /* Font Size Mobile Adjustments */
+    .warn-val { font-size: 2rem !important; }
+    .warn-lbl { font-size: 0.65rem !important; flex-wrap: wrap; }
+    .warn-desc { font-size: 0.6rem !important; }
+    
+    /* FILTER STACKING - SUPER AMAN */
+    .adv-filter-block { 
+      display: grid !important; 
+      grid-template-columns: 1fr 1fr !important; /* Pasti muat! */
+      gap: 8px !important; 
+    }
+    .input-wrap input, .input-wrap select { padding: 8px 10px 8px 30px !important; font-size: 0.75rem !important; }
+    
+    /* Paksa elemen filter panjang turun ke baris baru full width di mobile */
+    .mob-fw { grid-column: span 2 !important; }
+    
+    .lp-metrics-row { display: none !important; }
+    .lp-lists-row { display: flex !important; flex-direction: column !important; gap: 20px !important; }
+    .adv-list-top { justify-content: space-between !important; }
+    .mobile-metric { display: flex !important; flex-direction: column !important; }
+    
+    .right-panel { display: flex !important; flex-direction: column !important; gap: 16px !important; width: 100% !important; }
+    .adv-chart-card { padding: 5px !important; }
+  }
+</style>

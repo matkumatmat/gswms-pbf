@@ -206,12 +206,12 @@ function setupLayananTrigger() {
  * Fungsi ini yang akan dikaitkan ke Time-driven Trigger Google Apps Script.
  * Disarankan berjalan setiap hari pukul 01:00 AM - 02:00 AM.
  */
-function scheduledDailyStockSync() {
-  try {
-    const aggregatorService = new StockAggregatorService();
-    aggregatorService.executeDailySync();
-  } catch (error) {
-    console.error("Cron Job Failed: " + error.toString());
-    // Di sini Anda bisa mengimplementasikan notifikasi email ke Admin jika cron job gagal
-  }
-}
+// function scheduledDailyStockSync() {
+//   try {
+//     const aggregatorService = new StockAggregatorService();
+//     aggregatorService.executeDailySync();
+//   } catch (error) {
+//     console.error("Cron Job Failed: " + error.toString());
+//     // Di sini Anda bisa mengimplementasikan notifikasi email ke Admin jika cron job gagal
+//   }
+// }
