@@ -48,6 +48,9 @@ class AnalyticsService {
 // ====================================================================
   // WRITE: Ngitung, Mutilasi (Chunking), & Simpan JSON (The Worker 👷)
   // ====================================================================
+// ====================================================================
+  // WRITE: Ngitung, Mutilasi (Chunking), & Simpan JSON (The Worker 👷)
+  // ====================================================================
   buildAndSaveDashboardSummary() {
     console.log("Memulai kompilasi Data Mart...");
     
@@ -78,9 +81,9 @@ class AnalyticsService {
         rcv: b.createdAt || new Date().toISOString(),
         rslBln: b.rslBulan || 0,
         in: 0, out: 0, stok: 0,
-        firstInDate: null, // Global First In
-        lastOutDate: null, // Global Last Out
-        trxByMonth: {} // FORMAT BARU: { '2026-04': { in: 0, out: 0, firstIn: null, lastOut: null } }
+        firstInDate: null, 
+        lastOutDate: null, 
+        trxByMonth: {} 
       };
       
       batchMartMap.set(b.id, batchObj);
@@ -120,13 +123,11 @@ class AnalyticsService {
         bm.trxByMonth[mKey].in += qIn;
         bm.trxByMonth[mKey].out += qOut;
 
-        // Cek Tanggal Masuk (Penerimaan)
         if (qIn > 0) {
           if (!bm.firstInDate || tglRaw < new Date(bm.firstInDate)) bm.firstInDate = tglIso;
           if (!bm.trxByMonth[mKey].firstIn || tglRaw < new Date(bm.trxByMonth[mKey].firstIn)) bm.trxByMonth[mKey].firstIn = tglIso;
         }
 
-        // Cek Tanggal Keluar (Distribusi)
         if (qOut > 0) {
           if (!bm.lastOutDate || tglRaw > new Date(bm.lastOutDate)) bm.lastOutDate = tglIso;
           if (!bm.trxByMonth[mKey].lastOut || tglRaw > new Date(bm.trxByMonth[mKey].lastOut)) bm.trxByMonth[mKey].lastOut = tglIso;
@@ -134,22 +135,56 @@ class AnalyticsService {
       }
     }
 
-    // 4. Merge Cold Storage
-    const ssMaster = SpreadsheetApp.openById(AppConfig.DB_BATCH_LOOKUP_ID);
-    const sheetCold = ssMaster.getSheetByName(AppConfig.DB_STOK_COLD_REKAP_SHEET_NAME);
-    if (sheetCold && sheetCold.getLastRow() > 1) {
-      const rawCold = sheetCold.getRange(2, 1, sheetCold.getLastRow() - 1, 4).getValues();
-      for(let row of rawCold) {
-        const bNo = String(row[0] || '').trim().toUpperCase();
-        const kBrg = String(row[1] || '').trim().toUpperCase();
-        
-        let targetId = batchSearchIndex.get(`${kBrg}_${bNo}`) || batchSearchIndex.get(bNo);
-        if (targetId && batchMartMap.has(targetId)) {
+    // 4. THE FIX: Merge Cold Storage DARI SUMBER MENTAH (Biar dapet EXACT DATE 2025!)
+    const coldConfigs = AppConfig.DB_DISTRIBUSI_COLD || [];
+    for (let cConfig of coldConfigs) {
+      if (!cConfig.DB_DISTRIBUSI_ID || cConfig.DB_DISTRIBUSI_ID === 'NOT_SET_YET') continue;
+      
+      try {
+        const ssCold = SpreadsheetApp.openById(cConfig.DB_DISTRIBUSI_ID);
+        const sheetCold = ssCold.getSheetByName(cConfig.DB_DISTRIBUSI_SHEET_NAME);
+        if (!sheetCold) continue;
+
+        const rawCold = sheetCold.getRange(cConfig.DB_DISTRIBUSI_START_ROW, 1, sheetCold.getLastRow(), sheetCold.getLastColumn()).getValues();
+        const mapCold = cConfig.DB_DISTRIBUSI_CURRENT_COLUMN_MAPPER;
+
+        for (let row of rawCold) {
+          const bNo = String(row[mapCold.batch - 1] || '').trim().toUpperCase();
+          const kBrg = String(row[mapCold.kodeBarang - 1] || '').trim().toUpperCase();
+          
+          let targetId = batchSearchIndex.get(`${kBrg}_${bNo}`) || batchSearchIndex.get(bNo);
+          if (!targetId || !batchMartMap.has(targetId)) continue;
+
           const bm = batchMartMap.get(targetId);
-          bm.in += this._parseIdn(row[2]);
-          bm.out += this._parseIdn(row[3]);
-          bm.stok = bm.in - bm.out;
+          const qIn = this._parseIdn(row[mapCold.penerimaan - 1]);
+          const qOut = this._parseIdn(row[mapCold.distribusi - 1]);
+          const tglRaw = row[mapCold.tanggal - 1];
+
+          bm.in += qIn; bm.out += qOut; bm.stok = bm.in - bm.out;
+
+          // NANGKAP TANGGAL EXACT DARI TAHUN 2025!
+          if (tglRaw instanceof Date && !isNaN(tglRaw.getTime())) {
+            const tglIso = tglRaw.toISOString();
+            const mKey = `${tglRaw.getFullYear()}-${String(tglRaw.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (!bm.trxByMonth[mKey]) bm.trxByMonth[mKey] = { in: 0, out: 0, firstIn: null, lastOut: null };
+            
+            bm.trxByMonth[mKey].in += qIn;
+            bm.trxByMonth[mKey].out += qOut;
+
+            if (qIn > 0) {
+              if (!bm.firstInDate || tglRaw < new Date(bm.firstInDate)) bm.firstInDate = tglIso;
+              if (!bm.trxByMonth[mKey].firstIn || tglRaw < new Date(bm.trxByMonth[mKey].firstIn)) bm.trxByMonth[mKey].firstIn = tglIso;
+            }
+
+            if (qOut > 0) {
+              if (!bm.lastOutDate || tglRaw > new Date(bm.lastOutDate)) bm.lastOutDate = tglIso;
+              if (!bm.trxByMonth[mKey].lastOut || tglRaw > new Date(bm.trxByMonth[mKey].lastOut)) bm.trxByMonth[mKey].lastOut = tglIso;
+            }
+          }
         }
+      } catch(e) {
+        console.error("Gagal baca Cold Storage:", e);
       }
     }
 
@@ -175,4 +210,5 @@ class AnalyticsService {
     console.log(`Data Mart OLAP sukses di-update!`);
     return payload;
   }
+  
 }

@@ -185,18 +185,39 @@
 
     updateWarnings();
     
-    // MAPPING TABEL DENGAN TANGGAL DINAMIS
+// ========================================================
+    // MAPPING TABEL (MURNI TANGGAL ASLI DARI DATABASE!)
+    // ========================================================
+    
+    // Tabel 1: Penerimaan
     listStates.listAscContainer.data = filteredBatches
       .filter(b => b.in > 0)
-      .map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: formatShortDate(b.tglIn), qty: b.in, rawDate: b.tglIn }));
+      .map(b => ({ 
+        name: `${b.namaProduk} - ${b.b}`, 
+        date: formatShortDate(b.tglIn), 
+        qty: b.in, 
+        rawDate: b.tglIn || '1970-01-01' 
+      }));
 
+    // Tabel 2: Distribusi
     listStates.listDescContainer.data = filteredBatches
       .filter(b => b.out > 0)
-      .map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: b.tglOut ? formatShortDate(b.tglOut) : '-', qty: b.out, rawDate: b.tglOut || '1970-01-01' }));
+      .map(b => ({ 
+        name: `${b.namaProduk} - ${b.b}`, 
+        date: formatShortDate(b.tglOut), 
+        qty: b.out, 
+        rawDate: b.tglOut || '1970-01-01' 
+      }));
 
+    // Tabel 3: Stok
     listStates.listAzContainer.data = filteredBatches
       .filter(b => b.stok > 0)
-      .map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: 'Stok Tersedia', qty: b.stok, rawDate: b.tglOut || b.tglIn }));
+      .map(b => ({ 
+        name: `${b.namaProduk} - ${b.b}`, 
+        date: 'Stok Tersedia', 
+        qty: b.stok, 
+        rawDate: b.tglOut || b.tglIn || '1970-01-01' 
+      }));
 
     applySortAndRender('listAscContainer');
     applySortAndRender('listDescContainer');

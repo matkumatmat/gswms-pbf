@@ -175,39 +175,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
 const menuData = [
-    { title: 'Dashboard', icon: 'layout-dashboard', url: '?page=home' },
-    { 
-      title: 'Master Data', icon: 'database', 
+    { title: 'Dashboard', icon: 'layout-dashboard', url: '?page=maindashboard' },
+    { title: 'Inventory Control', icon: 'warehouse',
       submenu: [
-        { title: 'Katalog Produk', url: '?page=master_product' },
-        { title: 'Inventaris & Batch', url: '?page=product' },
-        { title: 'Direktori Konsumen', url: '?page=master_customer' }
+        // { title: 'Stok Produk', url: '?page=stok' },
+        // { title: 'Mutasi Stok', url: '?page=mutasi_stok' },
+        // { title: 'Cycle Count', url: '?page=cycle_count' },
+        // { title: 'Penerimaan (In)', url: '?page=inbound' },
+        // { title: 'Pengiriman (Out)', url: '?page=outbound' },        
+        { title: 'Product', url: '?page=product' },
+        { title: 'FEFO Center', url: '?page=fefo_center' }
       ]
     },
     { 
-      title: 'Operasional', icon: 'truck', 
+      title: 'Shipping', icon: 'truck', 
       submenu: [
-        { title: 'Penerimaan (In)', url: '?page=inbound' },
-        { title: 'Pengiriman (Out)', url: '?page=outbound' },
         { title: 'Shipping Label', url: '?page=shipping_label' },
         { title: 'Shipping Embalage', url: '?page=embalage' },
       ]
     },
     { 
-      title: 'Inventory Control', icon: 'clipboard-list', 
+      title: 'Directory', icon: 'database', 
       submenu: [
-        { title: 'Cycle Count', url: '?page=cycle_count' },
-        { title: 'FEFO & Expiry Alert', url: '?page=fefo_center' }
+        { title: 'Direktori Konsumen', url: '?page=master_customer' }
       ]
-    },
-    { 
-      title: 'Kepatuhan CDOB', icon: 'shield-check', 
-      submenu: [
-        { title: 'Retur & Recall', url: '?page=retur' },
-        { title: 'Cold Chain Log', url: '?page=cold_chain' },
-        { title: 'test dashboard', url: '?page=maindashboard' }
-      ]
-    }
+    },    
+    // { 
+    //   title: 'Kepatuhan CDOB', icon: 'shield-check', 
+    //   submenu: [
+    //     { title: 'Retur & Recall', url: '?page=retur' },
+    //     { title: 'Cold Chain Log', url: '?page=cold_chain' },
+    //     { title: 'test dashboard', url: '?page=maindashboard' }
+    //   ]
+    // }
   ];
 
   function renderMenu() {
