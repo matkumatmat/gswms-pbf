@@ -12,10 +12,11 @@
     slow: { index: 0, options: [60, 30, 90] }
   };
 
+  // THE FIX: Definisi Sort Type Baru! (date = Waktu, qty = Jumlah)
   const listStates = {
-    'listAscContainer': { sortType: 'qty', dir: 'asc', data: [], metricType: 'in' },
-    'listDescContainer': { sortType: 'qty', dir: 'desc', data: [], metricType: 'out' },
-    'listAzContainer': { sortType: 'name', dir: 'asc', data: [], metricType: 'stock' }
+    'listAscContainer': { sortType: 'date', dir: 'desc', data: [], metricType: 'in' },    // Penerimaan -> Default: Terbaru
+    'listDescContainer': { sortType: 'date', dir: 'desc', data: [], metricType: 'out' },  // Distribusi -> Default: Terbaru
+    'listAzContainer': { sortType: 'qty', dir: 'desc', data: [], metricType: 'stock' }    // Stok -> Default: Terbanyak
   };
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -24,7 +25,7 @@
     loadOlapData();
   });
 
-  // HELPER FORMAT TANGGAL KAYAK DUMMY LU ("20 Sep 26")
+  // HELPER FORMAT TANGGAL ("20 Sep 26")
   function formatShortDate(isoString) {
     if (!isoString || isoString === '-') return '-';
     try {
@@ -37,20 +38,16 @@
 
   function initCharts() {
     const pieOptions = { 
-      series: [0, 0], 
-      chart: { type: 'pie', height: 250, animations: { speed: 800 } }, 
-      labels: ['Distribusi Keluar', 'Stok Gudang'], 
-      colors: ['#f43f5e', '#10b981'], 
-      stroke: { width: 3, colors: ['#ffffff'] }, 
-      dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 'bold' } }, 
+      series: [0, 0], chart: { type: 'pie', height: 250, animations: { speed: 800 } }, 
+      labels: ['Distribusi Keluar', 'Stok Gudang'], colors: ['#f43f5e', '#10b981'], 
+      stroke: { width: 3, colors: ['#ffffff'] }, dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 'bold' } }, 
       legend: { position: 'bottom', markers: { radius: 12 } } 
     };
     compChartInstance = new ApexCharts(document.querySelector("#chartComposition"), pieOptions);
     compChartInstance.render();
 
     const barOptions = { 
-      series: [{ name: 'Stok', data: [] }], 
-      chart: { type: 'bar', height: 220, toolbar: { show: false } }, 
+      series: [{ name: 'Stok', data: [] }], chart: { type: 'bar', height: 220, toolbar: { show: false } }, 
       plotOptions: { bar: { borderRadius: 6, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } }, 
       colors: ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#06b6d4'], 
       dataLabels: { enabled: true, offsetY: -20, style: { fontSize: '10px', colors: ["#475569"] } }, 
@@ -74,10 +71,7 @@
       });
 
       new SearchDropdown({
-        inputId: 'prodSearch',
-        dropdownId: 'prodDropdown',
-        data: OLAP_RAW_DATA.masterProducts,
-        searchKeys: ['kode', 'nama'],
+        inputId: 'prodSearch', dropdownId: 'prodDropdown', data: OLAP_RAW_DATA.masterProducts, searchKeys: ['kode', 'nama'],
         renderItem: (item) => `<div style="font-weight:700; font-size:0.85rem;">${item.nama}</div><div style="font-size:0.75rem; color:var(--text-light);">Kode: ${item.kode} | Kat: ${item.kat}</div>`,
         onSelect: (item) => {
           selectedFilterProductId = item.pId;
@@ -102,6 +96,7 @@
   }
 
   // --- CORE ENGINE ---
+// --- CORE ENGINE ---
   function processData() {
     if (!OLAP_RAW_DATA) return;
 
@@ -131,76 +126,77 @@
 
       let qtyIn = 0, qtyOut = 0;
       let lastPeriodIn = 0, lastPeriodOut = 0; 
+      
+      // DEFAULTS (Global Date)
+      let tglIn = bm.firstInDate || bm.rcv; 
+      let tglOut = bm.lastOutDate || null;
 
       if (filterWaktu === 'ALL') { 
         qtyIn = bm.in; qtyOut = bm.out; 
       }
       else if (filterWaktu === 'THIS_YEAR') {
+        let minIn = null, maxOut = null;
         Object.keys(bm.trxByMonth).forEach(k => { 
-          if (k.startsWith(cYear)) { qtyIn += bm.trxByMonth[k].in; qtyOut += bm.trxByMonth[k].out; } 
+          if (k.startsWith(cYear)) { 
+            const m = bm.trxByMonth[k];
+            qtyIn += m.in; qtyOut += m.out; 
+            if (m.firstIn && (!minIn || new Date(m.firstIn) < new Date(minIn))) minIn = m.firstIn;
+            if (m.lastOut && (!maxOut || new Date(m.lastOut) > new Date(maxOut))) maxOut = m.lastOut;
+          } 
         });
+        tglIn = minIn || tglIn;
+        tglOut = maxOut || null;
       }
       else if (filterWaktu === 'THIS_MONTH') { 
-        qtyIn = bm.trxByMonth[cMonthKey]?.in || 0; 
-        qtyOut = bm.trxByMonth[cMonthKey]?.out || 0; 
+        const cData = bm.trxByMonth[cMonthKey];
+        if (cData) {
+            qtyIn = cData.in; qtyOut = cData.out;
+            tglIn = cData.firstIn || tglIn;
+            tglOut = cData.lastOut || null;
+        }
         lastPeriodIn = bm.trxByMonth[lMonthKey]?.in || 0;
         lastPeriodOut = bm.trxByMonth[lMonthKey]?.out || 0;
       }
       else if (filterWaktu === 'LAST_MONTH') { 
-        qtyIn = bm.trxByMonth[lMonthKey]?.in || 0; 
-        qtyOut = bm.trxByMonth[lMonthKey]?.out || 0; 
+        const lData = bm.trxByMonth[lMonthKey];
+        if (lData) {
+            qtyIn = lData.in; qtyOut = lData.out;
+            tglIn = lData.firstIn || tglIn;
+            tglOut = lData.lastOut || null;
+        }
       }
 
       let diffHari = 0;
       if (bm.stok > 0) {
-        const lastDate = bm.lastTrxDate ? new Date(bm.lastTrxDate) : new Date(bm.rcv);
+        const lastDate = bm.lastOutDate ? new Date(bm.lastOutDate) : new Date(bm.rcv);
         diffHari = Math.ceil((today - lastDate) / (1000 * 60 * 60 * 24));
       }
 
       kategoriMap[pm.kat] = (kategoriMap[pm.kat] || 0) + bm.stok;
 
       filteredBatches.push({
-        b: bm.b,
-        namaProduk: pm.nama,
-        stok: bm.stok,
-        in: qtyIn,
-        out: qtyOut,
-        lastIn: lastPeriodIn,
-        lastOut: lastPeriodOut,
-        ed: bm.ed,
-        rcv: bm.rcv, 
-        lastTrxDate: bm.lastTrxDate,
-        rslBln: bm.rslBln,
-        slowDays: diffHari
+        b: bm.b, namaProduk: pm.nama,
+        stok: bm.stok, in: qtyIn, out: qtyOut,
+        lastIn: lastPeriodIn, lastOut: lastPeriodOut,
+        ed: bm.ed, rslBln: bm.rslBln, slowDays: diffHari,
+        tglIn: tglIn, tglOut: tglOut // TANGGAL DINAMIS!
       });
     });
 
     updateWarnings();
     
-    // ========================================================
-    // THE FIX: MAPPING TABEL (SESUAI DENGAN METRIK CARD DI ATASNYA!)
-    // ========================================================
-    
-    // Tabel 1: Penerimaan (Kiri) -> Tanggal Masuk Pertama (rcv)
-    listStates.listAscContainer.data = filteredBatches.map(b => ({ 
-      name: `${b.namaProduk} - ${b.b}`, 
-      date: formatShortDate(b.rcv), 
-      qty: b.in 
-    }));
+    // MAPPING TABEL DENGAN TANGGAL DINAMIS
+    listStates.listAscContainer.data = filteredBatches
+      .filter(b => b.in > 0)
+      .map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: formatShortDate(b.tglIn), qty: b.in, rawDate: b.tglIn }));
 
-    // Tabel 2: Distribusi (Tengah) -> Tanggal Keluar Terakhir (lastTrxDate)
-    listStates.listDescContainer.data = filteredBatches.map(b => ({ 
-      name: `${b.namaProduk} - ${b.b}`, 
-      date: b.lastTrxDate ? formatShortDate(b.lastTrxDate) : '-', 
-      qty: b.out 
-    }));
+    listStates.listDescContainer.data = filteredBatches
+      .filter(b => b.out > 0)
+      .map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: b.tglOut ? formatShortDate(b.tglOut) : '-', qty: b.out, rawDate: b.tglOut || '1970-01-01' }));
 
-    // Tabel 3: Stok (Kanan) -> Tanggal Update Stok Terakhir
-    listStates.listAzContainer.data = filteredBatches.map(b => ({ 
-      name: `${b.namaProduk} - ${b.b}`, 
-      date: formatShortDate(b.lastTrxDate || b.rcv), 
-      qty: b.stok 
-    }));
+    listStates.listAzContainer.data = filteredBatches
+      .filter(b => b.stok > 0)
+      .map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: 'Stok Tersedia', qty: b.stok, rawDate: b.tglOut || b.tglIn }));
 
     applySortAndRender('listAscContainer');
     applySortAndRender('listDescContainer');
@@ -218,17 +214,17 @@
     catChartInstance.updateSeries([{ name: 'Stok', data: sortedKat.map(k => kategoriMap[k]) }]);
     catChartInstance.updateOptions({ xaxis: { categories: sortedKat } });
   }
-
+  
   function updateWarnings() {
     const limitBulan = cardState.ed.options[cardState.ed.index];
     const edList = filteredBatches.filter(b => b.rslBln > 0 && b.rslBln <= limitBulan);
     document.getElementById('advCountED').innerText = edList.length;
-    document.getElementById('advDescED').innerText = `Masa simpan < ${limitBulan} bulan`;
+    document.getElementById('advDescED').innerText = `Masa simpan < ${limitBulan} bln`;
 
     const limitHari = cardState.slow.options[cardState.slow.index];
     const slowList = filteredBatches.filter(b => b.stok > 0 && b.slowDays > limitHari);
     document.getElementById('advCountSlow').innerText = slowList.length;
-    document.getElementById('advDescSlow').innerText = `Tanpa mutasi > ${limitHari} hari`;
+    document.getElementById('advDescSlow').innerText = `Tanpa mutasi > ${limitHari} hr`;
   }
 
   function calculateMetric(type) {
@@ -238,13 +234,8 @@
       return;
     }
 
-    let total = 0;
-    let totalLastPeriod = 0;
-    
-    filteredBatches.forEach(b => {
-      total += b[type];
-      totalLastPeriod += (type === 'in' ? b.lastIn : b.lastOut);
-    });
+    let total = 0, totalLastPeriod = 0;
+    filteredBatches.forEach(b => { total += b[type]; totalLastPeriod += (type === 'in' ? b.lastIn : b.lastOut); });
 
     const filterWaktu = document.getElementById('filterWaktu').value;
     const wText = document.getElementById('filterWaktu').options[document.getElementById('filterWaktu').selectedIndex].text;
@@ -259,13 +250,9 @@
     if (trendEl) {
       if (filterWaktu === 'THIS_MONTH' && totalLastPeriod > 0) {
         const pct = Math.round(((total - totalLastPeriod) / totalLastPeriod) * 100);
-        if (pct > 0) {
-          trendEl.className = 'trend-up'; trendEl.innerHTML = `<i data-lucide="trending-up" style="width:10px;"></i> ${pct}%`;
-        } else if (pct < 0) {
-          trendEl.className = 'trend-down'; trendEl.innerHTML = `<i data-lucide="trending-down" style="width:10px;"></i> ${Math.abs(pct)}%`;
-        } else {
-          trendEl.className = 'trend-neutral'; trendEl.innerHTML = `<i data-lucide="minus" style="width:10px;"></i> 0%`;
-        }
+        if (pct > 0) { trendEl.className = 'trend-up'; trendEl.innerHTML = `<i data-lucide="trending-up" style="width:10px;"></i> ${pct}%`; } 
+        else if (pct < 0) { trendEl.className = 'trend-down'; trendEl.innerHTML = `<i data-lucide="trending-down" style="width:10px;"></i> ${Math.abs(pct)}%`; } 
+        else { trendEl.className = 'trend-neutral'; trendEl.innerHTML = `<i data-lucide="minus" style="width:10px;"></i> 0%`; }
       } else {
         trendEl.className = 'trend-neutral'; trendEl.innerHTML = `<i data-lucide="minus" style="width:10px;"></i> -`;
       }
@@ -280,27 +267,43 @@
     lucide.createIcons();
   };
 
+  // --- BUTTON LIST TOGGLE ---
   window.toggleListSort = function(containerId) {
     const state = listStates[containerId];
     state.dir = state.dir === 'asc' ? 'desc' : 'asc';
     applySortAndRender(containerId);
   };
 
+  // ========================================================
+  // THE FIX: LOGIKA SORTING TANGGAL (WAKTU HEAD / TAIL)
+  // ========================================================
   function applySortAndRender(containerId) {
     const state = listStates[containerId];
-    if (state.sortType === 'qty') {
-      state.data.sort((a,b) => state.dir === 'asc' ? a.qty - b.qty : b.qty - a.qty);
+    
+    if (state.sortType === 'date') {
+      // Sorting Waktu: Terlama (Asc) / Terbaru (Desc)
+      state.data.sort((a,b) => {
+        const timeA = new Date(a.rawDate).getTime();
+        const timeB = new Date(b.rawDate).getTime();
+        return state.dir === 'asc' ? timeA - timeB : timeB - timeA;
+      });
     } else {
-      state.data.sort((a,b) => state.dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+      // Sorting Qty (Untuk Stok): Terkecil (Asc) / Terbanyak (Desc)
+      state.data.sort((a,b) => state.dir === 'asc' ? a.qty - b.qty : b.qty - a.qty);
     }
-    let label = state.sortType === 'qty' ? (state.dir === 'asc' ? 'Ascending' : 'Descending') : (state.dir === 'asc' ? 'A - Z' : 'Z - A');
+    
+    let label = '';
+    if (state.sortType === 'date') label = state.dir === 'asc' ? 'Terlama' : 'Terbaru';
+    else label = state.dir === 'asc' ? 'Terkecil' : 'Terbanyak';
+
+    // Setelah diurutin full, baru dipotong 15 tail/head!
     renderSingleList(containerId, label, state.data.slice(0, 15), state.metricType);
     lucide.createIcons();
   }
 
   function renderSingleList(containerId, sortLabel, data, metricType) {
     const container = document.getElementById(containerId);
-    let iconDir = (sortLabel === 'Ascending' || sortLabel === 'A - Z') ? 'arrow-down-up' : 'arrow-up-down';
+    let iconDir = 'arrow-up-down'; // Icon default sorting
 
     let itemsHtml = data.map(item => `
       <div class="adv-list-item">

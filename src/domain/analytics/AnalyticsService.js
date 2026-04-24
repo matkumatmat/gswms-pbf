@@ -51,22 +51,22 @@ class AnalyticsService {
   buildAndSaveDashboardSummary() {
     console.log("Memulai kompilasi Data Mart...");
     
-    // 1. Master Produk (Ganti Sektor jadi Kategori)
+    // 1. Master Produk
     const rawProducts = this.productRepo.getAllProductRaw();
     const productsMapped = AppUtils.mapArrayToObject(rawProducts, ProductRepo.TABLE_KEYS);
     const masterProducts = productsMapped.map(p => ({
       pId: p.id,
       kode: (p.kodeBarangNew && p.kodeBarangNew !== '-') ? p.kodeBarangNew : p.kodeBarang,
       nama: p.namaDagang,
-      kat: p.kategori && p.kategori !== '-' ? p.kategori : 'TIDAK ADA KATEGORI' // PAKE KATEGORI!
+      kat: p.kategori && p.kategori !== '-' ? p.kategori : 'TIDAK ADA KATEGORI' 
     }));
 
-    // 2. Mapping Batch pakai ID (Biar 434 baris masuk semua, anti ke-skip!)
+    // 2. Mapping Batch pakai ID
     const rawBatches = this.batchRepo.getAllBatchLookupRaw();
     const batches = AppUtils.mapArrayToObject(rawBatches, BatchRepo.TABLE_KEYS);
     
-    const batchMartMap = new Map(); // Key sekarang adalah b.id
-    const batchSearchIndex = new Map(); // Buat nyari waktu cocokin transaksi
+    const batchMartMap = new Map();
+    const batchSearchIndex = new Map(); 
     
     batches.forEach(b => {
       const batchObj = {
@@ -75,20 +75,20 @@ class AnalyticsService {
         pId: b.productId,
         sys: b.sysStatus || 'UNKNOWN',
         ed: b.expiryDate || null,
-        rcv: b.createdAt || new Date().toISOString(), // TANGGAL MASUK GUDANG!
+        rcv: b.createdAt || new Date().toISOString(),
         rslBln: b.rslBulan || 0,
         in: 0, out: 0, stok: 0,
-        lastTrxDate: null, 
-        trxByMonth: {} 
+        firstInDate: null, // Global First In
+        lastOutDate: null, // Global Last Out
+        trxByMonth: {} // FORMAT BARU: { '2026-04': { in: 0, out: 0, firstIn: null, lastOut: null } }
       };
       
       batchMartMap.set(b.id, batchObj);
       
-      // Indexing buat nyari saat baca transaksi (KodeBarang_Batch)
       const prod = masterProducts.find(p => p.pId === b.productId);
       const kode = prod ? prod.kode : '';
       batchSearchIndex.set(`${kode}_${batchObj.b}`.toUpperCase(), b.id);
-      if (!batchSearchIndex.has(batchObj.b)) batchSearchIndex.set(batchObj.b, b.id); // Fallback
+      if (!batchSearchIndex.has(batchObj.b)) batchSearchIndex.set(batchObj.b, b.id);
     });
 
     // 3. Transaksi Hot
@@ -101,7 +101,6 @@ class AnalyticsService {
       const bNo = String(row[map.batch - 1] || '').trim().toUpperCase();
       const kBrg = String(row[map.kodeBarang - 1] || '').trim().toUpperCase();
       
-      // Cari ID Batch-nya
       let targetId = batchSearchIndex.get(`${kBrg}_${bNo}`) || batchSearchIndex.get(bNo);
       if (!targetId || !batchMartMap.has(targetId)) continue;
 
@@ -113,15 +112,24 @@ class AnalyticsService {
       bm.in += qIn; bm.out += qOut; bm.stok = bm.in - bm.out;
 
       if (tglRaw instanceof Date && !isNaN(tglRaw.getTime())) {
+        const tglIso = tglRaw.toISOString();
         const mKey = `${tglRaw.getFullYear()}-${String(tglRaw.getMonth() + 1).padStart(2, '0')}`;
-        if (!bm.trxByMonth[mKey]) bm.trxByMonth[mKey] = { in: 0, out: 0 };
+        
+        if (!bm.trxByMonth[mKey]) bm.trxByMonth[mKey] = { in: 0, out: 0, firstIn: null, lastOut: null };
+        
         bm.trxByMonth[mKey].in += qIn;
         bm.trxByMonth[mKey].out += qOut;
 
+        // Cek Tanggal Masuk (Penerimaan)
+        if (qIn > 0) {
+          if (!bm.firstInDate || tglRaw < new Date(bm.firstInDate)) bm.firstInDate = tglIso;
+          if (!bm.trxByMonth[mKey].firstIn || tglRaw < new Date(bm.trxByMonth[mKey].firstIn)) bm.trxByMonth[mKey].firstIn = tglIso;
+        }
+
+        // Cek Tanggal Keluar (Distribusi)
         if (qOut > 0) {
-          if (!bm.lastTrxDate || tglRaw > new Date(bm.lastTrxDate)) {
-            bm.lastTrxDate = tglRaw.toISOString();
-          }
+          if (!bm.lastOutDate || tglRaw > new Date(bm.lastOutDate)) bm.lastOutDate = tglIso;
+          if (!bm.trxByMonth[mKey].lastOut || tglRaw > new Date(bm.trxByMonth[mKey].lastOut)) bm.trxByMonth[mKey].lastOut = tglIso;
         }
       }
     }
@@ -145,14 +153,12 @@ class AnalyticsService {
       }
     }
 
-    // 5. Build Payload Final
     const payload = {
       lastSync: new Date().toISOString(),
       masterProducts: masterProducts,
       batchMart: Array.from(batchMartMap.values())
     };
 
-    // 6. Teknik Chunking Mutilasi Limit 50k
     const jsonString = JSON.stringify(payload);
     const chunkSize = 45000; 
     const chunkArray = [];
@@ -163,11 +169,10 @@ class AnalyticsService {
 
     const ssOlap = SpreadsheetApp.openById(AppConfig.DB_OLAP_DATA_ID);
     const sheetOlap = ssOlap.getSheetByName(AppConfig.DB_OLAP_DATA_SHEET_NAME);
-    
     sheetOlap.clearContents();
     sheetOlap.getRange(1, 1, chunkArray.length, 1).setValues(chunkArray);
     
-    console.log(`Data Mart OLAP sukses di-update! (Terpecah jadi ${chunkArray.length} sel)`);
+    console.log(`Data Mart OLAP sukses di-update!`);
     return payload;
   }
 }
