@@ -6,7 +6,7 @@
   let compChartInstance = null;
   let catChartInstance = null;
 
-  // State Card Warning (Bisa Di-klik muter)
+  // --- STATE MANAGEMENT ---
   const cardState = {
     ed: { index: 0, options: [3, 6, 1] },
     slow: { index: 0, options: [60, 30, 90] }
@@ -24,8 +24,18 @@
     loadOlapData();
   });
 
+  // HELPER FORMAT TANGGAL KAYAK DUMMY LU ("20 Sep 26")
+  function formatShortDate(isoString) {
+    if (!isoString || isoString === '-') return '-';
+    try {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return '-';
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+      return `${d.getDate()} ${months[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`;
+    } catch(e) { return '-'; }
+  }
+
   function initCharts() {
-    // PIE CHART: Distribusi vs Stok Aktif
     const pieOptions = { 
       series: [0, 0], 
       chart: { type: 'pie', height: 250, animations: { speed: 800 } }, 
@@ -38,7 +48,6 @@
     compChartInstance = new ApexCharts(document.querySelector("#chartComposition"), pieOptions);
     compChartInstance.render();
 
-    // BAR CHART: 5 Kategori Terbesar
     const barOptions = { 
       series: [{ name: 'Stok', data: [] }], 
       chart: { type: 'bar', height: 220, toolbar: { show: false } }, 
@@ -57,7 +66,6 @@
       OLAP_RAW_DATA = await GasApi.get('getDashboardAnalytics');
       if (!OLAP_RAW_DATA || !OLAP_RAW_DATA.batchMart) throw new Error("Data mart OLAP kosong!");
 
-      // Populate Kategori di Select "Semua Sektor" lu
       const katSet = new Set();
       OLAP_RAW_DATA.masterProducts.forEach(p => katSet.add(p.kat));
       const selKat = document.getElementById('filterKategori');
@@ -65,7 +73,6 @@
         selKat.innerHTML += `<option value="${k}">${k}</option>`;
       });
 
-      // Init Autocomplete Produk
       new SearchDropdown({
         inputId: 'prodSearch',
         dropdownId: 'prodDropdown',
@@ -98,13 +105,11 @@
   function processData() {
     if (!OLAP_RAW_DATA) return;
 
-    // Ambil Filter dari UI
     const filterWaktu = document.getElementById('filterWaktu').value;
     const filterStatus = document.getElementById('filterStatus').value;
     const filterKat = document.getElementById('filterKategori').value;
     const filterBatchSearch = document.getElementById('filterBatch').value.toUpperCase().trim();
 
-    // Setup Waktu (Tahun / Bulan)
     const today = new Date();
     const cYear = today.getFullYear().toString();
     const cMonthKey = `${cYear}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -115,20 +120,17 @@
     filteredBatches = [];
     const kategoriMap = {};
 
-    // Mulai Saring Data
     OLAP_RAW_DATA.batchMart.forEach(bm => {
       const pm = OLAP_RAW_DATA.masterProducts.find(p => p.pId === bm.pId);
       if (!pm) return;
       
-      // Terapkan Filter
       if (selectedFilterProductId !== 'ALL' && bm.pId !== selectedFilterProductId) return;
       if (filterKat !== 'ALL' && pm.kat !== filterKat) return;
       if (filterStatus !== 'ALL' && String(bm.sys).toUpperCase() !== filterStatus) return;
       if (filterBatchSearch !== '' && !bm.b.includes(filterBatchSearch)) return;
 
-      // Kalkulasi Waktu Dinamis
       let qtyIn = 0, qtyOut = 0;
-      let lastPeriodIn = 0, lastPeriodOut = 0; // Buat ngitung Trend
+      let lastPeriodIn = 0, lastPeriodOut = 0; 
 
       if (filterWaktu === 'ALL') { 
         qtyIn = bm.in; qtyOut = bm.out; 
@@ -149,7 +151,6 @@
         qtyOut = bm.trxByMonth[lMonthKey]?.out || 0; 
       }
 
-      // Hitung Umur Slow Moving
       let diffHari = 0;
       if (bm.stok > 0) {
         const lastDate = bm.lastTrxDate ? new Date(bm.lastTrxDate) : new Date(bm.rcv);
@@ -167,6 +168,8 @@
         lastIn: lastPeriodIn,
         lastOut: lastPeriodOut,
         ed: bm.ed,
+        rcv: bm.rcv, 
+        lastTrxDate: bm.lastTrxDate,
         rslBln: bm.rslBln,
         slowDays: diffHari
       });
@@ -174,26 +177,43 @@
 
     updateWarnings();
     
-    // MAPPING TABEL (GABUNGAN NAMA PRODUK + BATCH)
-    listStates.listAscContainer.data = filteredBatches.map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: b.ed ? b.ed.split('T')[0] : '-', qty: b.stok }));
-    listStates.listDescContainer.data = filteredBatches.map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: 'Distribusi Keluar', qty: b.out }));
-    listStates.listAzContainer.data = filteredBatches.map(b => ({ name: `${b.namaProduk} - ${b.b}`, date: 'Penerimaan Masuk', qty: b.in }));
+    // ========================================================
+    // THE FIX: MAPPING TABEL (SESUAI DENGAN METRIK CARD DI ATASNYA!)
+    // ========================================================
+    
+    // Tabel 1: Penerimaan (Kiri) -> Tanggal Masuk Pertama (rcv)
+    listStates.listAscContainer.data = filteredBatches.map(b => ({ 
+      name: `${b.namaProduk} - ${b.b}`, 
+      date: formatShortDate(b.rcv), 
+      qty: b.in 
+    }));
+
+    // Tabel 2: Distribusi (Tengah) -> Tanggal Keluar Terakhir (lastTrxDate)
+    listStates.listDescContainer.data = filteredBatches.map(b => ({ 
+      name: `${b.namaProduk} - ${b.b}`, 
+      date: b.lastTrxDate ? formatShortDate(b.lastTrxDate) : '-', 
+      qty: b.out 
+    }));
+
+    // Tabel 3: Stok (Kanan) -> Tanggal Update Stok Terakhir
+    listStates.listAzContainer.data = filteredBatches.map(b => ({ 
+      name: `${b.namaProduk} - ${b.b}`, 
+      date: formatShortDate(b.lastTrxDate || b.rcv), 
+      qty: b.stok 
+    }));
 
     applySortAndRender('listAscContainer');
     applySortAndRender('listDescContainer');
     applySortAndRender('listAzContainer');
 
-    // METRICS
     calculateMetric('in');
     calculateMetric('out');
     calculateMetric('stock');
 
-    // CHARTS (Pie: Dist vs Stok Aktif)
     const totalOut = filteredBatches.reduce((s, b) => s + b.out, 0);
     const totalStok = filteredBatches.reduce((s, b) => s + b.stok, 0);
-    compChartInstance.updateSeries([totalOut, totalStok]);
+    compChartInstance.updateSeries([totalOut, totalStok]); 
 
-    // CHARTS (Bar: 5 Kategori Terbesar)
     const sortedKat = Object.keys(kategoriMap).sort((a,b) => kategoriMap[b] - kategoriMap[a]).slice(0, 5);
     catChartInstance.updateSeries([{ name: 'Stok', data: sortedKat.map(k => kategoriMap[k]) }]);
     catChartInstance.updateOptions({ xaxis: { categories: sortedKat } });
@@ -236,7 +256,6 @@
     if (valEl) valEl.innerText = total.toLocaleString('id-ID');
     if (periodEl) periodEl.innerText = `(${wText})`;
 
-    // Logic Hitung Trend (Ijo/Merah) KHUSUS untuk 'Bulan Ini'
     if (trendEl) {
       if (filterWaktu === 'THIS_MONTH' && totalLastPeriod > 0) {
         const pct = Math.round(((total - totalLastPeriod) / totalLastPeriod) * 100);
@@ -254,7 +273,7 @@
   }
 
   window.cycleCard = function(type) {
-    if (type === 'in' || type === 'out' || type === 'stock') return; // Matikan klik card metrik
+    if (type === 'in' || type === 'out' || type === 'stock') return; 
     const state = cardState[type];
     state.index = (state.index + 1) % state.options.length;
     updateWarnings();
