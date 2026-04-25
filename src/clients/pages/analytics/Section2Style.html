@@ -1,0 +1,83 @@
+<style>
+  /* SKELETON LOADER ANIMATION */
+  .skel-box {
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 8px; color: transparent !important; pointer-events: none;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  .s2-grid-layout { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+
+  /* TOP ROW: 1.5fr (Hero) - 2fr (Metrics) - 1.5fr (Bar Chart) */
+  .s2-row-top { display: grid; grid-template-columns: 1.5fr 2fr 1.5fr; gap: 16px; }
+
+  /* BOTTOM ROW: 1fr (Batch) - 3fr (History) - 1fr (Pie) */
+  .s2-row-bottom { display: grid; grid-template-columns: 1fr 3fr 1fr; gap: 16px; align-items: start; }
+
+  /* HERO CARD */
+  .s2-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1px solid #334155; padding: 20px; display: flex; flex-direction: column;
+    min-height: 160px; position: relative; overflow: hidden; border-radius: 12px;
+  }
+  .s2-hero::after {
+    content: ''; position: absolute; right: -20px; top: -50px;
+    width: 150px; height: 150px; background: var(--primary);
+    filter: blur(60px); opacity: 0.15; border-radius: 50%;
+  }
+
+  .s2-metrics { display: flex; flex-direction: column; gap: 10px; justify-content: space-between; height: 100%;}
+  .s2-metric-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
+    font-weight: 800; color: var(--text-main); flex: 1; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  .s2-met-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+
+  .s2-card-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-light); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+  .s2-toggle-group { display: flex; background: #e2e8f0; border-radius: 6px; padding: 2px; }
+  .s2-toggle-btn { background: transparent; border: none; font-size: 0.65rem; font-weight: 700; color: #64748b; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+  .s2-toggle-btn.active { background: #fff; color: var(--primary); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+  .s2-batch-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px; margin-bottom: 8px; cursor: pointer; transition: 0.2s;
+  }
+  .s2-batch-card:hover { border-color: #cbd5e1; background: #f8fafc; }
+  .s2-batch-card.active { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 1px var(--primary); }
+  .s2-bc-top { font-family: monospace; font-weight: 800; color: var(--text-main); margin-bottom: 4px; font-size: 0.8rem;}
+  .s2-bc-bot { display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 600; color: var(--text-light); }
+  .s2-bc-bot span b { color: var(--text-main); margin-left: 4px;}
+
+  .s2-scroll-area {
+    max-height: 260px; overflow-y: auto; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  }
+  .s2-scroll-area::-webkit-scrollbar { display: none; }
+
+  /* FIX TABLE STYLING */
+  .s2-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; table-layout: fixed; }
+  .s2-table th { background: #f1f5f9; padding: 8px 10px; text-align: left; color:#475569; font-weight:800; text-transform: uppercase; font-size: 0.7rem;}
+  .s2-table td { padding: 10px; border-bottom: 1px solid var(--border); color: var(--text-main); vertical-align: middle; }
+  .s2-table tr:hover td { background: #f8fafc; }
+
+  /* COLUMN WIDTHS HISTORY */
+  .s2-history .s2-table th:nth-child(1), .s2-history .s2-table td:nth-child(1) { width: 45%; }
+  .s2-history .s2-table th:nth-child(2), .s2-history .s2-table td:nth-child(2) { width: 30%; }
+  .s2-history .s2-table th:nth-child(3), .s2-history .s2-table td:nth-child(3) { width: 25%; text-align: right; }
+
+  .s2-pagination { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; }
+  .s2-pagination button { background: #e2e8f0; color: #475569; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-weight: 700;}
+  .s2-pagination button:hover:not(:disabled) { background: #cbd5e1; }
+  .s2-pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .s2-pagination span { font-weight: 800; color: var(--primary); padding: 0 4px;}
+
+  @media (max-width: 1023px) { 
+    .s2-row-top, .s2-row-bottom { grid-template-columns: 1fr; } 
+    .s2-scroll-area { max-height: 400px; }
+  }
+</style>

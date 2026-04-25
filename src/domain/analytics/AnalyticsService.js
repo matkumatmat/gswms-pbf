@@ -210,5 +210,94 @@ class AnalyticsService {
     console.log(`Data Mart OLAP sukses di-update!`);
     return payload;
   }
-  
+
+  getSection2ProductDetail(payload) {
+    const { productId, kodeBarang } = payload;
+    const olapData = this.getDashboardAnalytics(); 
+    
+    const productInfo = olapData.masterProducts.find(p => p.pId === productId);
+    const productBatches = olapData.batchMart.filter(b => b.pId === productId);
+    
+    let batchList = [];
+    let allBatchNos = [];
+    
+    productBatches.forEach(b => {
+       batchList.push({ batch: b.b, in: b.in, out: b.out, stok: b.stok, ed: b.ed });
+       allBatchNos.push(b.b);
+    });
+
+    const historyRepo = new TransactionHistoryRepo();
+    let rawHistory = historyRepo.getNormalizedHistoryByBatchList(allBatchNos);
+
+    // =========================================================
+    // REFINEMENT: GROUPING (SUM) DATA YANG SAMA
+    // =========================================================
+    const groupedMap = new Map();
+    let distReguler = 0;
+    let distKonsinyasi = 0;
+    let consumerAgg = {};
+
+    rawHistory.forEach(h => {
+      // Key Grouping: Tgl + Konsumen + Cabang + Batch
+      const tglKey = h.tanggal instanceof Date ? h.tanggal.toISOString().split('T')[0] : String(h.tanggal);
+      const groupKey = `${tglKey}_${h.namaKonsumen}_${h.kotaCabang}_${h.batch}`.toUpperCase();
+
+      if (!groupedMap.has(groupKey)) {
+        groupedMap.set(groupKey, { ...h, tanggal: h.tanggal }); // Clone awal
+      } else {
+        const existing = groupedMap.get(groupKey);
+        existing.penerimaan += h.penerimaan;
+        existing.distribusi += h.distribusi;
+        // Keterangan kita gabung aja pake koma biar PO-PO nya keliatan kalau di-hover
+        if (h.keterangan && !existing.keterangan.includes(h.keterangan)) {
+          existing.keterangan += `, ${h.keterangan}`;
+        }
+      }
+
+      // Hitung statistik untuk Chart
+      if (h.distribusi > 0) {
+        const isKons = String(h.keterangan || '').toUpperCase().includes('KONSINYASI');
+        if (isKons) {
+          distKonsinyasi += h.distribusi;
+        } else {
+          distReguler += h.distribusi;
+          const kons = String(h.namaKonsumen || 'UNKNOWN').toUpperCase();
+          if (!kons.includes('SALDO AWAL')) {
+            consumerAgg[kons] = (consumerAgg[kons] || 0) + h.distribusi;
+          }
+        }
+      }
+    });
+
+    const finalHistory = Array.from(groupedMap.values());
+
+    // =========================================================
+    // REFINEMENT: SORTING (TGL DESC, PENERIMAAN DULUAN)
+    // =========================================================
+    finalHistory.sort((a, b) => {
+      const timeA = new Date(a.tanggal).getTime();
+      const timeB = new Date(b.tanggal).getTime();
+      if (timeB !== timeA) return timeB - timeA;
+
+      // Jika hari sama, Penerimaan (+) harus di atas Distribusi (-)
+      const aScore = a.penerimaan > 0 ? 1 : 0;
+      const bScore = b.penerimaan > 0 ? 1 : 0;
+      return bScore - aScore;
+    });
+
+    const topConsumers = Object.keys(consumerAgg)
+       .map(k => ({ nama: k, total: consumerAgg[k] }))
+       .sort((a,b) => b.total - a.total)
+       .slice(0, 5);
+
+    return {
+       product: productInfo,
+       batches: batchList,
+       charts: {
+          consumers: topConsumers,
+          pie: { reguler: distReguler, konsinyasi: distKonsinyasi, stok: productBatches.reduce((s,b)=>s+b.stok,0) }
+       },
+       history: finalHistory 
+    };
+  }
 }

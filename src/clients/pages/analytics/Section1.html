@@ -1,0 +1,114 @@
+<div class="adv-master-wrapper">
+  <div class="left-panel">
+    
+    <div class="lp-top-row">
+      <div class="adv-warn-group">
+        <div class="adv-warn-card bg-ed" onclick="cycleCard('ed')">
+          <div class="warn-lbl"><i data-lucide="clock-4" style="width:14px; flex-shrink:0;"></i> Produk akan ed</div>
+          <div class="warn-val" id="advCountED">0</div>
+          <div class="warn-desc" id="advDescED">Masa simpan < 3 bln</div>
+        </div>
+        
+        <div class="adv-warn-card bg-slow" onclick="cycleCard('slow')">
+          <div class="warn-lbl"><i data-lucide="trending-down" style="width:14px; flex-shrink:0;"></i> Produk slow mov</div>
+          <div class="warn-val" id="advCountSlow">0</div>
+          <div class="warn-desc" id="advDescSlow">Tanpa mutasi > 60 hr</div>
+        </div>
+      </div>
+
+      <div class="adv-filter-block">
+        <div class="input-wrap mob-fw f-span-2">
+          <i data-lucide="calendar-range"></i>
+          <select id="filterWaktu" onchange="processData()" style="padding-left: 32px;">
+            <option value="ALL">Semua Waktu</option>
+            <option value="THIS_YEAR" selected>Tahun Ini (Berjalan)</option>
+            <option value="THIS_MONTH">Bulan Ini</option>
+            <option value="LAST_MONTH">Bulan Lalu</option>
+          </select>
+        </div>
+        
+        <div class="input-wrap f-span-1"><i data-lucide="calendar-days"></i><input type="text" placeholder="Start Date" disabled style="background:#f1f5f9; cursor:not-allowed;"></div>
+        <div class="input-wrap f-span-1"><i data-lucide="calendar-days"></i><input type="text" placeholder="End Date" disabled style="background:#f1f5f9; cursor:not-allowed;"></div>
+        
+        <div class="input-wrap mob-fw f-span-3">
+          <i data-lucide="search"></i>
+          <input type="text" id="prodSearch" placeholder="Cari nama produk..." autocomplete="off">
+          <button id="btnClearFilter" class="btn btn-secondary" style="display:none; position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:4px 8px; font-size:0.65rem;" onclick="clearProductFilter()">Reset</button>
+          <div id="prodDropdown" class="ui-dropdown-list"></div>
+        </div>
+        
+        <div class="input-wrap mob-fw f-span-1">
+          <i data-lucide="hash"></i>
+          <input type="text" id="filterBatch" placeholder="No batch..." autocomplete="off" oninput="processData()">
+        </div>
+        
+        <div class="input-wrap mob-fw f-span-2">
+          <i data-lucide="tag"></i>
+          <select id="filterStatus" onchange="processData()">
+            <option value="ALL">Semua Status</option>
+            <option value="ACTIVE" selected>Active</option>
+            <option value="EXPIRED">Expired</option>
+            <option value="CLOSED">Closed</option>
+          </select>
+        </div>
+
+        <div class="input-wrap mob-fw f-span-2">
+          <i data-lucide="layers"></i>
+          <select id="filterKategori" onchange="processData()">
+            <option value="ALL">Semua Kategori</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="lp-metrics-row">
+      <div class="adv-met-card" style="cursor:default;">
+        <div class="met-icon-box met-icon-in"><i data-lucide="arrow-down-left"></i></div>
+        <div class="met-info">
+          <div class="m-lbl">Penerimaan <span id="advPeriodIn" style="font-size:0.6rem; color:#94a3b8; margin-left:4px;">(Tahun Ini)</span></div>
+          <div style="display: flex; align-items: center;">
+            <div class="m-val" id="advValIn">0</div>
+            <div id="advTrendIn" class="trend-up"><i data-lucide="trending-up" style="width:10px;"></i> 0%</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="adv-met-card" style="cursor:default;">
+        <div class="met-icon-box met-icon-out"><i data-lucide="arrow-up-right"></i></div>
+        <div class="met-info">
+          <div class="m-lbl">Distribusi <span id="advPeriodOut" style="font-size:0.6rem; color:#94a3b8; margin-left:4px;">(Tahun Ini)</span></div>
+          <div style="display: flex; align-items: center;">
+            <div class="m-val" id="advValOut">0</div>
+            <div id="advTrendOut" class="trend-down"><i data-lucide="trending-down" style="width:10px;"></i> 0%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="adv-met-card" onclick="cycleCard('stock')">
+        <div class="met-icon-box met-icon-stok"><i data-lucide="database"></i></div>
+        <div class="met-info">
+          <div class="m-lbl">Stok Aktif <span id="advPeriodStock" style="font-size:0.6rem; color:#94a3b8; margin-left:4px;">(Real-time)</span></div>
+          <div style="display: flex; align-items: center;">
+            <div class="m-val" id="advValStock">0</div>
+            <div id="advTrendStock" class="trend-neutral"><i data-lucide="check-circle" style="width:10px;"></i> Valid</div>
+          </div>
+        </div>
+      </div>
+    </div>    
+
+    <div class="lp-lists-row">
+      <div class="adv-list-card" id="listAscContainer"></div>
+      <div class="adv-list-card" id="listDescContainer"></div>
+      <div class="adv-list-card" id="listAzContainer"></div>
+    </div>
+  </div> 
+  
+  <div class="right-panel">
+    <div class="adv-chart-card">
+      <div id="chartComposition" style="width: 100%;"></div>
+    </div>
+    <div class="adv-chart-card">
+      <div id="chartCategory" style="width: 100%;"></div>
+    </div>
+  </div>
+</div>

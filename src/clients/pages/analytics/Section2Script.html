@@ -1,0 +1,333 @@
+<script>
+  let S2_FULL_DATA = null;
+  let S2_ACTIVE_BATCH = 'ALL';
+  let S2_BATCH_MODE = 'ALL'; 
+  
+  let S2_HISTORY_FILTERED = [];
+  let S2_CURRENT_PAGE = 1;
+  const S2_LIMIT = 12; 
+  
+  let s2BarChartInst = null;
+  let s2PieChartInst = null;
+
+  async function openDeepDive(pId, pName) {
+    const targetProd = OLAP_RAW_DATA.masterProducts.find(p => p.pId === pId);
+    const pKode = targetProd ? targetProd.kode : '';
+
+    // 1. Tampilkan layar Section 2
+    const sec2 = document.getElementById('sec-2-detail');
+    sec2.style.display = 'block';
+    
+    // 2. SCROLL PINTAR (Pake Offset biar gak nyungsep di bawah header biru!)
+    const yOffset = sec2.getBoundingClientRect().top + window.scrollY - 85; 
+    window.scrollTo({ top: yOffset, behavior: 'smooth' });
+
+    // 3. RESET DOM KE KONDISI SKELETON
+    document.getElementById('s2-hero-name').innerText = 'Memuat Produk...';
+    document.getElementById('s2-hero-code').innerText = 'KODE-XXXX';
+    document.getElementById('s2-hero-cat').innerText = 'KATEGORI';
+    document.getElementById('s2-hero-batch-info').style.display = 'none';
+    document.getElementById('s2-met-in').innerText = '000';
+    document.getElementById('s2-met-out').innerText = '000';
+    document.getElementById('s2-met-stok').innerText = '000';
+    document.getElementById('s2-val-reg').innerText = '0';
+    document.getElementById('s2-val-kon').innerText = '0';
+    document.getElementById('s2-batch-container').innerHTML = `
+      <div class="skel-box" style="height:50px; margin-bottom:8px;"></div>
+      <div class="skel-box" style="height:50px; margin-bottom:8px;"></div>
+    `;
+    document.getElementById('s2-history-tbody').innerHTML = `
+      <tr><td class="skel-box" style="height:35px;" colspan="3"></td></tr>
+      <tr><td class="skel-box" style="height:35px;" colspan="3"></td></tr>
+    `;
+    
+    if(s2BarChartInst) { s2BarChartInst.destroy(); s2BarChartInst = null; }
+    if(s2PieChartInst) { s2PieChartInst.destroy(); s2PieChartInst = null; }
+    document.getElementById('s2ChartKonsumen').innerHTML = '';
+    document.getElementById('s2ChartPie').innerHTML = '';
+
+    // Nyalakan Animasi Skeleton
+    toggleSkeletons(true);
+
+    try {
+      // 4. TEMBAK API + ARTIFICIAL DELAY 600ms (Biar efek loading kerasa "Mahal")
+      const [res] = await Promise.all([
+        GasApi.post('getSection2ProductDetail', { productId: pId, kodeBarang: pKode }),
+        new Promise(resolve => setTimeout(resolve, 600)) 
+      ]);
+
+      S2_FULL_DATA = res;
+      
+      document.getElementById('s2-hero-name').innerText = res.product.nama;
+      document.getElementById('s2-hero-code').innerText = res.product.kode;
+      document.getElementById('s2-hero-cat').innerText = res.product.kat;
+
+      S2_BATCH_MODE = 'ALL';
+      document.getElementById('btn-tg-all').classList.add('active');
+      document.getElementById('btn-tg-stok').classList.remove('active');
+
+      renderS2BatchList();
+      selectS2Batch('ALL');
+
+    } catch (e) {
+      ToastSystem.show("Gagal narik data: " + e.message, "error");
+    } finally {
+      toggleSkeletons(false);
+      lucide.createIcons();
+    }
+  }
+
+  function toggleSkeletons(isActive) {
+    document.querySelectorAll('.skel-box').forEach(el => {
+      if (isActive) el.classList.add('skel-box');
+      else el.classList.remove('skel-box');
+    });
+  }
+
+  window.toggleBatchMode = function(mode) {
+    S2_BATCH_MODE = mode;
+    document.getElementById('btn-tg-all').classList.toggle('active', mode === 'ALL');
+    document.getElementById('btn-tg-stok').classList.toggle('active', mode === 'STOK');
+    renderS2BatchList();
+  }
+
+  function renderS2BatchList() {
+    const container = document.getElementById('s2-batch-container');
+    let batches = [...S2_FULL_DATA.batches];
+
+    if (S2_BATCH_MODE === 'STOK') batches = batches.filter(b => b.stok > 0);
+    batches.sort((a,b) => b.stok - a.stok);
+
+    let tIn=0, tOut=0, tStok=0;
+    S2_FULL_DATA.batches.forEach(b => { tIn+=b.in; tOut+=b.out; tStok+=b.stok; });
+
+    let html = `
+      <div class="s2-batch-card ${S2_ACTIVE_BATCH === 'ALL' ? 'active' : ''}" id="bc-ALL" onclick="selectS2Batch('ALL')">
+         <div class="s2-bc-top">SEMUA BATCH</div>
+         <div class="s2-bc-bot"><span>Dist: <b>${tOut.toLocaleString('id-ID')}</b></span><span>Stok: <b>${tStok.toLocaleString('id-ID')}</b></span></div>
+      </div>
+    `;
+
+    batches.forEach(b => {
+      html += `
+        <div class="s2-batch-card ${S2_ACTIVE_BATCH === b.batch ? 'active' : ''}" id="bc-${b.batch}" onclick="selectS2Batch('${b.batch}')">
+           <div class="s2-bc-top">${b.batch}</div>
+           <div class="s2-bc-bot"><span>Dist: <b>${b.out.toLocaleString('id-ID')}</b></span><span style="color:var(--primary);">Stok: <b>${b.stok.toLocaleString('id-ID')}</b></span></div>
+        </div>
+      `;
+    });
+    
+    if(batches.length === 0) html += `<div style="text-align:center; padding:10px; color:var(--text-light); font-size:0.7rem;">Tidak ada stok tersedia.</div>`;
+    container.innerHTML = html;
+  }
+
+  window.selectS2Batch = function(batchNo) {
+    // 1. Munculin Skeleton Effect Sementara
+    document.querySelectorAll('.s2-batch-card').forEach(el => el.classList.remove('active'));
+    const targetEl = document.getElementById(`bc-${batchNo}`);
+    if (targetEl) targetEl.classList.add('active');
+
+    document.getElementById('s2-history-tbody').innerHTML = `
+      <tr><td class="skel-box" style="height:35px;" colspan="3"></td></tr>
+      <tr><td class="skel-box" style="height:35px;" colspan="3"></td></tr>
+      <tr><td class="skel-box" style="height:35px;" colspan="3"></td></tr>
+    `;
+    document.getElementById('s2-met-in').classList.add('skel-box');
+    document.getElementById('s2-met-out').classList.add('skel-box');
+    document.getElementById('s2-met-stok').classList.add('skel-box');
+
+    // 2. Tunda 300ms biar kerasa animasinya
+    setTimeout(() => {
+      S2_ACTIVE_BATCH = batchNo;
+      const batchInfoEl = document.getElementById('s2-hero-batch-info');
+
+      if (batchNo === 'ALL') {
+        S2_HISTORY_FILTERED = S2_FULL_DATA.history;
+        batchInfoEl.style.display = 'none'; 
+      } else {
+        S2_HISTORY_FILTERED = S2_FULL_DATA.history.filter(h => String(h.batch || '').trim().toUpperCase() === String(batchNo).trim().toUpperCase());
+        
+        const bData = S2_FULL_DATA.batches.find(b => b.batch === batchNo);
+        if(bData && bData.ed) {
+           const expDate = new Date(bData.ed);
+           const diffTime = expDate - new Date();
+           const sisaHari = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+           let rslBln = sisaHari > 0 ? (sisaHari / 30.44).toFixed(1) : 0;
+           
+           const expEl = document.getElementById('s2-hero-exp');
+           expEl.innerText = formatShortDate(bData.ed);
+           document.getElementById('s2-hero-rsl').innerText = rslBln;
+           
+           if(sisaHari < 0) expEl.style.color = '#ef4444'; 
+           else if(rslBln < 3) expEl.style.color = '#f59e0b'; 
+           else expEl.style.color = '#10b981'; 
+
+           batchInfoEl.style.display = 'block';
+        } else {
+           batchInfoEl.style.display = 'none';
+        }
+      }
+
+      S2_CURRENT_PAGE = 1;
+      recalculateMetricsAndCharts();
+      renderS2History();
+      
+      document.getElementById('s2-met-in').classList.remove('skel-box');
+      document.getElementById('s2-met-out').classList.remove('skel-box');
+      document.getElementById('s2-met-stok').classList.remove('skel-box');
+      
+    }, 600);
+  }
+
+  function recalculateMetricsAndCharts() {
+    let mIn = 0, mOut = 0, mStok = 0;
+    let cAgg = {}, dReg = 0, dKon = 0;
+
+    S2_FULL_DATA.batches.forEach(b => {
+      if (S2_ACTIVE_BATCH === 'ALL' || S2_ACTIVE_BATCH === b.batch) {
+        mIn += b.in; mOut += b.out; mStok += b.stok;
+      }
+    });
+
+    S2_HISTORY_FILTERED.forEach(h => {
+      if (h.distribusi > 0) {
+        if (String(h.keterangan||'').toUpperCase().includes('KONSINYASI')) { dKon += h.distribusi; } 
+        else {
+          dReg += h.distribusi;
+          const kons = String(h.namaKonsumen || 'UNKNOWN').toUpperCase();
+          if (!kons.includes('SALDO AWAL')) cAgg[kons] = (cAgg[kons] || 0) + h.distribusi;
+        }
+      }
+    });
+
+    document.getElementById('s2-met-in').innerText = mIn.toLocaleString('id-ID');
+    document.getElementById('s2-met-out').innerText = mOut.toLocaleString('id-ID');
+    document.getElementById('s2-met-stok').innerText = mStok.toLocaleString('id-ID');
+    
+    document.getElementById('s2-val-reg').innerText = dReg.toLocaleString('id-ID');
+    document.getElementById('s2-val-kon').innerText = dKon.toLocaleString('id-ID');
+    // Inject angka stok ke tabel legend manual
+    document.getElementById('s2-val-stok').innerText = mStok.toLocaleString('id-ID');
+
+    const topKons = Object.keys(cAgg).map(k => ({ nama: k, total: cAgg[k] })).sort((a,b) => b.total - a.total).slice(0, 5);
+    initS2Charts(topKons, dReg, dKon, mStok);
+  }
+
+  function initS2Charts(consumers, reg, kon, stok) {
+    if(s2BarChartInst) { s2BarChartInst.destroy(); s2BarChartInst = null; }
+    if(s2PieChartInst) { s2PieChartInst.destroy(); s2PieChartInst = null; }
+
+    const barCats = consumers.map(c => c.nama.substring(0, 15));
+    const barVals = consumers.map(c => c.total);
+
+    // BAR CHART (Pake array warna brand lu & distributed: true biar beda-beda)
+    s2BarChartInst = new ApexCharts(document.querySelector("#s2ChartKonsumen"), {
+      series: [{ name: 'Qty', data: barVals }], 
+      chart: { type: 'bar', height: 160, toolbar: { show: false }, animations: { speed: 400 } },
+      colors: ['#00abbd', '#e46a26', '#f2c21b', '#008f9e', '#ca9f0e'], // Palet warna perusahaan lu!
+      plotOptions: { bar: { borderRadius: 4, columnWidth: '50%', distributed: true } }, // distributed = true buat warna-warni
+      dataLabels: { enabled: false },
+      xaxis: { categories: barCats, labels: { style: {fontSize:'8px', fontWeight:700} } }, 
+      yaxis: { show: false }, grid: { show: false },
+      legend: { show: false } // Matiin legend bawaan
+    });
+    s2BarChartInst.render();
+
+    // PIE CHART
+    s2PieChartInst = new ApexCharts(document.querySelector("#s2ChartPie"), {
+      series: [reg, stok, kon], 
+      chart: { type: 'donut', height: 160, animations: { speed: 400 } },
+      labels: ['Dist. Reguler', 'Stok Aktual', 'Konsinyasi'], 
+      colors: ['#00abbd', '#f2c21b', '#e46a26'], // Sesuai urutan tabel legend manual
+      dataLabels: { enabled: false }, 
+      legend: { show: false }, // MATIIN DOUBLE LEGEND DI SINI
+      stroke: { width: 2, colors:['#ffffff'] }
+    });
+    s2PieChartInst.render();
+  }
+  
+
+  function renderS2History() {
+    const start = (S2_CURRENT_PAGE - 1) * S2_LIMIT;
+    const end = start + S2_LIMIT;
+    const pageData = S2_HISTORY_FILTERED.slice(start, end);
+    const maxPage = Math.ceil(S2_HISTORY_FILTERED.length / S2_LIMIT) || 1;
+    
+    document.getElementById('s2-page-info').innerText = `${S2_CURRENT_PAGE} / ${maxPage}`;
+    document.getElementById('s2-btn-prev').disabled = S2_CURRENT_PAGE === 1;
+    document.getElementById('s2-btn-next').disabled = S2_CURRENT_PAGE === maxPage;
+
+    const html = pageData.map(h => {
+      const isKons = (h.keterangan || '').toUpperCase().includes('KONSINYASI');
+      const distVal = h.distribusi > 0 ? `<span style="color:#ef4444; font-weight:900;">-${h.distribusi}</span>` : `<span style="color:#10b981; font-weight:900;">+${h.penerimaan}</span>`;
+      
+      return `
+        <tr>
+          <td title="${h.namaKonsumen} - Cabang: ${h.kotaCabang || '-'}">
+            <div style="font-weight:800; font-size:0.8rem; color:var(--text-main); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; display:block;">${h.namaKonsumen}</div>
+            <div style="color:var(--text-light); font-size:0.65rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; display:block;">${formatShortDate(h.tanggal)} • ${h.kotaCabang || '-'}</div>
+          </td>
+          <td title="${h.batch}">
+            <div style="font-family:monospace; color:var(--primary); font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; display:block;">${h.batch}</div>
+            ${isKons ? '<div style="font-size:0.6rem; color:#f59e0b; font-weight:600;">KONSINYASI</div>' : ''}
+          </td>
+          <td style="text-align:right; font-size:0.9rem;">${distVal}</td>
+        </tr>
+      `;
+    }).join('');
+    
+    document.getElementById('s2-history-tbody').innerHTML = html || '<tr><td colspan="3" style="text-align:center; padding:20px;">Tidak ada riwayat mutasi yang terekam.</td></tr>';
+  }
+
+  window.changePage = function(dir) {
+    const maxPage = Math.ceil(S2_HISTORY_FILTERED.length / S2_LIMIT);
+    if (S2_CURRENT_PAGE + dir >= 1 && S2_CURRENT_PAGE + dir <= maxPage) {
+      S2_CURRENT_PAGE += dir;
+      renderS2History();
+    }
+  }
+
+function initS2Charts(consumers, reg, kon, stok) {
+    if(s2BarChartInst) { s2BarChartInst.destroy(); s2BarChartInst = null; }
+    if(s2PieChartInst) { s2PieChartInst.destroy(); s2PieChartInst = null; }
+
+    const barCats = consumers.map(c => c.nama.substring(0, 15));
+    const barVals = consumers.map(c => c.total);
+
+    // =========================================
+    // 1. BAR CHART (Warna Beda-beda / Distributed)
+    // =========================================
+    s2BarChartInst = new ApexCharts(document.querySelector("#s2ChartKonsumen"), {
+      series: [{ name: 'Qty', data: barVals }], 
+      chart: { type: 'bar', height: 160, toolbar: { show: false } },
+      // Array 5 warna buat Top 5 Konsumen
+      colors: ['#00abbd', '#e46a26', '#f2c21b', '#008f9e', '#ca9f0e'], 
+      plotOptions: { 
+        bar: { borderRadius: 4, columnWidth: '50%', distributed: true } // distributed: true WAJIB TANPA GRADIENT
+      }, 
+      dataLabels: { enabled: false },
+      xaxis: { categories: barCats, labels: { style: {fontSize:'8px', fontWeight:700} } }, 
+      yaxis: { show: false }, 
+      grid: { show: false },
+      legend: { show: false } // Matiin legend bawaan Bar Chart
+    });
+    s2BarChartInst.render();
+
+    // =========================================
+    // 2. PIE CHART (Donut)
+    // =========================================
+    s2PieChartInst = new ApexCharts(document.querySelector("#s2ChartPie"), {
+      series: [reg, stok, kon], 
+      chart: { type: 'donut', height: 160 },
+      labels: ['Dist. Reguler', 'Stok Aktual', 'Konsinyasi'], 
+      colors: ['#00abbd', '#f2c21b', '#e46a26'], // Warna sinkron dengan legend tabel
+      dataLabels: { enabled: false }, 
+      stroke: { width: 2, colors:['#ffffff'] },
+      
+      // INI KUNCI PEMUSNAH LEGEND BAWAAN APEX (Harus di luar!)
+      legend: { show: false } 
+    });
+    s2PieChartInst.render();
+  }
+
+</script>

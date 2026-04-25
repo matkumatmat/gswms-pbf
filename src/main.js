@@ -96,7 +96,11 @@ const PostRegistry = {
       return new BatchDocumentGeneratorService(historyService);
     },
     method: 'generateDocument' 
-  }
+  },
+  'getSection2ProductDetail': {
+    factory: () => new AnalyticsService(),
+    method: 'getSection2ProductDetail'
+  },
 };
 
 // ============================================================================
