@@ -9,14 +9,14 @@
   // --- STATE MANAGEMENT ---
   const cardState = {
     ed: { index: 0, options: [3, 6, 1] },
-    slow: { index: 0, options: [60, 30, 90] }
+    slow: { index: 0, options: [60, 30, 90] },
+    stock: { index: 0, options: ['Real-time', 'Net Flow'] } 
   };
 
-  // THE FIX: Definisi Sort Type Baru! (date = Waktu, qty = Jumlah)
   const listStates = {
-    'listAscContainer': { sortType: 'date', dir: 'desc', data: [], metricType: 'in' },    // Penerimaan -> Default: Terbaru
-    'listDescContainer': { sortType: 'date', dir: 'desc', data: [], metricType: 'out' },  // Distribusi -> Default: Terbaru
-    'listAzContainer': { sortType: 'qty', dir: 'desc', data: [], metricType: 'stock' }    // Stok -> Default: Terbanyak
+    'listAscContainer': { sortType: 'date', dir: 'desc', data: [], metricType: 'in' },   
+    'listDescContainer': { sortType: 'date', dir: 'desc', data: [], metricType: 'out' },  
+    'listAzContainer': { sortType: 'qty', dir: 'desc', data: [], metricType: 'stock' }    
   };
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -25,7 +25,6 @@
     loadOlapData();
   });
 
-  // HELPER FORMAT TANGGAL ("20 Sep 26")
   function formatShortDate(isoString) {
     if (!isoString || isoString === '-') return '-';
     try {
@@ -96,7 +95,6 @@
   }
 
   // --- CORE ENGINE ---
-// --- CORE ENGINE ---
   function processData() {
     if (!OLAP_RAW_DATA) return;
 
@@ -105,12 +103,25 @@
     const filterKat = document.getElementById('filterKategori').value;
     const filterBatchSearch = document.getElementById('filterBatch').value.toUpperCase().trim();
 
+    // ========================================================
+    // THE FIX 1: MESIN WAKTU BUAT NGITUNG TREND LENGKAP
+    // ========================================================
     const today = new Date();
+    
+    // Untuk Tahun Ini vs Tahun Lalu
     const cYear = today.getFullYear().toString();
+    const lYear = (today.getFullYear() - 1).toString(); 
+
+    // Untuk Bulan Ini
     const cMonthKey = `${cYear}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    let lYear = today.getFullYear(), lMonth = today.getMonth(); 
-    if (lMonth === 0) { lYear--; lMonth = 12; }
-    const lMonthKey = `${lYear}-${String(lMonth).padStart(2, '0')}`;
+    
+    // Untuk Bulan Lalu
+    const lastMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lMonthKey = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
+
+    // Untuk DUA Bulan Lalu (Buat pembanding kalo milih "Bulan Lalu")
+    const twoMonthsAgoDate = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+    const llMonthKey = `${twoMonthsAgoDate.getFullYear()}-${String(twoMonthsAgoDate.getMonth() + 1).padStart(2, '0')}`;
 
     filteredBatches = [];
     const kategoriMap = {};
@@ -126,44 +137,40 @@
 
       let qtyIn = 0, qtyOut = 0;
       let lastPeriodIn = 0, lastPeriodOut = 0; 
-      
-      // DEFAULTS (Global Date)
       let tglIn = bm.firstInDate || bm.rcv; 
       let tglOut = bm.lastOutDate || null;
 
       if (filterWaktu === 'ALL') { 
         qtyIn = bm.in; qtyOut = bm.out; 
-      }
-      else if (filterWaktu === 'THIS_YEAR') {
+      } else if (filterWaktu === 'THIS_YEAR') {
         let minIn = null, maxOut = null;
         Object.keys(bm.trxByMonth).forEach(k => { 
+          // Akumulasi Tahun Ini
           if (k.startsWith(cYear)) { 
             const m = bm.trxByMonth[k];
             qtyIn += m.in; qtyOut += m.out; 
             if (m.firstIn && (!minIn || new Date(m.firstIn) < new Date(minIn))) minIn = m.firstIn;
             if (m.lastOut && (!maxOut || new Date(m.lastOut) > new Date(maxOut))) maxOut = m.lastOut;
-          } 
+          }
+          // Akumulasi Tahun Lalu (Buat Pct Change)
+          if (k.startsWith(lYear)) {
+            lastPeriodIn += bm.trxByMonth[k].in; lastPeriodOut += bm.trxByMonth[k].out;
+          }
         });
         tglIn = minIn || tglIn;
         tglOut = maxOut || null;
-      }
-      else if (filterWaktu === 'THIS_MONTH') { 
+      } else if (filterWaktu === 'THIS_MONTH') { 
         const cData = bm.trxByMonth[cMonthKey];
-        if (cData) {
-            qtyIn = cData.in; qtyOut = cData.out;
-            tglIn = cData.firstIn || tglIn;
-            tglOut = cData.lastOut || null;
-        }
+        if (cData) { qtyIn = cData.in; qtyOut = cData.out; tglIn = cData.firstIn || tglIn; tglOut = cData.lastOut || null; }
+        // Pembanding: Bulan Lalu
         lastPeriodIn = bm.trxByMonth[lMonthKey]?.in || 0;
         lastPeriodOut = bm.trxByMonth[lMonthKey]?.out || 0;
-      }
-      else if (filterWaktu === 'LAST_MONTH') { 
+      } else if (filterWaktu === 'LAST_MONTH') { 
         const lData = bm.trxByMonth[lMonthKey];
-        if (lData) {
-            qtyIn = lData.in; qtyOut = lData.out;
-            tglIn = lData.firstIn || tglIn;
-            tglOut = lData.lastOut || null;
-        }
+        if (lData) { qtyIn = lData.in; qtyOut = lData.out; tglIn = lData.firstIn || tglIn; tglOut = lData.lastOut || null; }
+        // Pembanding: DUA Bulan Lalu
+        lastPeriodIn = bm.trxByMonth[llMonthKey]?.in || 0;
+        lastPeriodOut = bm.trxByMonth[llMonthKey]?.out || 0;
       }
 
       let diffHari = 0;
@@ -175,49 +182,38 @@
       kategoriMap[pm.kat] = (kategoriMap[pm.kat] || 0) + bm.stok;
 
       filteredBatches.push({
-        b: bm.b, namaProduk: pm.nama,
+        b: bm.b, pId: bm.pId, namaProduk: pm.nama,
         stok: bm.stok, in: qtyIn, out: qtyOut,
         lastIn: lastPeriodIn, lastOut: lastPeriodOut,
-        ed: bm.ed, rslBln: bm.rslBln, slowDays: diffHari,
-        tglIn: tglIn, tglOut: tglOut // TANGGAL DINAMIS!
+        ed: bm.ed, rcv: bm.rcv, lastTrxDate: bm.lastTrxDate,
+        rslBln: bm.rslBln, slowDays: diffHari,
+        tglIn: tglIn, tglOut: tglOut
       });
     });
 
     updateWarnings();
     
-// ========================================================
-    // MAPPING TABEL (MURNI TANGGAL ASLI DARI DATABASE!)
-    // ========================================================
-    
-    // Tabel 1: Penerimaan
-    listStates.listAscContainer.data = filteredBatches
-      .filter(b => b.in > 0)
-      .map(b => ({ 
-        name: `${b.namaProduk} - ${b.b}`, 
-        date: formatShortDate(b.tglIn), 
-        qty: b.in, 
-        rawDate: b.tglIn || '1970-01-01' 
-      }));
+    listStates.listAscContainer.data = filteredBatches.filter(b => b.in > 0).map(b => ({ 
+        name: `${b.namaProduk} - ${b.b}`, date: formatShortDate(b.tglIn), qty: b.in, rawDate: b.tglIn || '1970-01-01' 
+    }));
 
-    // Tabel 2: Distribusi
-    listStates.listDescContainer.data = filteredBatches
-      .filter(b => b.out > 0)
-      .map(b => ({ 
-        name: `${b.namaProduk} - ${b.b}`, 
-        date: formatShortDate(b.tglOut), 
-        qty: b.out, 
-        rawDate: b.tglOut || '1970-01-01' 
-      }));
+    listStates.listDescContainer.data = filteredBatches.filter(b => b.out > 0).map(b => ({ 
+        name: `${b.namaProduk} - ${b.b}`, date: b.tglOut ? formatShortDate(b.tglOut) : '-', qty: b.out, rawDate: b.tglOut || '1970-01-01' 
+    }));
 
-    // Tabel 3: Stok
-    listStates.listAzContainer.data = filteredBatches
-      .filter(b => b.stok > 0)
-      .map(b => ({ 
-        name: `${b.namaProduk} - ${b.b}`, 
-        date: 'Stok Tersedia', 
-        qty: b.stok, 
-        rawDate: b.tglOut || b.tglIn || '1970-01-01' 
-      }));
+    const aggProduk = {};
+    filteredBatches.forEach(b => {
+      if (b.stok > 0) {
+        if (!aggProduk[b.pId]) {
+          aggProduk[b.pId] = { pId: b.pId, name: b.namaProduk, qty: 0, rawDate: b.tglOut || b.tglIn || '1970-01-01' };
+        }
+        aggProduk[b.pId].qty += b.stok;
+      }
+    });
+
+    listStates.listAzContainer.data = Object.values(aggProduk).map(p => ({ 
+      pId: p.pId, name: p.name, date: 'Klik untuk Analisis', qty: p.qty, rawDate: p.rawDate 
+    }));
 
     applySortAndRender('listAscContainer');
     applySortAndRender('listDescContainer');
@@ -235,7 +231,7 @@
     catChartInstance.updateSeries([{ name: 'Stok', data: sortedKat.map(k => kategoriMap[k]) }]);
     catChartInstance.updateOptions({ xaxis: { categories: sortedKat } });
   }
-  
+
   function updateWarnings() {
     const limitBulan = cardState.ed.options[cardState.ed.index];
     const edList = filteredBatches.filter(b => b.rslBln > 0 && b.rslBln <= limitBulan);
@@ -249,67 +245,87 @@
   }
 
   function calculateMetric(type) {
+    const filterWaktu = document.getElementById('filterWaktu').value;
+    const wText = document.getElementById('filterWaktu').options[document.getElementById('filterWaktu').selectedIndex].text;
+    const valEl = document.getElementById(`advVal${type.charAt(0).toUpperCase() + type.slice(1)}`);
+    const periodEl = document.getElementById(`advPeriod${type.charAt(0).toUpperCase() + type.slice(1)}`);
+    const trendEl = document.getElementById(`advTrend${type.charAt(0).toUpperCase() + type.slice(1)}`);
+
+    // ========================================================
+    // THE FIX 2: HAPUS ISTILAH AKUNTANSI, GANTI POSITIF/NEGATIF
+    // ========================================================
     if(type === 'stock') {
-      const total = filteredBatches.reduce((s, b) => s + b.stok, 0);
-      document.getElementById('advValStock').innerText = total.toLocaleString('id-ID');
+      const stockMode = cardState.stock.options[cardState.stock.index];
+      let total = 0;
+      
+      if (stockMode === 'Real-time') {
+        total = filteredBatches.reduce((s, b) => s + b.stok, 0);
+        if (periodEl) periodEl.innerText = `(Real-time)`;
+        if (trendEl) { trendEl.className = 'trend-neutral'; trendEl.innerHTML = `<i data-lucide="check-circle" style="width:10px;"></i> Valid`; }
+      } else {
+        const totalIn = filteredBatches.reduce((s, b) => s + b.in, 0);
+        const totalOut = filteredBatches.reduce((s, b) => s + b.out, 0);
+        total = totalIn - totalOut;
+        
+        if (periodEl) periodEl.innerText = `(Net Flow ${wText})`;
+        if (trendEl) {
+          if (total > 0) { trendEl.className = 'trend-up'; trendEl.innerHTML = `<i data-lucide="trending-up" style="width:10px;"></i> Positif`; }
+          else if (total < 0) { trendEl.className = 'trend-down'; trendEl.innerHTML = `<i data-lucide="trending-down" style="width:10px;"></i> Negatif`; }
+          else { trendEl.className = 'trend-neutral'; trendEl.innerHTML = `<i data-lucide="minus" style="width:10px;"></i> 0`; }
+        }
+      }
+      if (valEl) valEl.innerText = total.toLocaleString('id-ID');
       return;
     }
 
     let total = 0, totalLastPeriod = 0;
     filteredBatches.forEach(b => { total += b[type]; totalLastPeriod += (type === 'in' ? b.lastIn : b.lastOut); });
-
-    const filterWaktu = document.getElementById('filterWaktu').value;
-    const wText = document.getElementById('filterWaktu').options[document.getElementById('filterWaktu').selectedIndex].text;
-
-    const valEl = document.getElementById(`advVal${type.charAt(0).toUpperCase() + type.slice(1)}`);
-    const periodEl = document.getElementById(`advPeriod${type.charAt(0).toUpperCase() + type.slice(1)}`);
-    const trendEl = document.getElementById(`advTrend${type.charAt(0).toUpperCase() + type.slice(1)}`);
     
     if (valEl) valEl.innerText = total.toLocaleString('id-ID');
     if (periodEl) periodEl.innerText = `(${wText})`;
 
+    // ========================================================
+    // THE FIX 3: LOGIKA PERSENTASE TREND DIBUKA BUAT SEMUA PERIODE
+    // ========================================================
     if (trendEl) {
-      if (filterWaktu === 'THIS_MONTH' && totalLastPeriod > 0) {
+      if (filterWaktu !== 'ALL' && totalLastPeriod > 0) {
         const pct = Math.round(((total - totalLastPeriod) / totalLastPeriod) * 100);
         if (pct > 0) { trendEl.className = 'trend-up'; trendEl.innerHTML = `<i data-lucide="trending-up" style="width:10px;"></i> ${pct}%`; } 
         else if (pct < 0) { trendEl.className = 'trend-down'; trendEl.innerHTML = `<i data-lucide="trending-down" style="width:10px;"></i> ${Math.abs(pct)}%`; } 
         else { trendEl.className = 'trend-neutral'; trendEl.innerHTML = `<i data-lucide="minus" style="width:10px;"></i> 0%`; }
       } else {
+        // Cuma muncul strip kalo filternya ALL Time atau data pembandingnya murni 0
         trendEl.className = 'trend-neutral'; trendEl.innerHTML = `<i data-lucide="minus" style="width:10px;"></i> -`;
       }
     }
   }
 
   window.cycleCard = function(type) {
-    if (type === 'in' || type === 'out' || type === 'stock') return; 
+    if (type === 'in' || type === 'out') return; 
     const state = cardState[type];
     state.index = (state.index + 1) % state.options.length;
-    updateWarnings();
+    
+    if (type === 'stock') calculateMetric('stock');
+    else updateWarnings();
+    
     lucide.createIcons();
   };
 
-  // --- BUTTON LIST TOGGLE ---
   window.toggleListSort = function(containerId) {
     const state = listStates[containerId];
     state.dir = state.dir === 'asc' ? 'desc' : 'asc';
     applySortAndRender(containerId);
   };
 
-  // ========================================================
-  // THE FIX: LOGIKA SORTING TANGGAL (WAKTU HEAD / TAIL)
-  // ========================================================
   function applySortAndRender(containerId) {
     const state = listStates[containerId];
-    
     if (state.sortType === 'date') {
-      // Sorting Waktu: Terlama (Asc) / Terbaru (Desc)
       state.data.sort((a,b) => {
         const timeA = new Date(a.rawDate).getTime();
         const timeB = new Date(b.rawDate).getTime();
         return state.dir === 'asc' ? timeA - timeB : timeB - timeA;
       });
     } else {
-      // Sorting Qty (Untuk Stok): Terkecil (Asc) / Terbanyak (Desc)
       state.data.sort((a,b) => state.dir === 'asc' ? a.qty - b.qty : b.qty - a.qty);
     }
     
@@ -317,18 +333,22 @@
     if (state.sortType === 'date') label = state.dir === 'asc' ? 'Terlama' : 'Terbaru';
     else label = state.dir === 'asc' ? 'Terkecil' : 'Terbanyak';
 
-    // Setelah diurutin full, baru dipotong 15 tail/head!
     renderSingleList(containerId, label, state.data.slice(0, 15), state.metricType);
     lucide.createIcons();
   }
 
+  window.openDeepDive = function(pId, pName) {
+     ToastSystem.show(`Menyiapkan Analisis untuk ${pName}...`, 'info');
+     console.log("Trigger fetch for pId:", pId);
+  }
+
   function renderSingleList(containerId, sortLabel, data, metricType) {
     const container = document.getElementById(containerId);
-    let iconDir = 'arrow-up-down'; // Icon default sorting
+    let iconDir = 'arrow-up-down'; 
 
     let itemsHtml = data.map(item => `
-      <div class="adv-list-item">
-        <div class="li-left"><div class="li-info" title="${item.name}">${item.name}</div><div class="li-date">${item.date}</div></div>
+      <div class="adv-list-item" ${metricType === 'stock' ? `style="cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'" onclick="openDeepDive('${item.pId}', '${item.name.replace(/'/g, "\\'")}')"` : ''}>
+        <div class="li-left"><div class="li-info" title="${item.name}">${item.name}</div><div class="li-date" style="${metricType === 'stock' ? 'color:var(--primary); font-weight:700;' : ''}">${item.date}</div></div>
         <div class="li-qty">${item.qty.toLocaleString('id-ID')}</div>
       </div>
     `).join('');
@@ -349,7 +369,7 @@
           <i data-lucide="${iconDir}" style="width:14px;"></i> ${sortLabel}
         </button>
       </div>
-      <div class="adv-list-thead"><div class="th-title">Nama produk - batch</div><div class="th-sub"><span>Info</span><span>Jumlah</span></div></div>
+      <div class="adv-list-thead"><div class="th-title">Nama produk ${metricType === 'stock' ? '' : '- batch'}</div><div class="th-sub"><span>Info</span><span>Jumlah</span></div></div>
       <div class="adv-list-body">${itemsHtml}</div>
     `;
   }

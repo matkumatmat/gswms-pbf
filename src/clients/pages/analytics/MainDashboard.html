@@ -68,7 +68,7 @@
 
     </div>
 
-    <div class="lp-metrics-row">
+    <!-- <div class="lp-metrics-row">
       <div class="adv-met-card" style="cursor:default;">
         <div class="met-icon-box met-icon-in"><i data-lucide="arrow-down-left"></i></div>
         <div class="met-info">
@@ -101,7 +101,42 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
+
+    <div class="lp-metrics-row">
+      <div class="adv-met-card" style="cursor:default;">
+        <div class="met-icon-box met-icon-in"><i data-lucide="arrow-down-left"></i></div>
+        <div class="met-info">
+          <div class="m-lbl">Penerimaan <span id="advPeriodIn" style="font-size:0.6rem; color:#94a3b8; margin-left:4px;">(Tahun Ini)</span></div>
+          <div style="display: flex; align-items: center;">
+            <div class="m-val" id="advValIn">0</div>
+            <div id="advTrendIn" class="trend-up"><i data-lucide="trending-up" style="width:10px;"></i> 0%</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="adv-met-card" style="cursor:default;">
+        <div class="met-icon-box met-icon-out"><i data-lucide="arrow-up-right"></i></div>
+        <div class="met-info">
+          <div class="m-lbl">Distribusi <span id="advPeriodOut" style="font-size:0.6rem; color:#94a3b8; margin-left:4px;">(Tahun Ini)</span></div>
+          <div style="display: flex; align-items: center;">
+            <div class="m-val" id="advValOut">0</div>
+            <div id="advTrendOut" class="trend-down"><i data-lucide="trending-down" style="width:10px;"></i> 0%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="adv-met-card" onclick="cycleCard('stock')">
+        <div class="met-icon-box met-icon-stok"><i data-lucide="database"></i></div>
+        <div class="met-info">
+          <div class="m-lbl">Stok Aktif <span id="advPeriodStock" style="font-size:0.6rem; color:#94a3b8; margin-left:4px;">(Real-time)</span></div>
+          <div style="display: flex; align-items: center;">
+            <div class="m-val" id="advValStock">0</div>
+            <div id="advTrendStock" class="trend-neutral"><i data-lucide="check-circle" style="width:10px;"></i> Valid</div>
+          </div>
+        </div>
+      </div>
+    </div>    
 
     <div class="lp-lists-row">
       <div class="adv-list-card" id="listAscContainer"></div>
