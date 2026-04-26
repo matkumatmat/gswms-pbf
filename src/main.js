@@ -101,6 +101,15 @@ const PostRegistry = {
     factory: () => new AnalyticsService(),
     method: 'getSection2ProductDetail'
   },
+  'scheduledDailyStockSync': {
+    factory: () => ({
+      executeSync: () => {
+        scheduledDailyStockSync(); 
+        return { status: 'success', message: 'Sinkronisasi berhasil ditarik manual' };
+      }
+    }),
+    method: 'executeSync'
+  }
 };
 
 // ============================================================================

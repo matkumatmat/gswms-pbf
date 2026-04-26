@@ -1,13 +1,20 @@
 <style>
   .app-header {
-    position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+    position: fixed; top: 0; left: 0; right: 0; height: var(--header-height, 65px);
     background-color: var(--primary); color: #ffffff;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 20px; z-index: 1000; transition: var(--transition);
+    padding: 0 20px; z-index: 1000; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   @media (min-width: 1024px) {
-    .app-header { left: var(--sidebar-width); }
+    .app-header { left: var(--sidebar-width, 260px); }
+    
+    /* THE FIX: Kalo sidebar ciut, Header melar ke ujung kiri nutupin bolong! */
+    body.sidebar-collapsed .app-header { 
+      left: 0; 
+      padding-left: 100px; /* Ngasih jarak biar logo gak nabrak icon bulet sidebar */
+    }
+
     /* Logo ilang kalo sidebar desktop aktif ngelebar */
     body:not(.sidebar-collapsed) .header-logo {
       opacity: 0; visibility: hidden; transform: translateX(-20px);
@@ -24,66 +31,111 @@
 
   .header-logo { 
     font-weight: 800; font-size: 1.2rem; letter-spacing: 0.5px; 
-    display: flex; align-items: center; gap: 8px; transition: var(--transition);
+    display: flex; align-items: center; gap: 8px; transition: 0.3s ease;
     cursor: pointer; 
   }
-  .header-sync { font-size: 0.8rem; display: flex; align-items: center; gap: 6px; font-weight: 500; }
+  
+  /* THE FIX SYNC: Tambahin cursor pointer sama efek hover dikit */
+  .header-sync { 
+    font-size: 0.8rem; display: flex; align-items: center; gap: 6px; 
+    font-weight: 600; cursor: pointer; padding: 6px 12px; 
+    border-radius: 20px; transition: 0.2s; background: rgba(255,255,255,0.1);
+  }
+  .header-sync:hover { background: rgba(255,255,255,0.25); }
+  
+  /* Buat efek muter halus */
+  .spin-anim { animation: spin 1s linear infinite; }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
 </style>
 
 <header class="app-header sidebar-transition" id="mainHeader">
   
   <div class="header-logo" onclick="handleHeaderLogoClick()">      
-    <img id="header-logo-img" src="https://drive.google.com/thumbnail?id=18xdVTIKD8A7zbwfrVzX03wTNGaZv8KBF&sz=w200" alt="PBF Logo" style="height: 28px; width: auto; object-fit: contain;">    
+    <div id="header-logo-placeholder" style="width:28px; height:28px; background:rgba(255,255,255,0.2); border-radius:4px;"></div>
+    <img id="header-logo-img" src="" alt="PBF Logo" style="height: 28px; width: auto; object-fit: contain; display:none;">    
     <span id="header-logo-text" style="display:none;">PBF Manage</span>
   </div>
   
-  <div class="header-sync">
-    <i data-lucide="refresh-cw" style="width:14px;"></i> Last Sync: <span id="txtLastSync">--:--</span>
+  <div class="header-sync" onclick="triggerManualSync()" title="Klik untuk Sinkronisasi Manual">
+    <i id="syncIcon" data-lucide="refresh-cw" style="width:14px;"></i> 
+    <span>Last Sync: <span id="txtLastSync">--:--</span></span>
   </div>
 
 </header>
 
 <script>
-  // Script Scroll bawaan lu (Aman!)
+  // 1. Script Scroll
   window.addEventListener('scroll', () => {
     const header = document.getElementById('mainHeader');
     if (window.scrollY > 10) header.classList.add('scrolled');
     else header.classList.remove('scrolled');
   });
 
-  // ==========================================
-  // INJEKSI SCRIPT NARIK LOGO DARI DRIVE
-  // ==========================================
+  // 2. Inisiasi Logo & Last Sync saat halaman dimuat
   document.addEventListener('DOMContentLoaded', async () => {
+    // A. SET LAST SYNC DARI OLAP
+    if (typeof OLAP_RAW_DATA !== 'undefined' && OLAP_RAW_DATA.generatedAt) {
+       const dateObj = new Date(OLAP_RAW_DATA.generatedAt);
+       const hh = ("0" + dateObj.getHours()).slice(-2);
+       const mm = ("0" + dateObj.getMinutes()).slice(-2);
+       document.getElementById('txtLastSync').innerText = `${hh}:${mm}`;
+    }
+
+    // B. NARIK LOGO
     try {
-      // Panggil fungsi getNavbarLogo yang di AppUtils.js
       const logoData = await GasApi.get('getNavbarLogo');
-      
       if (logoData) {
         const placeholder = document.getElementById('header-logo-placeholder');
         const img = document.getElementById('header-logo-img');
         const text = document.getElementById('header-logo-text');
 
-        // Kalau dapet gambarnya, matiin kotak palsu sama teksnya, terus idupin img-nya!
-        if (img) {
-          img.src = logoData;
-          img.style.display = 'inline-block';
-        }
+        if (img) { img.src = logoData; img.style.display = 'inline-block'; }
         if (placeholder) placeholder.style.display = 'none';
         if (text) text.style.display = 'none'; 
       }
     } catch (e) {
       console.error("Gagal narik logo ke Header bos:", e);
-      // Kalo error, biarin aja nampilin kotak asli sama teks bawaan lu (Fallback aman)
     }
   });
 
+  // 3. LOGIKA BACKGROUND SYNC (MUTAR TANPA LOADER)
+  async function triggerManualSync() {
+    const icon = document.getElementById('syncIcon');
+    const txt = document.getElementById('txtLastSync');
+    
+    // Cegah double klik kalau lagi muter
+    if (icon.classList.contains('spin-anim')) return;
+
+    // Nyalain animasi & ubah teks
+    icon.classList.add('spin-anim');
+    const oldText = txt.innerText;
+    txt.innerText = "Syncing...";
+
+    try {
+      // Panggil AppScript "scheduledDailyStockSync" diem-diem dari belakang
+      // Kita pake GasApi.post biar gampang, karna bawaan kita gak nge-trigger Loader.show otomatis
+      await GasApi.post('scheduledDailyStockSync', {}); 
+      
+      // Update pake jam sekarang kalo sukses
+      const now = new Date();
+      const hh = ("0" + now.getHours()).slice(-2);
+      const mm = ("0" + now.getMinutes()).slice(-2);
+      txt.innerText = `${hh}:${mm}`;
+      
+      ToastSystem.show("Sinkronisasi Selesai!", "success");
+    } catch (e) {
+      txt.innerText = oldText; // Balikin jam lama
+      ToastSystem.show("Gagal Sync: " + e.message, "error");
+    } finally {
+      icon.classList.remove('spin-anim');
+    }
+  }
+
+  // 4. Klik Logo Header
   function handleHeaderLogoClick() {
     if (window.innerWidth >= 1024) {
-      // Desktop: Klik logo header biru = buka sidebar
       document.body.classList.remove('sidebar-collapsed');
     } else {
-      // Mobile: Klik logo = buka/tutup menu samping
       toggleMobileSidebar();
     }
   }

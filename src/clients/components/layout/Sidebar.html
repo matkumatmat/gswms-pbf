@@ -3,7 +3,7 @@
   .desktop-sidebar {
     position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width, 260px);
     background: #ffffff; border-right: 1px solid var(--border);
-    z-index: 10001; display: flex; flex-direction: column; transition: 0.3s ease;
+    z-index: 10001; display: flex; flex-direction: column; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .sidebar-overlay {
@@ -33,7 +33,7 @@
   @media (max-width: 1023px) { .toggle-btn { display: none; } }
 
   /* ==========================================================
-     MENU AREA - MODE NORMAL (SCROLL JALAN)
+     MENU AREA - MODE NORMAL (EXPANDED)
      ========================================================== */
   .sidebar-menu { 
     flex: 1; padding: 15px 12px; overflow-y: auto; overflow-x: hidden; 
@@ -52,10 +52,9 @@
   }
   .menu-item:hover, .menu-item.active { background: var(--primary-light); color: var(--primary); }
   
-  /* THE FIX 1: BULETAN DEFAULT 32px DI DALEM MENU */
   .icon-wrapper {
     display: flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; border-radius: 50%; transition: 0.2s;
+    width: 32px; height: 32px; border-radius: 50%; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .submenu-list { 
@@ -70,54 +69,82 @@
   .submenu-item:hover, .submenu-item.active { color: var(--primary); background: var(--primary-light); }
 
   /* ==========================================================
-     COLLAPSED STATE DESIGN - KEMBALINYA SANG BULETAN DEWA!
+     COLLAPSED STATE DESIGN - THE FLOATING ISLANDS! 🏝️
      ========================================================== */
   @media (min-width: 1024px) {
-    body.sidebar-collapsed .desktop-sidebar { width: 80px; }
+    body.sidebar-collapsed .desktop-sidebar { 
+      width: 80px; 
+      background: transparent !important; /* HILANGIN PUTIHNYA */
+      border-right: none !important;      /* HILANGIN GARISNYA */
+      box-shadow: none !important;
+      pointer-events: none; /* Biar space kosongnya bisa di-klik tembus ke konten belakang */
+    }
     
-    /* THE FIX 2: JEBOL KANDANG BIAR BULETAN BISA NONGOL BEBAS */
-    body.sidebar-collapsed .sidebar-menu { overflow: visible !important; }
+    body.sidebar-collapsed .sidebar-header { 
+      border-bottom: none !important; 
+      background: transparent !important;
+    }
+    
+    body.sidebar-collapsed #sidebar-logo-container { 
+      display: none !important; /* Sembunyiin logo biar beneran bersih */
+    }
+
+    body.sidebar-collapsed .sidebar-menu { 
+      overflow: visible !important; 
+      pointer-events: none; /* Scroll tembus */
+    }
 
     body.sidebar-collapsed .menu-text, 
     body.sidebar-collapsed .submenu-indicator,
-    body.sidebar-collapsed .header-logo-content,
-    body.sidebar-collapsed .menu-group-label { display: none; }
+    body.sidebar-collapsed .menu-group-label,
+    body.sidebar-collapsed .submenu-list { display: none !important; }
     
-    body.sidebar-collapsed .sidebar-header { justify-content: center; padding: 0; }
-    
-    /* Kasih margin bawah 24px biar buletan 60px nya ga saling injek! */
     body.sidebar-collapsed .menu-item { 
-      padding: 0; background: transparent !important; justify-content: flex-end; margin-bottom: 24px; 
+      padding: 0; 
+      background: transparent !important; 
+      justify-content: center; /* Posisikan buletan di tengah area 80px */
+      margin-bottom: 20px; 
+      pointer-events: auto; /* NYALAIN KLIK KHUSUS BUAT BULETANNYA AJA */
     }
-    
-    body.sidebar-collapsed .submenu-list { display: none !important; } 
 
-    /* THE FIX 3: INI DIA! BULETAN 60px, BORDER RADIUS 50%, NONGOL KE KANAN 34px! */
+    /* DESAIN BULETAN NGAPUNG (GLASSMORPHISM) */
     body.sidebar-collapsed .icon-wrapper {
-      position: absolute; right: -34px; top: 50%; transform: translateY(-50%); 
-      width: 60px; height: 60px; background: #ffffff;
-      border: 1px solid var(--border); box-shadow: 2px 0 8px rgba(0,0,0,0.05); z-index: 10;
-      border-radius: 50%; /* BULET SEMPURNA 100% KEMBALI! */
+      position: relative; right: auto; top: auto; transform: none; 
+      width: 52px; height: 52px; 
+      background: rgba(255, 255, 255, 0.85); 
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.5); 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06); 
+      z-index: 10; border-radius: 50%;
+    }
+
+    /* EFEK HOVER BULETAN TERBANG */
+    body.sidebar-collapsed .menu-item:hover .icon-wrapper {
+      background: #ffffff;
+      box-shadow: 0 8px 20px rgba(0, 171, 189, 0.2);
+      transform: translateY(-3px); /* Naik dikit pas di-hover */
+      color: var(--primary);
     }
 
     body.sidebar-collapsed .menu-item:hover .icon-wrapper::before,
     body.sidebar-collapsed .menu-item.active .icon-wrapper::before {
       content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 40px; height: 40px; background: var(--primary-light); border-radius: 50%;
+      width: 38px; height: 38px; background: var(--primary-light); border-radius: 50%;
       z-index: -1; transition: 0.2s;
     }
   }
 </style>
+
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
 
 <aside class="desktop-sidebar sidebar-transition" id="mainSidebar">
-<div class="sidebar-header" style="padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; min-height: 70px;">
-    <div id="sidebar-logo-container" style="display: flex; justify-content: center; align-items: center; width: 100%;">
-        <i id="sidebar-logo-loader" data-lucide="loader-2" class="lucide-spin" style="width: 24px; color: var(--text-light);"></i>
-        <img id="sidebar-logo-img" src="" alt="PBF Logo" style="max-height: 40px; max-width: 100%; object-fit: contain; display: none;">
-        <h2 id="sidebar-logo-text" style="color: var(--primary); margin: 0; font-size: 1.25rem; font-weight: 800; display: none;">GSWMS PBF</h2>
-    </div>
-</div>
+  <div class="sidebar-header" style="padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; min-height: 70px;">
+      <div id="sidebar-logo-container" style="display: flex; justify-content: center; align-items: center; width: 100%;">
+          <i id="sidebar-logo-loader" data-lucide="loader-2" class="lucide-spin" style="width: 24px; color: var(--text-light);"></i>
+          <img id="sidebar-logo-img" src="" alt="PBF Logo" style="max-height: 40px; max-width: 100%; object-fit: contain; display: none;">
+          <h2 id="sidebar-logo-text" style="color: var(--primary); margin: 0; font-size: 1.25rem; font-weight: 800; display: none;">GSWMS PBF</h2>
+      </div>
+  </div>
 
   <div class="sidebar-menu" id="sidebarMenuContainer"></div>
 </aside>
@@ -130,16 +157,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const img = document.getElementById('sidebar-logo-img');
         const text = document.getElementById('sidebar-logo-text');
 
-        if(loader) loader.style.display = 'none'; // Matiin loading
+        if(loader) loader.style.display = 'none'; 
 
         if (logoData) {
-            // Kalau berhasil narik logo
             if(img) {
                 img.src = logoData;
                 img.style.display = 'block';
             }
         } else {
-            // Kalau gagal narik logo (tampilin teks aja)
             if(text) text.style.display = 'block';
         }
     } catch (e) {
@@ -152,20 +177,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 });  
 
 // --- LOGIKA DESKTOP SMART SIDEBAR ---
-  // 1. Kalo sidebar lagi menciut, terus lu klik area sidebar mana aja -> Ngelebar
   document.getElementById('mainSidebar').addEventListener('click', (e) => {
     if (window.innerWidth >= 1024 && document.body.classList.contains('sidebar-collapsed')) {
       document.body.classList.remove('sidebar-collapsed');
     }
   });
 
-  // 2. Kalo sidebar lagi ngelebar, terus lu klik di luar sidebar -> Menciut
   document.addEventListener('click', (e) => {
     if (window.innerWidth >= 1024) {
       const sidebar = document.getElementById('mainSidebar');
       const headerLogo = document.querySelector('.header-logo');
       
-      // Deteksi: Yang diklik BUKAN sidebar DAN BUKAN logo di header biru
       if (!sidebar.contains(e.target) && (!headerLogo || !headerLogo.contains(e.target))) {
         if (!document.body.classList.contains('sidebar-collapsed')) {
           document.body.classList.add('sidebar-collapsed');
@@ -178,11 +200,6 @@ const menuData = [
     { title: 'Dashboard', icon: 'layout-dashboard', url: '?page=maindashboard' },
     { title: 'Inventory Control', icon: 'warehouse',
       submenu: [
-        // { title: 'Stok Produk', url: '?page=stok' },
-        // { title: 'Mutasi Stok', url: '?page=mutasi_stok' },
-        // { title: 'Cycle Count', url: '?page=cycle_count' },
-        // { title: 'Penerimaan (In)', url: '?page=inbound' },
-        // { title: 'Pengiriman (Out)', url: '?page=outbound' },        
         { title: 'Product', url: '?page=product' },
         { title: 'FEFO Center', url: '?page=fefo_center' }
       ]
@@ -199,15 +216,7 @@ const menuData = [
       submenu: [
         { title: 'Direktori Konsumen', url: '?page=master_customer' }
       ]
-    },    
-    // { 
-    //   title: 'Kepatuhan CDOB', icon: 'shield-check', 
-    //   submenu: [
-    //     { title: 'Retur & Recall', url: '?page=retur' },
-    //     { title: 'Cold Chain Log', url: '?page=cold_chain' },
-    //     { title: 'test dashboard', url: '?page=maindashboard' }
-    //   ]
-    // }
+    }
   ];
 
   function renderMenu() {
@@ -232,7 +241,8 @@ const menuData = [
       
       if (!hasSub) {
         el.href = item.url;
-        el.onclick = (e) => { if(!e.ctrlKey) { Loader.show('Menembus Dimensi Waktu...'); } };
+        // THE FIX EASTER EGG: Udah resmi jadi bahasa Corporate!
+        el.onclick = (e) => { if(!e.ctrlKey) { Loader.show('Memuat Halaman...'); } };
       } else {
         el.onclick = () => toggleSubMenu(menuId);
       }
@@ -279,7 +289,6 @@ const menuData = [
   }
 
   function toggleSubMenu(id) {
-    // Kalau diklik pas lagi collapsed, dia otomatis expand dulu!
     if(document.body.classList.contains('sidebar-collapsed')) {
       toggleSidebarCollapse();
     }
