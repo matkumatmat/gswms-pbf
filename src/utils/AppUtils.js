@@ -1,33 +1,41 @@
 // src/utils/AppUtils.js
 
 class AppUtils {
-    static mapArrayToObject(rawData, keys) {
-        return rawData.map(row => {
-        let obj = {};
-        keys.forEach((key, index) => {
-            let value = row[index];
-            if (typeof value === 'string') value = value.trim();
-            obj[key] = (value !== undefined && value !== '') ? value : null;
-        });
-        return obj;
-        });
-    }
+  static mapArrayToObject(rawData, keys) {
+    return rawData.map(row => {
+      let obj = {};
+      keys.forEach((key, index) => {
+        let value = row[index];
+        if (typeof value === 'string') value = value.trim();
+        obj[key] = (value !== undefined && value !== '') ? value : null;
+      });
+      return obj;
+    });
+  }
 
-    static generateUUID() {
-        return Utilities.getUuid();
-    }
+  static generateUUID() {
+    return Utilities.getUuid();
+  }
 
-    static getAuditTrail() {
-    let email = 'System/WebApp';
-    try {
-      // Kita bungkus try-catch. Kalau Google nge-blokir akses email di background,
-      // script nggak akan crash, tapi otomatis pakai 'System/WebApp'
-      const user = Session.getActiveUser();
-      if (user && user.getEmail()) {
-        email = user.getEmail();
+  // === INI YANG KITA RUBAH BOS! ===
+  // Sekarang dia bisa nerima email lemparan dari trigger menu
+  static getAuditTrail(explicitUserEmail = null) {
+    // Prioritas 1: Kalo ada email operan dari trigger menu (onUserEdit), pake itu!
+    // Prioritas 2: Kalo kosong, baru fallback ke default
+    let email = explicitUserEmail || 'System/WebApp';
+
+    // Kalo misal dapetnya tetep 'System/WebApp', kita coba cara native
+    if (email === 'System/WebApp') {
+      try {
+        // Kita bungkus try-catch. Kalau Google nge-blokir akses email di background,
+        // script nggak akan crash
+        const user = Session.getActiveUser();
+        if (user && user.getEmail()) {
+          email = user.getEmail();
+        }
+      } catch (e) {
+        // Diamkan saja errornya
       }
-    } catch (e) {
-      // Diamkan saja errornya
     }
 
     return {
@@ -61,7 +69,9 @@ class AppUtils {
   
 }
 
-// src/utils/AppUtils.js
+// =========================================================
+// Helper luar class
+// =========================================================
 
 /**
  * Mengambil file logo dari Google Drive dan mengubahnya menjadi Base64 string

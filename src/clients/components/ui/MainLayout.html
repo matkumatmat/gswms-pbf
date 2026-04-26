@@ -77,11 +77,11 @@
       else if (!isTokenKosong && page === 'login') {
          title.innerText = 'Anda Sudah Login';
          desc.innerText = 'Mengalihkan ke Dashboard Utama...';
-         btn.href = appUrl + "?page=home";
+         btn.href = appUrl + "?page=maindashboard";
          btn.innerText = "Masuk ke Dashboard";
          btn.style.display = 'block';
 
-         setTimeout(() => { try { window.top.location.replace(appUrl + "?page=home"); } catch(e) {} }, 300);
+         setTimeout(() => { try { window.top.location.replace(appUrl + "?page=maindashboard"); } catch(e) {} }, 300);
       }
       else {
          // LOLOS VALIDASI: Hancurkan Layar Penutup!

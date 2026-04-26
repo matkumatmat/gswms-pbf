@@ -59,6 +59,7 @@ class SystemTrigger {
     if (!config || rowNumber < config.startRow) return;
 
     const audit = AppUtils.getAuditTrail();
+    // const audit = AppUtils.getAuditTrail(explicitUserEmail);    
 
     // 1. CREATE ONLY: Isi UUID jika kosong
     if (config.idCol) {
@@ -206,4 +207,32 @@ function setupLayananTrigger() {
       Logger.log("Gagal memasang CCTV di ID: " + ssId + " | Error: " + error.toString());
     }
   });
+}
+
+// --- TARUH DI BAWAH FILE src/core/Triggers.js ---
+
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('🛡️ Otorisasi Sistem')
+    .addItem('Aktivasi Pelacakan Akun', 'pasangKTP')
+    .addToUi();
+}
+
+function pasangKTP() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet();
+  const email = Session.getEffectiveUser().getEmail();
+
+  const triggers = ScriptApp.getUserTriggers(sheet);
+  triggers.forEach(t => {
+    if (t.getHandlerFunction() === 'onUserEdit') ScriptApp.deleteTrigger(t);
+  });
+
+  ScriptApp.newTrigger('onUserEdit').forSpreadsheet(sheet).onEdit().create();
+  SpreadsheetApp.getUi().alert('Sukses!', `Akun ${email} udah terhubung ke sistem log.`, SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+function onUserEdit(e) {
+  if (!e) return;
+  const emailAsli = Session.getEffectiveUser().getEmail(); 
+  // Lempar emailAsli nya ke fungsi runAudit!
+  SystemTrigger.runAudit(e.source.getActiveSheet(), e.range.getRow(), emailAsli);
 }
