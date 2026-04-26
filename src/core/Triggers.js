@@ -85,7 +85,15 @@ class SystemTrigger {
       sheet.getRange(rowNumber, config.updatedByCol).setValue(audit.updatedBy);
     }
 
-// ... (Langkah 1, 2, 3 audit yang sudah ada) ...
+    const idValue = config.idCol ? sheet.getRange(rowNumber, config.idCol).getValue() : "-";
+        GlobalLogger.log(
+          audit.updatedBy, 
+          "EDIT_SPREADSHEET", 
+          sheetName, 
+          idValue, 
+          "Manual", 
+          "Perubahan langsung di Sheet"
+        );
 
     // 4 & 5. INTERCEPTOR: Auto Format PLT & Smart URL
     // Pastikan ini HANYA mengeksekusi sheet PM_BATCH
@@ -199,19 +207,3 @@ function setupLayananTrigger() {
     }
   });
 }
-
-// src/core/CronJobs.js
-
-/**
- * Fungsi ini yang akan dikaitkan ke Time-driven Trigger Google Apps Script.
- * Disarankan berjalan setiap hari pukul 01:00 AM - 02:00 AM.
- */
-// function scheduledDailyStockSync() {
-//   try {
-//     const aggregatorService = new StockAggregatorService();
-//     aggregatorService.executeDailySync();
-//   } catch (error) {
-//     console.error("Cron Job Failed: " + error.toString());
-//     // Di sini Anda bisa mengimplementasikan notifikasi email ke Admin jika cron job gagal
-//   }
-// }

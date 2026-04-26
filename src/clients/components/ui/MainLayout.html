@@ -6,7 +6,6 @@
   <title>PBF Manage</title>
   
   <base target="_top" href="<?= ScriptApp.getService().getUrl() ?>">
-  
   <script src="https://unpkg.com/lucide@latest"></script>
   
   <?!= include('src/clients/assets/css/Theme'); ?>
@@ -33,18 +32,75 @@
     @media (min-width: 1024px) {
       .app-main { margin-left: var(--sidebar-width); padding: calc(var(--header-height) + 24px) 30px 30px 30px; }
     }
+    /* Style Layar Satpam Anti-Bocor */
+    #auth-guard {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #f8fafc; z-index: 9999999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: sans-serif;
+    }
   </style>
 </head>
 <body>
 
-  <?!= include('src/clients/components/layout/Sidebar'); ?>
-  <?!= include('src/clients/components/layout/Header'); ?>
+  <div id="auth-guard">
+     <i data-lucide="shield-alert" style="width:80px; height:80px; color:var(--primary); margin-bottom:20px;"></i>
+     <h2 id="ag-title" style="color:#0f172a; margin-bottom:10px; font-weight:800;">Memeriksa Sesi...</h2>
+     <p id="ag-desc" style="color:#64748b; margin-bottom:25px; font-size:0.9rem;">Mohon tunggu sebentar.</p>
+     <a id="btn-manual-redirect" href="#" target="_top" style="display:none; padding:12px 24px; background:var(--primary); color:white; font-weight:bold; border-radius:8px; text-decoration:none; box-shadow:0 4px 6px rgba(0,0,0,0.1);">Lanjutkan Manual</a>
+  </div>
+
+  <script>
+    (function() {
+      const token = localStorage.getItem('PBF_TOKEN');
+      const page = "<?= activePage ?>";
+      const appUrl = "<?= appUrl ?>";
+
+      const isTokenKosong = (!token || token === 'undefined' || token === 'null' || token === '');
+      const guard = document.getElementById('auth-guard');
+      const title = document.getElementById('ag-title');
+      const desc = document.getElementById('ag-desc');
+      const btn = document.getElementById('btn-manual-redirect');
+
+      // 1. KASUS: BELUM LOGIN TAPI MAU BUKA DASHBOARD
+      if (isTokenKosong && page !== 'login') {
+         title.innerText = 'Akses Ditolak';
+         desc.innerText = 'Sesi telah habis atau Anda belum login.';
+         btn.href = appUrl + "?page=login";
+         btn.innerText = "Masuk ke Halaman Login";
+         btn.style.display = 'block';
+
+         // Coba auto-redirect (Kalo gagal, user tinggal klik tombol)
+         setTimeout(() => { try { window.top.location.replace(appUrl + "?page=login"); } catch(e) {} }, 300);
+      }
+      // 2. KASUS: UDAH LOGIN TAPI ISENG BUKA HALAMAN LOGIN
+      else if (!isTokenKosong && page === 'login') {
+         title.innerText = 'Anda Sudah Login';
+         desc.innerText = 'Mengalihkan ke Dashboard Utama...';
+         btn.href = appUrl + "?page=home";
+         btn.innerText = "Masuk ke Dashboard";
+         btn.style.display = 'block';
+
+         setTimeout(() => { try { window.top.location.replace(appUrl + "?page=home"); } catch(e) {} }, 300);
+      }
+      else {
+         // LOLOS VALIDASI: Hancurkan Layar Penutup!
+         guard.style.display = 'none';
+      }
+    })();
+  </script>
+  <? if (activePage !== 'login') { ?>
+    <?!= include('src/clients/components/layout/Sidebar'); ?>
+    <?!= include('src/clients/components/layout/Header'); ?>
+  <? } ?>
   
-  <main class="app-main sidebar-transition">
+  <main class="<?= activePage === 'login' ? '' : 'app-main sidebar-transition' ?>">
     <?!= include(pageContent); ?>
   </main>
 
-  <?!= include('src/clients/components/layout/MobileNav'); ?>
+  <? if (activePage !== 'login') { ?>
+    <?!= include('src/clients/components/layout/MobileNav'); ?>
+  <? } ?>
 
   <?!= include('src/clients/components/ui/Modal'); ?>
   <?!= include('src/clients/components/ui/Loading'); ?>

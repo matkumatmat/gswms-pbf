@@ -67,11 +67,13 @@ const DomainRegistry = {
 const PostRegistry = {
   'createShippingLabel': {
     factory: () => new ShippingLabelService(new ShippingLabelRepo()),
-    method: 'create'
+    method: 'create',
+    roles: ['ADMIN', 'OPERATOR']
   },
   'updatePrintStatus': {
     factory: () => new ShippingLabelService(new ShippingLabelRepo()),
-    method: 'updatePrintStatus'
+    method: 'updatePrintStatus',
+    roles: ['ADMIN', 'OPERATOR']
   },
   'getBatchDetail': {
     factory: () => new BatchService(new BatchRepo(), new ProductRepo()),
@@ -79,11 +81,13 @@ const PostRegistry = {
   },
   'createCustomer': {
     factory: () => new CustomerService(new CustomerRepo()),
-    method: 'create'
+    method: 'create',
+    roles: ['ADMIN']
   },
   'createEmbalageTransaction': {
     factory: () => new ShippingEmbalageService(new MasterShippingEmbalageRepo(), new ConstantShippingEmbalageRepo()),
-    method: 'createTransaction'
+    method: 'createTransaction',
+    roles: ['ADMIN', 'OPERATOR']
   },
   'getBatchHistoryV2': {
     factory: () => new TransactionHistoryService(new TransactionHistoryRepo()),
@@ -117,7 +121,6 @@ const PostRegistry = {
 // ============================================================================
 const PageRegistry = {
   // Format: 'nama_param_url': 'path/ke/file/html/tanpa/ekstensi'
-  'home': 'src/clients/pages/Home',
   'dashboard': 'src/clients/pages/dashboard/AdvanceDashboard',
   'product': 'src/clients/pages/product/Product',
   'detail': 'src/clients/pages/product_detail/ProductDetail', 
@@ -216,20 +219,23 @@ function doGet(e) {
 // ============================================================================
 
 function handleClientRouting(params) {
-  const reqPage = params.page || 'home';
-  // Template layout utama ngambil dari folder clients yang baru
+  const reqPage = params.page || 'MainDashboard';
   const template = HtmlService.createTemplateFromFile('src/clients/components/ui/MainLayout');      
+
+  // ========================================================
+  // FIX DARI GUE: INJEKSI NAMA PAGE & URL KE FRONTEND
+  // ========================================================
+  template.activePage = reqPage;
+  template.appUrl = ScriptApp.getService().getUrl();
 
   if (PageRegistry[reqPage]) {
     template.pageContent = PageRegistry[reqPage];
     
-    // Injeksi parameter khusus buat halaman yang butuh ID (seperti detail)
     if (reqPage === 'detail' || reqPage === 'product') {
       template.urlParamId = params.id || null;
       template.urlParamBatch = params.batch || null;
     }
   } else {
-    // Fallback kalau halaman ga ketemu
     template.pageContent = 'src/clients/pages/Error404';
   }
 
@@ -302,11 +308,53 @@ function handleApiGet(params) {
 
 function processUiRequest(action, payload) {
   try {
+    // 1. BYPASS LOGIN
+    if (action === 'loginAction') {
+      const loginResult = AuthService.login(payload.data); 
+      return JSON.parse(JSON.stringify({ status: "success", data: loginResult }));
+    }
+
+    // 2. VALIDASI TOKEN
+    const activeUser = AuthService.validateToken(payload.token);
+    if (!activeUser) {
+      throw new Error("Sesi telah habis atau akses ditolak! Silakan login ulang.");
+    }
+
+    // 3. CEK REGISTRY & RBAC (ROLE-BASED ACCESS CONTROL)
     const route = PostRegistry[action];
     if (!route) throw new Error(`Action '${action}' tidak ditemukan di Registry!`);
 
+    // THE FIX: Bantai user kalau Role-nya nggak cukup!
+    if (route.roles && Array.isArray(route.roles)) {
+      if (!route.roles.includes(activeUser.role)) {
+        // Catet percobaan pembobolan ke GlobalLogger!
+        GlobalLogger.log(activeUser.name, "RBAC_VIOLATION", action, "-", "-", `User role [${activeUser.role}] mencoba akses rute terlarang.`);
+        throw new Error(`Akses Ditolak:[${activeUser.role}]`);
+      }
+    }
+
     const service = route.factory();
-    const result = service[route.method](payload);
+    if (typeof payload.data === 'object') {
+      payload.data.__currentUser = activeUser;
+    }
+
+    // 4. EKSEKUSI FUNGSI
+    const result = service[route.method](payload.data);
+
+    // 5. GLOBAL LOGGER PINTAR (CUMA NYATET MUTASI)
+    // Jangan nyatet fungsi 'get' biar log lu ga penuh sampah
+    if (!action.startsWith('get') && !action.startsWith('query')) {
+      
+      // Coba cari ID dari data yang dikirim, kalo gaada pake strip '-'
+      const entityId = (payload.data && payload.data.id) ? payload.data.id : 
+                       (result && result.id ? result.id : '-');
+                       
+      // Tangkap data apa yang disubmit user
+      const valAfter = payload.data ? JSON.stringify(payload.data) : '-';
+
+      GlobalLogger.log(activeUser.name, action, "API_MUTASI", entityId, "Executed", valAfter);
+    }
+
     return JSON.parse(JSON.stringify({ status: "success", data: result }));
   } catch (error) {
     console.error("UI Request Error: " + error.toString());
