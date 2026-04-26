@@ -32,18 +32,51 @@ const GasApi = {
     });
   },
 
+  // post: (action, payload) => {
+  //   return new Promise((resolve, reject) => {
+  //     google.script.run
+  //       .withSuccessHandler(response => {
+  //         if (response && response.status === "error") {
+  //           reject(new Error(response.message));
+  //         } else {
+  //           resolve(response.data);
+  //         }
+  //       })
+  //       .withFailureHandler(error => reject(error))
+  //       .processUiRequest(action, payload);
+  //   });
+  // }
+
   post: (action, payload) => {
     return new Promise((resolve, reject) => {
+      
+      // THE FIX: Ambil Token dari LocalStorage Browser
+      const userToken = localStorage.getItem('PBF_TOKEN') || null;
+
+      // Bungkus ulang payload biar API AppsScript lu bisa baca tokennya
+      const finalPayload = {
+         action: action,
+         token: userToken,
+         data: payload
+      };
+
       google.script.run
         .withSuccessHandler(response => {
           if (response && response.status === "error") {
+            // Kalau session abis, tendang ke login!
+            if(response.message.includes('Sesi telah habis')) {
+               localStorage.removeItem('PBF_TOKEN');
+               window.location.href = "?page=login"; 
+            }
             reject(new Error(response.message));
           } else {
             resolve(response.data);
           }
         })
         .withFailureHandler(error => reject(error))
-        .processUiRequest(action, payload);
+        // Panggilnya beda sekarang, kirim object utuh (kalau lu pake JSON stringify di backend)
+        // Atau lu sesuaiin sama fungsi processUiRequest lu
+        .processUiRequest(action, finalPayload); 
     });
   }
 };

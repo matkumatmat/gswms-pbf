@@ -126,7 +126,8 @@ const PageRegistry = {
   'add_customer': 'src/clients/pages/customer/CustomerForm',
   'fefo_center': 'src/clients/pages/fefo/FefoCenter',
   'embalage': 'src/clients/pages/embalage/ShippingEmbalage',
-  'maindashboard': 'src/clients/pages/analytics/MainDashboard'
+  'maindashboard': 'src/clients/pages/analytics/MainDashboard',
+  'login': 'src/clients/pages/login/Login',
 };
 
 // ============================================================================
@@ -137,26 +138,48 @@ function doPost(e) {
   try {
     const contents = JSON.parse(e.postData.contents);
     const action = contents.action;
+    const token = contents.token; // Kita tarik token dari frontend
 
     if (!action) throw new Error("Action (method) tidak ditentukan!");
+
+    // 1. BYPASS KHUSUS UNTUK LOGIN
+    if (action === 'loginAction') {
+      const loginResult = AuthService.login(contents.data);
+      return responseHelper({ status: "success", data: loginResult });
+    }
+
+    // 2. SATPAM RBAC: Validasi Token
+    const activeUser = AuthService.validateToken(token);
+    if (!activeUser) {
+      throw new Error("Sesi telah habis atau akses ditolak! Silakan login ulang.");
+    }
 
     const route = PostRegistry[action];
     if (!route) throw new Error(`Endpoint POST '${action}' tidak ditemukan!`);
 
+    // (OPSIONAL: Kalau lu mau ngecek ROLE di sini, lu bisa tambahin pengecekan di route Registry)
+    // if (route.requiredRole && route.requiredRole !== activeUser.role) throw new Error("Akses Ditolak: Bukan Hak Kamu!");
+
     const service = route.factory();
+    
+    // Injeksi user aktif ke dalam data biar service tau siapa yang lagi ngeksekusi
+    if (typeof contents.data === 'object') {
+      contents.data.__currentUser = activeUser;
+    }
+
     const result = service[route.method](contents.data);
+
+    // 3. GLOBAL LOGGING OTOMATIS (Bisa dipanggil di dalam Service lu, tapi buat trigger dasar bisa taruh sini)
+    GlobalLogger.log(activeUser.name, "EXECUTE", action, "-", "-", "-");
 
     return responseHelper({
       status: "success",
-      message: "Data berhasil disimpan dan cache telah di-invalidate",
+      message: "Berhasil dieksekusi",
       data: result
     });
 
   } catch (error) {
-    return responseHelper({
-      status: "error",
-      message: error.toString()
-    });
+    return responseHelper({ status: "error", message: error.toString() });
   }
 }
 

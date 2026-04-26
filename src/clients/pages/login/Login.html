@@ -1,0 +1,40 @@
+<div style="display: flex; align-items: center; justify-content: center; min-height: 80vh;">
+  <div class="ui-card" style="width: 100%; max-width: 400px; padding: 30px;">
+    <div style="text-align: center; margin-bottom: 25px;">
+      <h2 style="color: var(--primary); font-weight: 800;">GSWMS PBF</h2>
+      <p style="color: var(--text-light); font-size: 0.9rem;">Masuk untuk mengelola logistik</p>
+    </div>
+    
+    <form id="loginForm" onsubmit="event.preventDefault(); handleLogin();">
+      <div style="margin-bottom: 15px;">
+        <label style="font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 5px;">EMAIL</label>
+        <input type="email" id="loginEmail" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;">
+      </div>
+      <div style="margin-bottom: 25px;">
+        <label style="font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 5px;">PASSWORD</label>
+        <input type="password" id="loginPass" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;">
+      </div>
+      <button type="submit" id="btnLogin" class="btn btn-primary" style="width: 100%; padding: 14px;">MASUK</button>
+    </form>
+  </div>
+</div>
+
+<script>
+async function handleLogin() {
+  const btn = document.getElementById('btnLogin');
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPass').value;
+  
+  btn.classList.add('loading');
+  try {
+    const res = await GasApi.post('loginAction', { email, password });
+    localStorage.setItem('PBF_TOKEN', res.token);
+    localStorage.setItem('PBF_USER', JSON.stringify(res.user));
+    window.location.href = "?page=home";
+  } catch (e) {
+    ToastSystem.show(e.message, "error");
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+</script>
