@@ -50,10 +50,7 @@ const GasApi = {
   post: (action, payload) => {
     return new Promise((resolve, reject) => {
       
-      // THE FIX: Ambil Token dari LocalStorage Browser
       const userToken = localStorage.getItem('PBF_TOKEN') || null;
-
-      // Bungkus ulang payload biar API AppsScript lu bisa baca tokennya
       const finalPayload = {
          action: action,
          token: userToken,
@@ -63,19 +60,23 @@ const GasApi = {
       google.script.run
         .withSuccessHandler(response => {
           if (response && response.status === "error") {
-            // Kalau session abis, tendang ke login!
             if(response.message.includes('Sesi telah habis')) {
                localStorage.removeItem('PBF_TOKEN');
-               window.location.href = "?page=login"; 
+               window.top.location.replace("?page=login"); // THE FIX: Pake window.top.location.replace
             }
             reject(new Error(response.message));
           } else {
             resolve(response.data);
           }
         })
-        .withFailureHandler(error => reject(error))
-        // Panggilnya beda sekarang, kirim object utuh (kalau lu pake JSON stringify di backend)
-        // Atau lu sesuaiin sama fungsi processUiRequest lu
+        .withFailureHandler(error => {
+            // Backup penjaga gawang kalau ada system error murni
+            if(error.message && error.message.includes('Sesi telah habis')) {
+               localStorage.removeItem('PBF_TOKEN');
+               window.top.location.replace("?page=login");
+            }
+            reject(error);
+        })
         .processUiRequest(action, finalPayload); 
     });
   }

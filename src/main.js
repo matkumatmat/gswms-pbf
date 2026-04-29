@@ -219,7 +219,7 @@ function doGet(e) {
 // ============================================================================
 
 function handleClientRouting(params) {
-  const reqPage = params.page || 'MainDashboard';
+  const reqPage = params.page || 'maindashboard';
   const template = HtmlService.createTemplateFromFile('src/clients/components/ui/MainLayout');      
 
   // ========================================================
@@ -358,7 +358,8 @@ function processUiRequest(action, payload) {
     return JSON.parse(JSON.stringify({ status: "success", data: result }));
   } catch (error) {
     console.error("UI Request Error: " + error.toString());
-    throw new Error(error.toString()); 
+    // THE FIX: Jangan di-throw! Return object aja biar ketangkep di withSuccessHandler
+    return { status: "error", message: error.toString() }; 
   }
 }
 

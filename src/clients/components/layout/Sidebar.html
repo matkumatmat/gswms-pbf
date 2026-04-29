@@ -133,6 +133,42 @@
       z-index: -1; transition: 0.2s;
     }
   }
+
+  /* ==========================================================
+     SIDEBAR FOOTER - JALAN KELUAR DARI PENDERITAAN
+     ========================================================== */
+  .sidebar-footer {
+    padding: 15px 12px;
+    border-top: 1px solid var(--border);
+    background: #ffffff;
+    transition: 0.3s ease;
+  }
+  
+  .logout-btn {
+    color: #ef4444 !important; /* Merah bahaya */
+  }
+  
+  .logout-btn:hover {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+  }
+
+  body.sidebar-collapsed .sidebar-footer {
+    border-top: none !important;
+    background: transparent !important;
+    padding: 0 12px 15px 12px;
+    pointer-events: auto; /* Biar buletan merahnya bisa diklik */
+  }
+  
+  body.sidebar-collapsed .logout-btn:hover .icon-wrapper {
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2) !important;
+    color: #ef4444 !important;
+  }
+  
+  body.sidebar-collapsed .logout-btn:hover .icon-wrapper::before {
+    background: #fef2f2 !important;
+  }
+
 </style>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
@@ -145,11 +181,27 @@
           <h2 id="sidebar-logo-text" style="color: var(--primary); margin: 0; font-size: 1.25rem; font-weight: 800; display: none;">GSWMS PBF</h2>
       </div>
   </div>
-
   <div class="sidebar-menu" id="sidebarMenuContainer"></div>
+
+  <div class="sidebar-footer">
+    <a class="menu-item logout-btn" onclick="handleLogout()">
+      <div class="icon-wrapper"><i data-lucide="log-out"></i></div>
+      <span class="menu-text" style="flex:1; font-weight: 700;">Logout</span>
+    </a>
+  </div>
+</aside>
 </aside>
 
 <script>
+// --- JALAN KELUAR ---
+  function handleLogout() {
+    Loader.show('Memusnahkan sesi...');     
+    localStorage.removeItem('PBF_TOKEN');    
+    setTimeout(() => {
+      window.top.location.replace("?page=login");
+    }, 600);
+  }
+
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const logoData = await GasApi.get('getNavbarLogo');
@@ -200,15 +252,15 @@ const menuData = [
     { title: 'Dashboard', icon: 'layout-dashboard', url: '?page=maindashboard' },
     { title: 'Inventory Control', icon: 'warehouse',
       submenu: [
-        { title: 'Product', url: '?page=product' },
-        { title: 'FEFO Center', url: '?page=fefo_center' }
+        { title: 'Produk', url: '?page=product' },
+        { title: 'FEFO Center', url: '?page=fefo_center' },
+        { title: 'Penunjang pengiriman', url: '?page=embalage' },
       ]
     },
     { 
-      title: 'Shipping', icon: 'truck', 
+      title: 'labelling', icon: 'printer', 
       submenu: [
-        { title: 'Shipping Label', url: '?page=shipping_label' },
-        { title: 'Shipping Embalage', url: '?page=embalage' },
+        { title: 'Label Pengiriman', url: '?page=shipping_label' },
       ]
     },
     { 
@@ -224,7 +276,7 @@ const menuData = [
     container.innerHTML = '';
 
     const urlParams = new URLSearchParams(window.location.search);
-    const currentPage = urlParams.get('page') || 'home';
+    const currentPage = urlParams.get('page') || 'maindashboard';
 
     menuData.forEach(item => {
       const hasSub = item.submenu && item.submenu.length > 0;

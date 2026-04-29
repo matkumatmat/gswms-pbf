@@ -25,14 +25,14 @@
 
 <script>
   const dockData = [
-    { title: 'Dashboard', icon: 'layout-dashboard', url: '?page=home' },
+    { title: 'Dashboard', icon: 'layout-dashboard', url: '?page=maindashboard' },
     { title: 'Shipping', icon: 'truck', url: '?page=shipping_label' },
     { title: 'Sheet', icon: 'file-spreadsheet', url: '?page=sheet' }
   ];
 
   const dockContainer = document.getElementById('mobileDock');
   const urlParamsDock = new URLSearchParams(window.location.search);
-  const currentDockPage = urlParamsDock.get('page') || 'home';
+  const currentDockPage = urlParamsDock.get('page') || 'maindashboard';
 
   dockData.forEach(item => {
     const isActive = item.url.includes(currentDockPage);

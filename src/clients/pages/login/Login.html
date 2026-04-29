@@ -30,7 +30,7 @@ async function handleLogin() {
     const res = await GasApi.post('loginAction', { email, password });
     localStorage.setItem('PBF_TOKEN', res.token);
     localStorage.setItem('PBF_USER', JSON.stringify(res.user));
-    window.location.href = "?page=home";
+    window.location.href = "?page=maindashboard";
   } catch (e) {
     ToastSystem.show(e.message, "error");
   } finally {

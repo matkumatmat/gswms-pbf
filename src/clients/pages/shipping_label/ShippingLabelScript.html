@@ -130,8 +130,8 @@
               <input type="text" id="modalPetugas" value="Kaye" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; outline:none;">
             </div>
             <div>
-              <label style="font-size:0.75rem; font-weight:800; margin-bottom:6px; display:block;">Suhu</label>
-              <input type="text" id="modalSuhu" value="2-8 °C" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; outline:none;">
+              <label style="font-size:0.75rem; font-weight:800; margin-bottom:6px; display:block;">Berat</label>
+              <input type="text" id="modalSuhu" value="2 kg" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; outline:none;">
             </div>
           </div>
           <hr style="border:0; border-top:2px dashed var(--border); margin:5px 0;">
@@ -178,7 +178,7 @@
       if(name) products.push({name, qty});
     });
 
-    if(products.length === 0) { ToastSystem.show("Minimal masukkan 1 produk!", "warning"); return; }
+    // if(products.length === 0) { ToastSystem.show("Minimal masukkan 1 produk!", "warning"); return; } // NEED to Update
 
     boxConfigs.push({ count, petugas, temp, products });
     recalculateBoxNumbering();
@@ -196,7 +196,7 @@
     let boxHtml = boxConfigs.map(c => `
       <div style="margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--border);">
         <div style="font-weight:800; color:var(--text-main); margin-bottom:4px;">Box ${c.count > 1 ? c.start+'-'+c.end : c.start}</div>
-        <div style="font-size:0.8rem; color:var(--text-light); margin-bottom:6px;">Suhu: ${c.temp} | Petugas: ${c.petugas}</div>
+        <div style="font-size:0.8rem; color:var(--text-light); margin-bottom:6px;">Berat: ${c.temp} | Petugas: ${c.petugas}</div> 
         <div style="font-size:0.8rem; font-weight:500;">${c.products.map(p => `• ${p.name} (x${p.qty})`).join('<br>')}</div>
       </div>
     `).join('');
@@ -222,8 +222,7 @@
 
   async function executeSubmitPayload() {
     ModalSystem.close(); 
-    Loader.show('Merakit Data & Menyimpan ke Database...'); // PAKE GLOBAL LOADER KEREN LU!
-
+    Loader.show('Merakit Data & Menyimpan ke Database...'); 
     const alamatLengkap = `${selectedCustomerPayload.alamat || ''}, ${selectedCustomerPayload.kota || ''}`;
     const finalAlamat = splitAddress60(alamatLengkap);
     
