@@ -27,7 +27,7 @@ class AuthService {
           name: row[config.COLS.USER_ID_COL - 1] 
         };
         
-        CacheService.getScriptCache().put(`SESSION_${token}`, JSON.stringify(sessionData), 21600);
+        CacheService.getScriptCache().put(`SESSION_${token}`, JSON.stringify(sessionData), 21600000000);
         GlobalLogger.log(sessionData.name, "LOGIN", "SYSTEM", "-", "-", "Success");
         return { token, user: sessionData };
       }

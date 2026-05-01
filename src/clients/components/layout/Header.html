@@ -112,11 +112,7 @@
     txt.innerText = "Syncing...";
 
     try {
-      // Panggil AppScript "scheduledDailyStockSync" diem-diem dari belakang
-      // Kita pake GasApi.post biar gampang, karna bawaan kita gak nge-trigger Loader.show otomatis
-      await GasApi.post('scheduledDailyStockSync', {}); 
-      
-      // Update pake jam sekarang kalo sukses
+      await GasApi.post('scheduledDailyStockSync', {});       
       const now = new Date();
       const hh = ("0" + now.getHours()).slice(-2);
       const mm = ("0" + now.getMinutes()).slice(-2);
