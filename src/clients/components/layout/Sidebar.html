@@ -194,13 +194,11 @@
 
 <script>
 // --- JALAN KELUAR ---
-  function handleLogout() {
-    Loader.show('Memusnahkan sesi...');     
-    localStorage.removeItem('PBF_TOKEN');    
-    setTimeout(() => {
-      window.top.location.replace("?page=login");
-    }, 600);
-  }
+function handleLogout() {
+  localStorage.removeItem('PBF_TOKEN');
+  localStorage.removeItem('PBF_USER');
+  window.top.location.replace("?page=login");
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {

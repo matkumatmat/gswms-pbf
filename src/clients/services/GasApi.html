@@ -47,37 +47,52 @@ const GasApi = {
   //   });
   // }
 
-  post: (action, payload) => {
-    return new Promise((resolve, reject) => {
+//   post: (action, payload) => {
+//     return new Promise((resolve, reject) => {
       
-      const userToken = localStorage.getItem('PBF_TOKEN') || null;
-      const finalPayload = {
-         action: action,
-         token: userToken,
-         data: payload
-      };
+//       const userToken = localStorage.getItem('PBF_TOKEN') || null;
+//       const finalPayload = {
+//          action: action,
+//          token: userToken,
+//          data: payload
+//       };
 
-      google.script.run
-        .withSuccessHandler(response => {
-          if (response && response.status === "error") {
-            if(response.message.includes('Sesi telah habis')) {
-               localStorage.removeItem('PBF_TOKEN');
-               window.top.location.replace("?page=login"); // THE FIX: Pake window.top.location.replace
-            }
-            reject(new Error(response.message));
-          } else {
-            resolve(response.data);
-          }
-        })
-        .withFailureHandler(error => {
-            // Backup penjaga gawang kalau ada system error murni
-            if(error.message && error.message.includes('Sesi telah habis')) {
-               localStorage.removeItem('PBF_TOKEN');
-               window.top.location.replace("?page=login");
-            }
-            reject(error);
-        })
-        .processUiRequest(action, finalPayload); 
+//       google.script.run
+//         .withSuccessHandler(response => {
+//           if (response && response.status === "error") {
+//             if(response.message.includes('Sesi telah habis')) {
+//                localStorage.removeItem('PBF_TOKEN');
+//                window.top.location.replace("?page=login"); // THE FIX: Pake window.top.location.replace
+//             }
+//             reject(new Error(response.message));
+//           } else {
+//             resolve(response.data);
+//           }
+//         })
+//         .withFailureHandler(error => {
+//             // Backup penjaga gawang kalau ada system error murni
+//             if(error.message && error.message.includes('Sesi telah habis')) {
+//                localStorage.removeItem('PBF_TOKEN');
+//                window.top.location.replace("?page=login");
+//             }
+//             reject(error);
+//         })
+//         .processUiRequest(action, finalPayload); 
+//     });
+//   }
+
+post: (action, payload) => {
+  return new Promise((resolve, reject) => {
+    google.script.run
+    .withSuccessHandler(response => {
+        if (response && response.status === 'error') {
+          reject(new Error(response.message));
+        } else {
+          resolve(response.data);
+        }
+      })
+      .withFailureHandler(error => reject(error))
+      .processUiRequest(action, payload); // langsung payload, tanpa token wrapper
     });
   }
 };

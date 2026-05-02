@@ -51,43 +51,25 @@
   </div>
 
   <script>
-    (function() {
-      const token = localStorage.getItem('PBF_TOKEN');
-      const page = "<?= activePage ?>";
-      const appUrl = "<?= appUrl ?>";
+  (function() {
+    const token = localStorage.getItem('PBF_TOKEN');
+    const page = "<?= activePage ?>";
+    const appUrl = "<?= appUrl ?>";
 
-      const isTokenKosong = (!token || token === 'undefined' || token === 'null' || token === '');
-      const guard = document.getElementById('auth-guard');
-      const title = document.getElementById('ag-title');
-      const desc = document.getElementById('ag-desc');
+    if (!token && page !== 'login') {
+      // Belum login, paksa ke login
+      document.getElementById('ag-title').innerText = 'Silakan Login';
+      document.getElementById('ag-desc').innerText = 'Kamu belum login.';
       const btn = document.getElementById('btn-manual-redirect');
+      btn.href = appUrl + "?page=login";
+      btn.innerText = "Ke Halaman Login";
+      btn.style.display = 'block';
+      return; // Guard tetap visible, stop di sini
+    }
 
-      // 1. KASUS: BELUM LOGIN TAPI MAU BUKA DASHBOARD
-      if (isTokenKosong && page !== 'login') {
-         title.innerText = 'Akses Ditolak';
-         desc.innerText = 'Sesi telah habis atau Anda belum login.';
-         btn.href = appUrl + "?page=login";
-         btn.innerText = "Masuk ke Halaman Login";
-         btn.style.display = 'block';
-
-         // Coba auto-redirect (Kalo gagal, user tinggal klik tombol)
-         setTimeout(() => { try { window.top.location.replace(appUrl + "?page=login"); } catch(e) {} }, 300);
-      }
-      // 2. KASUS: UDAH LOGIN TAPI ISENG BUKA HALAMAN LOGIN
-      else if (!isTokenKosong && page === 'login') {
-         title.innerText = 'Anda Sudah Login';
-         desc.innerText = 'Mengalihkan ke Dashboard Utama...';
-         btn.href = appUrl + "?page=maindashboard";
-         btn.innerText = "Masuk ke Dashboard";
-         btn.style.display = 'block';
-
-         setTimeout(() => { try { window.top.location.replace(appUrl + "?page=maindashboard"); } catch(e) {} }, 300);
-      }
-      else {
-         // LOLOS VALIDASI: Hancurkan Layar Penutup!
-         guard.style.display = 'none';
-      }
-    })();
+    // Token ada, atau halaman memang login → lanjut
+    document.getElementById('auth-guard').style.display = 'none';
+  })();
   </script>
   <? if (activePage !== 'login') { ?>
     <?!= include('src/clients/components/layout/Sidebar'); ?>

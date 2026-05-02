@@ -308,58 +308,31 @@ function handleApiGet(params) {
 
 function processUiRequest(action, payload) {
   try {
-    // 1. BYPASS LOGIN
+
+    // 1. LOGIN - satu-satunya yang special
     if (action === 'loginAction') {
-      const loginResult = AuthService.login(payload.data); 
+      const loginResult = AuthService.login(payload); // payload langsung, bukan payload.data
       return JSON.parse(JSON.stringify({ status: "success", data: loginResult }));
     }
 
-    // 2. VALIDASI TOKEN
-    const activeUser = AuthService.validateToken(payload.token);
-    if (!activeUser) {
-      throw new Error("Sesi telah habis atau akses ditolak! Silakan login ulang.");
-    }
-
-    // 3. CEK REGISTRY & RBAC (ROLE-BASED ACCESS CONTROL)
+    // 2. ROUTE LOOKUP
     const route = PostRegistry[action];
     if (!route) throw new Error(`Action '${action}' tidak ditemukan di Registry!`);
 
-    // THE FIX: Bantai user kalau Role-nya nggak cukup!
-    if (route.roles && Array.isArray(route.roles)) {
-      if (!route.roles.includes(activeUser.role)) {
-        // Catet percobaan pembobolan ke GlobalLogger!
-        GlobalLogger.log(activeUser.name, "RBAC_VIOLATION", action, "-", "-", `User role [${activeUser.role}] mencoba akses rute terlarang.`);
-        throw new Error(`Akses Ditolak:[${activeUser.role}]`);
-      }
-    }
-
     const service = route.factory();
-    if (typeof payload.data === 'object') {
-      payload.data.__currentUser = activeUser;
-    }
+    const result = service[route.method](payload); // payload langsung
 
-    // 4. EKSEKUSI FUNGSI
-    const result = service[route.method](payload.data);
-
-    // 5. GLOBAL LOGGER PINTAR (CUMA NYATET MUTASI)
-    // Jangan nyatet fungsi 'get' biar log lu ga penuh sampah
+    // 3. LOG MUTASI (opsional, keep kalau mau audit trail)
     if (!action.startsWith('get') && !action.startsWith('query')) {
-      
-      // Coba cari ID dari data yang dikirim, kalo gaada pake strip '-'
-      const entityId = (payload.data && payload.data.id) ? payload.data.id : 
-                       (result && result.id ? result.id : '-');
-                       
-      // Tangkap data apa yang disubmit user
-      const valAfter = payload.data ? JSON.stringify(payload.data) : '-';
-
-      GlobalLogger.log(activeUser.name, action, "API_MUTASI", entityId, "Executed", valAfter);
+      const entityId = (payload?.id) || (result?.id) || '-';
+      GlobalLogger.log('Operator', action, "API_MUTASI", entityId, '-', JSON.stringify(payload) || '-');
     }
 
     return JSON.parse(JSON.stringify({ status: "success", data: result }));
+
   } catch (error) {
-    console.error("UI Request Error: " + error.toString());
-    // THE FIX: Jangan di-throw! Return object aja biar ketangkep di withSuccessHandler
-    return { status: "error", message: error.toString() }; 
+    console.error("processUiRequest Error: " + error.toString());
+    return { status: "error", message: error.toString() };
   }
 }
 
