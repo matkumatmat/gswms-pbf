@@ -252,6 +252,7 @@ async function executeLocalPrintLabel() {
 
     // THE FIX: QR_CODE ISINYA MURNI UUID DARI PM_BATCH SESUAI PERMINTAAN LU!
     const qrCodeStr = d.id;
+    const qrCodeExtStr = `<?= AppConfig.EXTERNAL_API_PRODUCT_DETAIL ?>?id=${d.id}`;
 
     const singlePayload = {
       product_code: pCode,
@@ -262,7 +263,8 @@ async function executeLocalPrintLabel() {
       mfg_date: mfgDate,
       exp_date: expDate,
       receive_date: rcvDate,
-      qr_code: qrCodeStr
+      qr_code: qrCodeStr,
+      qr_code_ext: qrCodeExtStr
     };
 
     const identities = [];
