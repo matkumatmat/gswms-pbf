@@ -73,15 +73,6 @@
 
   // 2. Inisiasi Logo & Last Sync saat halaman dimuat
   document.addEventListener('DOMContentLoaded', async () => {
-    // A. SET LAST SYNC DARI OLAP
-    if (typeof OLAP_RAW_DATA !== 'undefined' && OLAP_RAW_DATA.generatedAt) {
-       const dateObj = new Date(OLAP_RAW_DATA.generatedAt);
-       const hh = ("0" + dateObj.getHours()).slice(-2);
-       const mm = ("0" + dateObj.getMinutes()).slice(-2);
-       document.getElementById('txtLastSync').innerText = `${hh}:${mm}`;
-    }
-
-    // B. NARIK LOGO
     try {
       const logoData = await GasApi.get('getNavbarLogo');
       if (logoData) {
@@ -112,11 +103,16 @@
     txt.innerText = "Syncing...";
 
     try {
-      await GasApi.post('scheduledDailyStockSync', {});       
-      const now = new Date();
-      const hh = ("0" + now.getHours()).slice(-2);
-      const mm = ("0" + now.getMinutes()).slice(-2);
-      txt.innerText = `${hh}:${mm}`;
+      await GasApi.post('scheduledDailyStockSync', {});
+      if (typeof loadOlapData === 'function'){
+        await loadOlapData();
+      }
+      else {
+        const now = new Date();
+        const hh = ("0" + now.getHours()).slice(-2);
+        const mm = ("0" + now.getMinutes()).slice(-2);
+        txt.innerText = `${hh}:${mm}`;
+      }
       
       ToastSystem.show("Sinkronisasi Selesai!", "success");
     } catch (e) {

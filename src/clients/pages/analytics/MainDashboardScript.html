@@ -57,17 +57,26 @@
     // =========================================
     const barOptions = { 
       series: [{ name: 'Stok', data: [] }], 
-      chart: { type: 'bar', height: 220, toolbar: { show: false } }, 
+      chart: { type: 'bar', height: 260, toolbar: { show: false } }, // ← height naik buat ruang label miring
       plotOptions: { 
-        bar: { borderRadius: 6, columnWidth: '55%', distributed: true, dataLabels: { position: 'top' } } 
+        bar: { borderRadius: 6, columnWidth: '50%', distributed: true, dataLabels: { position: 'top' } } // ← 50% biar proporsional
       }, 
-      // Pake Array 5 Warna Perusahaan Lu!
       colors: ['#00abbd', '#e46a26', '#f2c21b', '#008f9e', '#ca9f0e'], 
       dataLabels: { enabled: true, offsetY: -20, style: { fontSize: '10px', colors: ["#475569"] } }, 
-      xaxis: { categories: [], labels: { style: { fontSize: '10px', fontWeight: 600 } }, axisBorder: { show: false }, axisTicks: { show: false } }, 
+      xaxis: { 
+        categories: [], 
+        labels: {           // ← PINDAH KE SINI, di dalam xaxis
+          style: { fontSize: '9px', fontWeight: 600 },
+          rotate: -45,
+          rotateAlways: true,
+          trim: false,
+          maxHeight: 80     // ← maxHeight kapital H
+        }, 
+        axisBorder: { show: false }, 
+        axisTicks: { show: false } 
+      }, 
       yaxis: { show: false }, 
       grid: { borderColor: '#e2e8f0', strokeDashArray: 4 }, 
-      // Legend dimatiin biar label xaxis aja yang kerja
       legend: { show: false } 
     };
     catChartInstance = new ApexCharts(document.querySelector("#chartCategory"), barOptions);
@@ -77,7 +86,7 @@
   async function loadOlapData() {
     try {
       OLAP_RAW_DATA = await GasApi.get('getDashboardAnalytics');
-      if (!OLAP_RAW_DATA || !OLAP_RAW_DATA.batchMart) throw new Error("Data mart OLAP kosong!");
+      if (!OLAP_RAW_DATA || !OLAP_RAW_DATA.batchMart) throw new Error("DataMart OLAP kosong!");
 
       const katSet = new Set();
       OLAP_RAW_DATA.masterProducts.forEach(p => katSet.add(p.kat));
@@ -97,12 +106,27 @@
         }
       });
 
+      updateLastSyncDisplay(OLAP_RAW_DATA.lastSync);
       processData();
     } catch (e) {
       console.error("Gagal load OLAP:", e);
       ToastSystem.show("Gagal memuat data analitik: " + e.message, "error");
     }
   }
+
+  function updateLastSyncDisplay(isoString) {
+  const txt = document.getElementById('txtLastSync');
+  if (!txt) return;
+  if (!isoString) { txt.innerText = '--:--'; return; }
+  const d = new Date(isoString);
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+  const tgl = d.getDate();
+  const bln = months[d.getMonth()];
+  const hh = ("0" + d.getHours()).slice(-2);
+  const mm = ("0" + d.getMinutes()).slice(-2);
+  
+  txt.innerText = `${tgl} ${bln}, ${hh}:${mm}`;
+}
 
   function clearProductFilter() {
     selectedFilterProductId = 'ALL';
@@ -246,7 +270,14 @@
 
     const sortedKat = Object.keys(kategoriMap).sort((a,b) => kategoriMap[b] - kategoriMap[a]).slice(0, 5);
     catChartInstance.updateSeries([{ name: 'Stok', data: sortedKat.map(k => kategoriMap[k]) }]);
-    catChartInstance.updateOptions({ xaxis: { categories: sortedKat } });
+    catChartInstance.updateOptions({ 
+      xaxis: { 
+        categories: sortedKat.map(k => 
+          k.replace(/^PRODUK\s+/i, '')   // Hapus prefix "PRODUK " di awal
+          .replace(/^K\s+/i, '')        // Hapus prefix "K " (dari "K PERUSAHAAN")
+        )
+      } 
+    });
   }
 
   function updateWarnings() {
