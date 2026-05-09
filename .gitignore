@@ -2,3 +2,12 @@ node_modules
 cols.txt
 server.py
 identities.json
+sourceBackup.zip
+file.html.bak
+payload.json
+pdf_base64.txt
+sourceBackup/**
+backupCode/**
+debug/**
+**.md
+**.bak

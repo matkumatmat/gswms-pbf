@@ -1,0 +1,630 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "PBF Manage API",
+    "version": "2.3.0",
+    "description": "API untuk manajemen master data, transaksi, riwayat, arsip, dan batch record."
+  },
+  "servers": [
+    {
+      "url": "https://script.google.com/macros/s/{deployment_id}/exec",
+      "description": "Google Apps Script Web App"
+    }
+  ],
+  "paths": {
+    "/api": {
+      "get": {
+        "summary": "Semua endpoint GET",
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "x-endpoints": [
+          {
+            "action": "getMasterCustomers",
+            "description": "Ambil daftar customer master (default statues='ACTIVE')",
+            "parameters": {
+              "statues": { "type": "string", "required": false, "default": "ACTIVE" }
+            },
+            "response": "Array of CustomerMaster objects"
+          },
+          {
+            "action": "getMasterCustomerById",
+            "description": "Ambil satu customer berdasarkan ID",
+            "parameters": {
+              "id": { "type": "string", "required": true }
+            },
+            "response": "CustomerMaster object"
+          },
+          {
+            "action": "getMasterCustomersPaginated",
+            "description": "Customer master dengan paginasi",
+            "parameters": {
+              "page": { "type": "integer", "required": false, "default": 1 },
+              "limit": { "type": "integer", "required": false, "default": 20 },
+              "statues": { "type": "string", "required": false }
+            },
+            "response": "{ data: [], page, limit, total, totalPages }"
+          },
+          {
+            "action": "getMasterCustomersByField",
+            "description": "Cari customer berdasarkan field tertentu (exact match case‑insensitive)",
+            "parameters": {
+              "field": { "type": "string", "required": true },
+              "value": { "type": "string", "required": true }
+            },
+            "response": "Array of CustomerMaster objects"
+          },
+          {
+            "action": "getMasterProducts",
+            "description": "Ambil daftar product master (default statues='ACTIVE')",
+            "parameters": {
+              "statues": { "type": "string", "required": false, "default": "ACTIVE" }
+            },
+            "response": "Array of ProductMaster objects"
+          },
+          {
+            "action": "getMasterProductById",
+            "parameters": { "id": { "type": "string", "required": true } },
+            "response": "ProductMaster object"
+          },
+          {
+            "action": "getMasterProductsPaginated",
+            "parameters": {
+              "page": { "type": "integer", "default": 1 },
+              "limit": { "type": "integer", "default": 20 },
+              "statues": { "type": "string" }
+            },
+            "response": "Paginated result"
+          },
+          {
+            "action": "getMasterProductsByField",
+            "parameters": {
+              "field": { "type": "string", "required": true },
+              "value": { "type": "string", "required": true }
+            },
+            "response": "Array of ProductMaster objects"
+          },
+          {
+            "action": "getMasterBatches",
+            "parameters": { "statues": { "type": "string", "default": "ACTIVE" } },
+            "response": "Array of BatchMaster objects"
+          },
+          {
+            "action": "getMasterBatchById",
+            "parameters": { "id": { "type": "string", "required": true } },
+            "response": "BatchMaster object"
+          },
+          {
+            "action": "getMasterBatchByBatchNo",
+            "description": "Cari batch berdasarkan nomor batch (exact match)",
+            "parameters": { "batchNo": { "type": "string", "required": true } },
+            "response": "BatchMaster object atau null"
+          },
+          {
+            "action": "getMasterBatchesByProductId",
+            "parameters": { "productId": { "type": "string", "required": true } },
+            "response": "Array of BatchMaster objects"
+          },
+          {
+            "action": "getMasterBatchesByField",
+            "parameters": {
+              "field": { "type": "string", "required": true },
+              "value": { "type": "string", "required": true }
+            },
+            "response": "Array of BatchMaster objects"
+          },
+          {
+            "action": "getMasterBatchesPaginated",
+            "parameters": {
+              "page": { "type": "integer", "default": 1 },
+              "limit": { "type": "integer", "default": 20 },
+              "statues": { "type": "string" }
+            },
+            "response": "Paginated result"
+          },
+          {
+            "action": "getMasterShippingEmbalages",
+            "parameters": { "statues": { "type": "string", "default": "ACTIVE" } },
+            "response": "Array of ShippingEmbalageMaster objects"
+          },
+          {
+            "action": "getMasterShippingEmbalageById",
+            "parameters": { "id": { "type": "string", "required": true } },
+            "response": "ShippingEmbalageMaster object"
+          },
+          {
+            "action": "getMasterShippingEmbalagesPaginated",
+            "parameters": {
+              "page": { "type": "integer", "default": 1 },
+              "limit": { "type": "integer", "default": 20 },
+              "statues": { "type": "string" }
+            },
+            "response": "Paginated result"
+          },
+          {
+            "action": "getMasterShippingEmbalagesByField",
+            "parameters": {
+              "field": { "type": "string", "required": true },
+              "value": { "type": "string", "required": true }
+            },
+            "response": "Array of objects"
+          },
+          {
+            "action": "getMasterProductEmbalages",
+            "parameters": { "statues": { "type": "string", "default": "ACTIVE" } },
+            "response": "Array of ProductEmbalageMaster objects"
+          },
+          {
+            "action": "getMasterProductEmbalageById",
+            "parameters": { "id": { "type": "string", "required": true } },
+            "response": "ProductEmbalageMaster object"
+          },
+          {
+            "action": "getMasterProductEmbalagesPaginated",
+            "parameters": {
+              "page": { "type": "integer", "default": 1 },
+              "limit": { "type": "integer", "default": 20 },
+              "statues": { "type": "string" }
+            },
+            "response": "Paginated result"
+          },
+          {
+            "action": "getMasterProductEmbalagesByField",
+            "parameters": {
+              "field": { "type": "string", "required": true },
+              "value": { "type": "string", "required": true }
+            },
+            "response": "Array of objects"
+          },
+          {
+            "action": "getTransactional",
+            "description": "Ambil data transaksi (ALL_DIST, ALL_RCV, ALL_CONS, ALL_SEMB, ALL_PEMB) berdasarkan tahun dan tipe sheet. Bisa dapatkan per ID atau paginated dengan filter type.",
+            "parameters": {
+              "year": { "type": "string", "required": true },
+              "sheet": { "type": "string", "required": true, "enum": ["ALL_DIST","ALL_RCV","ALL_CONS","ALL_SEMB","ALL_PEMB"] },
+              "id": { "type": "string", "required": false, "description": "Jika diset, hanya record dengan ID ini" },
+              "page": { "type": "integer", "default": 1 },
+              "limit": { "type": "integer", "default": 100 },
+              "type": { "type": "string", "description": "Filter berdasarkan field type (opsional)" }
+            },
+            "response": "Single object jika id diset, atau { data: [], total, page, limit, totalPages }"
+          },
+          {
+            "action": "getProductHistory",
+            "description": "Riwayat produk (ALL_DIST, ALL_RCV, ALL_CONS) dengan berbagai filter",
+            "parameters": {
+              "filterBy": { "type": "string", "enum": ["batch","kodeBarang","namaKonsumen","field"] },
+              "value": { "type": "string" },
+              "fieldName": { "type": "string", "required": false, "description": "Diperlukan jika filterBy='field'" },
+              "startDate": { "type": "string", "format": "date" },
+              "endDate": { "type": "string", "format": "date" },
+              "limit": { "type": "integer" },
+              "schema": { "type": "string", "default": "productHistoryDefault" }
+            },
+            "response": "Array of history objects sesuai schema"
+          },
+          {
+            "action": "exportBatchRecord",
+            "description": "Ekspor batch record ke format xlsx atau json. File disimpan di Archieve Drive dan URL dibagikan.",
+            "parameters": {
+              "batchNo": { "type": "string", "required": true },
+              "format": { "type": "string", "enum": ["xlsx","json"], "default": "xlsx" }
+            },
+            "response": "Untuk json: data JSON langsung. Untuk xlsx: { status, data: { id, url, fileName, format } }"
+          },
+          {
+            "action": "getShippingEmbalage",
+            "parameters": {
+              "year": { "type": "string", "default": "tahun berjalan" },
+              "page": { "type": "integer", "default": 1 },
+              "limit": { "type": "integer", "default": 100 }
+            },
+            "response": "Paginated SEMB transactions"
+          },
+          {
+            "action": "getShippingEmbalageById",
+            "parameters": {
+              "id": { "type": "string", "required": true },
+              "year": { "type": "string", "default": "tahun berjalan" }
+            },
+            "response": "Single SEMB record"
+          },
+          {
+            "action": "getShippingEmbalageByField",
+            "parameters": {
+              "field": { "type": "string", "required": true },
+              "value": { "type": "string", "required": true },
+              "year": { "type": "string", "default": "tahun berjalan" }
+            },
+            "response": "Array of SEMB records"
+          },
+          {
+            "action": "getShippingEmbalageHistory",
+            "parameters": {
+              "filterBy": { "type": "string", "enum": ["noDokumen","kodeBarang","namaBarang","field","year"] },
+              "value": { "type": "string" },
+              "fieldName": { "type": "string", "required": false },
+              "startDate": { "type": "string", "format": "date" },
+              "endDate": { "type": "string", "format": "date" },
+              "limit": { "type": "integer" },
+              "schema": { "type": "string", "default": "shippingEmbalageHistoryDefault" }
+            },
+            "response": "Array of history objects"
+          },
+          {
+            "action": "getProductEmbalage",
+            "parameters": {
+              "year": { "type": "string", "default": "tahun berjalan" },
+              "page": { "type": "integer", "default": 1 },
+              "limit": { "type": "integer", "default": 100 }
+            },
+            "response": "Paginated PEMB transactions"
+          },
+          {
+            "action": "getProductEmbalageById",
+            "parameters": {
+              "id": { "type": "string", "required": true },
+              "year": { "type": "string", "default": "tahun berjalan" }
+            },
+            "response": "Single PEMB record"
+          },
+          {
+            "action": "getProductEmbalageByField",
+            "parameters": {
+              "field": { "type": "string", "required": true },
+              "value": { "type": "string", "required": true },
+              "year": { "type": "string", "default": "tahun berjalan" }
+            },
+            "response": "Array of PEMB records"
+          },
+          {
+            "action": "getProductEmbalageHistory",
+            "parameters": {
+              "filterBy": { "type": "string", "enum": ["batch","kodeBarang","namaBarang","namaKonsumen","field","year"] },
+              "value": { "type": "string" },
+              "fieldName": { "type": "string", "required": false },
+              "startDate": { "type": "string", "format": "date" },
+              "endDate": { "type": "string", "format": "date" },
+              "limit": { "type": "integer" },
+              "schema": { "type": "string", "default": "productEmbalageHistoryDefault" }
+            },
+            "response": "Array of history objects"
+          },
+          {
+            "action": "getArchieves",
+            "parameters": {
+              "page": { "type": "integer", "default": 1 },
+              "limit": { "type": "integer", "default": 50 }
+            },
+            "response": "Paginated arsip { data, page, limit, total, totalPages }"
+          },
+          {
+            "action": "getArchieveById",
+            "parameters": { "id": { "type": "string", "required": true } },
+            "response": "Archieve detail object"
+          },
+          {
+            "action": "downloadArchieveFile",
+            "parameters": { "id": { "type": "string", "required": true } },
+            "response": "JSON dengan base64 konten file"
+          }
+        ]
+      },
+      "post": {
+        "summary": "Semua endpoint POST",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "action": { "type": "string" }, "data": { "type": "object" } }, "required": ["action"] } } }
+        },
+        "x-endpoints": [
+          {
+            "action": "createMasterCustomer",
+            "description": "Buat customer master baru",
+            "body": {
+              "type": "object",
+              "properties": {
+                "typeKonsumen": { "type": "string" },
+                "namaKonsumen": { "type": "string" },
+                "kotaCabang": { "type": "string" },
+                "namaSingkat": { "type": "string" },
+                "slug": { "type": "string" },
+                "provinsi": { "type": "string" },
+                "kota": { "type": "string" },
+                "alamat": { "type": "string" },
+                "pic": { "type": "string" },
+                "kontak": { "type": "string" },
+                "maps": { "type": "string" },
+                "jarak": { "type": "number" },
+                "kategori": { "type": "string" }
+              }
+            },
+            "response": "CustomerMaster object yang baru dibuat"
+          },
+          {
+            "action": "updateMasterCustomer",
+            "body": {
+              "id": { "type": "string", "required": true },
+              "data": { "type": "object", "description": "Field yang akan diubah" }
+            },
+            "response": "CustomerMaster updated"
+          },
+          {
+            "action": "deleteMasterCustomer",
+            "body": { "id": { "type": "string", "required": true } },
+            "response": "{ success: true, id }"
+          },
+          {
+            "action": "createMasterProduct",
+            "body": {
+              "year": { "type": "string" },
+              "kodeBarang": { "type": "string" },
+              "kodeBarangNew": { "type": "string" },
+              "namaBarang": { "type": "string" },
+              "namaBarangNew": { "type": "string" },
+              "kategori": { "type": "string" },
+              "jenis": { "type": "string" },
+              "satuan": { "type": "string" },
+              "suhu": { "type": "string" },
+              "Hjp": { "type": "number" },
+              "Het": { "type": "number" }
+            },
+            "response": "ProductMaster object"
+          },
+          {
+            "action": "updateMasterProduct",
+            "body": { "id": "string", "data": "object" },
+            "response": "Updated ProductMaster"
+          },
+          {
+            "action": "deleteMasterProduct",
+            "body": { "id": "string" },
+            "response": "{ success, id }"
+          },
+          {
+            "action": "createMasterBatch",
+            "body": {
+              "productId": { "type": "string", "required": true },
+              "batch": { "type": "string" },
+              "mfgDate": { "type": "string", "format": "date" },
+              "expireDate": { "type": "string", "format": "date" },
+              "status": { "type": "string", "enum": ["RECEIVED","NOT_RECEIVED","OTHER"] },
+              "alokasi": { "type": "string" },
+              "sektor": { "type": "string" },
+              "kodeBarang": { "type": "string" },
+              "namaBarang": { "type": "string" },
+              "nomorIzinEdar": { "type": "string" },
+              "dimensi": { "type": "string" },
+              "berat": { "type": "number" },
+              "perBucket": { "type": "number" },
+              "vvmStatus": { "type": "string" },
+              "notes": { "type": "string" },
+              "catatanFisik": { "type": "string" }
+            },
+            "response": "BatchMaster object"
+          },
+          {
+            "action": "updateMasterBatch",
+            "body": { "id": "string", "data": "object" }
+          },
+          {
+            "action": "deleteMasterBatch",
+            "body": { "id": "string" }
+          },
+          {
+            "action": "createMasterShippingEmbalages",
+            "body": {
+              "kodeBarang": { "type": "string" },
+              "namaBarang": { "type": "string" },
+              "aliasErp": { "type": "string" },
+              "kategori": { "type": "string" },
+              "satuan": { "type": "string" },
+              "keterangan": { "type": "string" },
+              "safetyStock": { "type": "number" },
+              "reorderPoint": { "type": "number" }
+            },
+            "response": "ShippingEmbalageMaster object"
+          },
+          {
+            "action": "updateMasterShippingEmbalages",
+            "body": { "id": "string", "data": "object" }
+          },
+          {
+            "action": "deleteMasterShippingEmbalages",
+            "body": { "id": "string" }
+          },
+          {
+            "action": "createMasterProductEmbalage",
+            "body": {
+              "kodeBarang": { "type": "string" },
+              "namaBarang": { "type": "string" },
+              "aliasErp": { "type": "string" },
+              "batch": { "type": "string" },
+              "expireDate": { "type": "string", "format": "date" },
+              "kategori": { "type": "string" },
+              "satuan": { "type": "string" },
+              "keterangan": { "type": "string" },
+              "safetyStock": { "type": "number" },
+              "reorderPoint": { "type": "number" }
+            },
+            "response": "ProductEmbalageMaster object"
+          },
+          {
+            "action": "updateMasterProductEmbalage",
+            "body": { "id": "string", "data": "object" }
+          },
+          {
+            "action": "deleteMasterProductEmbalage",
+            "body": { "id": "string" }
+          },
+          {
+            "action": "createTransactional",
+            "description": "Buat record transaksi baru di sheet tertentu",
+            "body": {
+              "year": { "type": "string", "required": true },
+              "sheet": { "type": "string", "required": true, "enum": ["ALL_DIST","ALL_RCV","ALL_CONS","ALL_SEMB","ALL_PEMB"] },
+              "data": { "type": "object", "description": "Sesuai field mapping sheet" }
+            },
+            "response": "Record yang dibuat"
+          },
+          {
+            "action": "updateTransactional",
+            "body": {
+              "year": { "type": "string", "required": true },
+              "sheet": { "type": "string", "required": true },
+              "id": { "type": "string", "required": true },
+              "data": { "type": "object" }
+            },
+            "response": "Record yang diupdate"
+          },
+          {
+            "action": "deleteTransactional",
+            "body": {
+              "year": { "type": "string", "required": true },
+              "sheet": { "type": "string", "required": true },
+              "id": { "type": "string", "required": true }
+            },
+            "response": "{ success, id }"
+          },
+          {
+            "action": "createProductReceiving",
+            "description": "Buat penerimaan produk (ALL_RCV) dengan enrichment dari batch & product master. Dapat mengirim batchId (web) atau batchNo (excel).",
+            "body": {
+              "year": { "type": "string", "default": "tahun berjalan" },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "batchId": { "type": "string", "description": "ID batch (prioritas)" },
+                  "batchNo": { "type": "string", "description": "Nomor batch, dicari di master" },
+                  "type": { "type": "string", "enum": ["RECEIVING","CONSIGNMENT_RETURN","REGULER_RETURN","RECALL","CANCEL"] },
+                  "tanggal": { "type": "string", "format": "date-time" },
+                  "jam": { "type": "string" },
+                  "noDokumen": { "type": "string" },
+                  "namaKonsumen": { "type": "string" },
+                  "kotaCabang": { "type": "string" },
+                  "kondisiKemasan": { "type": "string" },
+                  "nomorIzinEdar": { "type": "string" },
+                  "jenisKemasan": { "type": "string", "enum": ["REGULER","IMPORT"] },
+                  "jumlahFisik": { "type": "number" },
+                  "jumlahPerBucket": { "type": "number" },
+                  "jumlahBucket": { "type": "number" },
+                  "catatanFisik": { "type": "string" },
+                  "placement": { "type": "string" }
+                }
+              }
+            },
+            "response": "Record ALL_RCV yang telah dienrich"
+          },
+          {
+            "action": "updateProductReceiving",
+            "body": {
+              "year": { "type": "string", "default": "tahun berjalan" },
+              "id": { "type": "string", "required": true },
+              "data": { "type": "object" }
+            },
+            "response": "Record yang diupdate"
+          },
+          {
+            "action": "deleteProductReceiving",
+            "body": { "year": { "type": "string", "default": "tahun berjalan" }, "id": { "type": "string", "required": true } },
+            "response": "{ success, id }"
+          },
+          {
+            "action": "createShippingEmbalage",
+            "body": {
+              "year": { "type": "string", "default": "tahun berjalan" },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "tanggal": { "type": "string" },
+                  "noDokumen": { "type": "string" },
+                  "kodeBarang": { "type": "string" },
+                  "namaBarang": { "type": "string" },
+                  "kategori": { "type": "string" },
+                  "satuan": { "type": "string" },
+                  "penerimaan": { "type": "number" },
+                  "distribusi": { "type": "number" },
+                  "catatan": { "type": "string" }
+                }
+              }
+            },
+            "response": "Record SEMB"
+          },
+          {
+            "action": "updateShippingEmbalage",
+            "body": { "year": "string", "id": "string", "data": "object" }
+          },
+          {
+            "action": "deleteShippingEmbalage",
+            "body": { "year": "string", "id": "string" }
+          },
+          {
+            "action": "createProductEmbalage",
+            "body": {
+              "year": { "type": "string", "default": "tahun berjalan" },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "tanggal": { "type": "string" },
+                  "noDok": { "type": "string" },
+                  "namaKonsumen": { "type": "string" },
+                  "kotaCabang": { "type": "string" },
+                  "alokasi": { "type": "string" },
+                  "sektor": { "type": "string" },
+                  "kodeBarang": { "type": "string" },
+                  "namaBarang": { "type": "string" },
+                  "batch": { "type": "string" },
+                  "expireDate": { "type": "string" },
+                  "kategori": { "type": "string" },
+                  "satuan": { "type": "string" },
+                  "penerimaan": { "type": "number" },
+                  "distribusi": { "type": "number" },
+                  "catatan": { "type": "string" }
+                }
+              }
+            },
+            "response": "Record PEMB"
+          },
+          {
+            "action": "updateProductEmbalage",
+            "body": { "year": "string", "id": "string", "data": "object" }
+          },
+          {
+            "action": "deleteProductEmbalage",
+            "body": { "year": "string", "id": "string" }
+          },
+          {
+            "action": "uploadArchieveFile",
+            "description": "Upload file (gambar/dokumen) ke Drive dan catat metadata di sheet Archieve",
+            "body": {
+              "fileName": { "type": "string", "required": true },
+              "mimeType": { "type": "string" },
+              "base64Data": { "type": "string", "required": true },
+              "entityId": { "type": "string" },
+              "entityType": { "type": "string" },
+              "entityName": { "type": "string" },
+              "documentType": { "type": "string" },
+              "isPublic": { "type": "boolean" },
+              "notes": { "type": "string" },
+              "remarks": { "type": "string" },
+              "documentDate": { "type": "string" },
+              "expireDate": { "type": "string" }
+            },
+            "response": "Metadata arsip yang tersimpan"
+          },
+          {
+            "action": "updateArchieveMetadata",
+            "body": { "id": "string", "data": "object" }
+          },
+          {
+            "action": "deleteArchieveFile",
+            "body": { "id": "string" }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,899 @@
+{
+  "info": {
+    "name": "PBF Manage API - Full Actions",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://script.google.com/macros/s/AKfycbzlqoerdfGyCNPryzaxOvNZ0DutljadQOCM1EXzFr58e_OZwx4zimmzeLAoE3YYCNNS/exec"
+    }
+  ],
+  "item": [
+    {
+      "name": "GET Endpoints",
+      "item": [
+        {
+          "name": "getMasterCustomers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterCustomers",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterCustomers" },
+                { "key": "statues", "value": "ACTIVE", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterCustomerById",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterCustomerById&id=123",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterCustomerById" },
+                { "key": "id", "value": "123" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterCustomersPaginated",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterCustomersPaginated&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterCustomersPaginated" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterCustomersByField",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterCustomersByField&field=namaKonsumen&value=Apotek",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterCustomersByField" },
+                { "key": "field", "value": "namaKonsumen" },
+                { "key": "value", "value": "Apotek" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterProducts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterProducts&statues=ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterProducts" },
+                { "key": "statues", "value": "ACTIVE" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterProductById",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterProductById&id=123",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterProductById" },
+                { "key": "id", "value": "123" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterProductsPaginated",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterProductsPaginated&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterProductsPaginated" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterProductsByField",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterProductsByField&field=kodeBarang&value=PRD001",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterProductsByField" },
+                { "key": "field", "value": "kodeBarang" },
+                { "key": "value", "value": "PRD001" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterBatches",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterBatches&statues=ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterBatches" },
+                { "key": "statues", "value": "ACTIVE" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterBatchById",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterBatchById&id=123",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterBatchById" },
+                { "key": "id", "value": "123" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterBatchByBatchNo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterBatchByBatchNo&batchNo=BATCH001",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterBatchByBatchNo" },
+                { "key": "batchNo", "value": "BATCH001" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterBatchesByProductId",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterBatchesByProductId&productId=p123",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterBatchesByProductId" },
+                { "key": "productId", "value": "p123" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterBatchesByField",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterBatchesByField&field=batch&value=BATCH001",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterBatchesByField" },
+                { "key": "field", "value": "batch" },
+                { "key": "value", "value": "BATCH001" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterBatchesPaginated",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterBatchesPaginated&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterBatchesPaginated" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterShippingEmbalages",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterShippingEmbalages",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterShippingEmbalages" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterShippingEmbalageById",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterShippingEmbalageById&id=123",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterShippingEmbalageById" },
+                { "key": "id", "value": "123" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterShippingEmbalagesPaginated",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterShippingEmbalagesPaginated&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterShippingEmbalagesPaginated" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterShippingEmbalagesByField",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterShippingEmbalagesByField&field=kodeBarang&value=KB001",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterShippingEmbalagesByField" },
+                { "key": "field", "value": "kodeBarang" },
+                { "key": "value", "value": "KB001" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterProductEmbalages",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterProductEmbalages",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterProductEmbalages" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterProductEmbalageById",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterProductEmbalageById&id=123",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterProductEmbalageById" },
+                { "key": "id", "value": "123" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterProductEmbalagesPaginated",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterProductEmbalagesPaginated&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterProductEmbalagesPaginated" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getMasterProductEmbalagesByField",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getMasterProductEmbalagesByField&field=kodeBarang&value=PEMB001",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getMasterProductEmbalagesByField" },
+                { "key": "field", "value": "kodeBarang" },
+                { "key": "value", "value": "PEMB001" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getTransactional (ALL_DIST)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getTransactional&year=2025&sheet=ALL_DIST&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getTransactional" },
+                { "key": "year", "value": "2025" },
+                { "key": "sheet", "value": "ALL_DIST" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getProductHistory by batch",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getProductHistory&filterBy=batch&value=BATCH123",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getProductHistory" },
+                { "key": "filterBy", "value": "batch" },
+                { "key": "value", "value": "BATCH123" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "exportBatchRecord xlsx",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=exportBatchRecord&batchNo=BATCH123&format=xlsx",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "exportBatchRecord" },
+                { "key": "batchNo", "value": "BATCH123" },
+                { "key": "format", "value": "xlsx" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getShippingEmbalage paginated",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getShippingEmbalage&year=2025&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getShippingEmbalage" },
+                { "key": "year", "value": "2025" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getShippingEmbalageById",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getShippingEmbalageById&id=123&year=2025",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getShippingEmbalageById" },
+                { "key": "id", "value": "123" },
+                { "key": "year", "value": "2025" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getShippingEmbalageByField",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getShippingEmbalageByField&field=kodeBarang&value=K001",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getShippingEmbalageByField" },
+                { "key": "field", "value": "kodeBarang" },
+                { "key": "value", "value": "K001" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getShippingEmbalageHistory",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getShippingEmbalageHistory&filterBy=kodeBarang&value=K001",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getShippingEmbalageHistory" },
+                { "key": "filterBy", "value": "kodeBarang" },
+                { "key": "value", "value": "K001" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getProductEmbalage paginated",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getProductEmbalage&year=2025&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getProductEmbalage" },
+                { "key": "year", "value": "2025" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getProductEmbalageById",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getProductEmbalageById&id=123",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getProductEmbalageById" },
+                { "key": "id", "value": "123" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getProductEmbalageHistory",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getProductEmbalageHistory&filterBy=batch&value=B001",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getProductEmbalageHistory" },
+                { "key": "filterBy", "value": "batch" },
+                { "key": "value", "value": "B001" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getArchieves",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getArchieves&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getArchieves" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "getArchieveById",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=getArchieveById&id=123",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "getArchieveById" },
+                { "key": "id", "value": "123" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "downloadArchieveFile",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}?action=downloadArchieveFile&id=123",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                { "key": "action", "value": "downloadArchieveFile" },
+                { "key": "id", "value": "123" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST Endpoints",
+      "item": [
+        {
+          "name": "createMasterCustomer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"createMasterCustomer\",\n  \"data\": {\n    \"namaKonsumen\": \"Apotek Baru\",\n    \"kotaCabang\": \"Jakarta\",\n    \"typeKonsumen\": \"REGULER\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "updateMasterCustomer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"updateMasterCustomer\",\n  \"data\": {\n    \"id\": \"123\",\n    \"data\": { \"namaSingkat\": \"APB\" }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "deleteMasterCustomer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deleteMasterCustomer\",\n  \"data\": { \"id\": \"123\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "createMasterProduct",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"createMasterProduct\",\n  \"data\": {\n    \"kodeBarang\": \"PRD001\",\n    \"namaBarang\": \"Paracetamol\",\n    \"kategori\": \"Obat Bebas\",\n    \"jenis\": \"Tablet\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "updateMasterProduct",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"updateMasterProduct\",\n  \"data\": {\n    \"id\": \"123\",\n    \"data\": { \"Hjp\": 5000 }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "deleteMasterProduct",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deleteMasterProduct\",\n  \"data\": { \"id\": \"123\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "createMasterBatch",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"createMasterBatch\",\n  \"data\": {\n    \"productId\": \"p123\",\n    \"batch\": \"BTCH-001\",\n    \"mfgDate\": \"2025-01-01\",\n    \"expireDate\": \"2026-01-01\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "updateMasterBatch",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"updateMasterBatch\",\n  \"data\": {\n    \"id\": \"123\",\n    \"data\": { \"alokasi\": \"Gudang A\" }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "deleteMasterBatch",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deleteMasterBatch\",\n  \"data\": { \"id\": \"123\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "createMasterShippingEmbalages",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"createMasterShippingEmbalages\",\n  \"data\": {\n    \"kodeBarang\": \"KB001\",\n    \"namaBarang\": \"Kardus\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "updateMasterShippingEmbalages",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"updateMasterShippingEmbalages\",\n  \"data\": {\n    \"id\": \"123\",\n    \"data\": { \"safetyStock\": 10 }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "deleteMasterShippingEmbalages",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deleteMasterShippingEmbalages\",\n  \"data\": { \"id\": \"123\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "createMasterProductEmbalage",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"createMasterProductEmbalage\",\n  \"data\": {\n    \"kodeBarang\": \"PEMB001\",\n    \"namaBarang\": \"Botol Plastik\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "updateMasterProductEmbalage",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"updateMasterProductEmbalage\",\n  \"data\": {\n    \"id\": \"123\",\n    \"data\": { \"batch\": \"B123\" }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "deleteMasterProductEmbalage",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deleteMasterProductEmbalage\",\n  \"data\": { \"id\": \"123\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "createTransactional (ALL_RCV)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"createTransactional\",\n  \"data\": {\n    \"year\": \"2025\",\n    \"sheet\": \"ALL_RCV\",\n    \"data\": {\n      \"tanggal\": \"2025-01-15\",\n      \"noDokumen\": \"RCV001\",\n      \"kodeBarang\": \"PRD001\",\n      \"jumlahFisik\": 50\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "updateTransactional",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"updateTransactional\",\n  \"data\": {\n    \"year\": \"2025\",\n    \"sheet\": \"ALL_DIST\",\n    \"id\": \"123\",\n    \"data\": { \"distribusi\": 10 }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "deleteTransactional",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deleteTransactional\",\n  \"data\": {\n    \"year\": \"2025\",\n    \"sheet\": \"ALL_CONS\",\n    \"id\": \"123\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "createProductReceiving (by batchId)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"createProductReceiving\",\n  \"data\": {\n    \"data\": {\n      \"batchId\": \"b123\",\n      \"type\": \"RECEIVING\",\n      \"jumlahBucket\": 2,\n      \"jumlahPerBucket\": 10\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "updateProductReceiving",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"updateProductReceiving\",\n  \"data\": {\n    \"id\": \"123\",\n    \"data\": { \"placement\": \"Rak A\" }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "deleteProductReceiving",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deleteProductReceiving\",\n  \"data\": { \"id\": \"123\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "createShippingEmbalage",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"createShippingEmbalage\",\n  \"data\": {\n    \"data\": {\n      \"tanggal\": \"2025-05-01\",\n      \"noDokumen\": \"SEMB001\",\n      \"kodeBarang\": \"KB001\",\n      \"penerimaan\": 100\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "updateShippingEmbalage",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"updateShippingEmbalage\",\n  \"data\": {\n    \"id\": \"123\",\n    \"data\": { \"distribusi\": 20 }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "deleteShippingEmbalage",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deleteShippingEmbalage\",\n  \"data\": { \"id\": \"123\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "createProductEmbalage",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"createProductEmbalage\",\n  \"data\": {\n    \"data\": {\n      \"tanggal\": \"2025-05-01\",\n      \"noDok\": \"PEMB001\",\n      \"kodeBarang\": \"PEMB001\",\n      \"penerimaan\": 50\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "updateProductEmbalage",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"updateProductEmbalage\",\n  \"data\": {\n    \"id\": \"123\",\n    \"data\": { \"distribusi\": 30 }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "deleteProductEmbalage",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deleteProductEmbalage\",\n  \"data\": { \"id\": \"123\" }\n}"
+            }
+          }
+        },
+        {
+          "name": "uploadArchieveFile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"uploadArchieveFile\",\n  \"data\": {\n    \"fileName\": \"sample.jpg\",\n    \"base64Data\": \"/9j/4AAQ...\",\n    \"entityId\": \"b123\",\n    \"entityType\": \"BATCH\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "updateArchieveMetadata",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"updateArchieveMetadata\",\n  \"data\": {\n    \"id\": \"123\",\n    \"data\": { \"remarks\": \"Updated\" }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "deleteArchieveFile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"deleteArchieveFile\",\n  \"data\": { \"id\": \"123\" }\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

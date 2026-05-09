@@ -1,6 +1,6 @@
 // src/utils/SchemaRegistry.js
 
-var SchemaRegistry = {
+var SchemssaRegistry = {
   // Dropdown: cuma butuh identitas dasar
   dropdown: ['id', 'batch', 'namaBarangDagang', 'expireDate'],
   
