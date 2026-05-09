@@ -12,19 +12,36 @@ function TransactionalSheetAdapter(yearConfig, sheetConfig) {
     updatedBy: sheetConfig.globalUpdatedByCell
   } : null;
 
-  // Cache: id → row object, id → row number, headers, headerOrder
+  // Cache group from resolver – no hardcode
+  const cacheGroup = CacheManager.resolveCacheGroup({
+    domain: 'transactional',
+    spreadsheetId: yearConfig.spreadsheetId,
+    sheetName: sheetConfig.sheetName,
+    year: yearConfig.year,
+    type: sheetConfig.type
+  });
+
   let cache = null;
 
   function buildCache() {
-    if (cache) return cache;
+    if (cache) {
+      const currentVersion = CacheManager.getVersion(cacheGroup);
+      if (cache.version === currentVersion) return cache;
+    }
+
     const sheet = sheetReader.openSheet(spreadsheetId, sheetName);
     const lastRow = sheet.getLastRow();
     if (lastRow < startRow) {
-      cache = { mapIdToRow: new Map(), mapIdToRowNumber: new Map(), headers: [], headerOrder: [] };
+      cache = {
+        mapIdToRow: new Map(),
+        mapIdToRowNumber: new Map(),
+        headers: [],
+        headerOrder: [],
+        version: CacheManager.getVersion(cacheGroup)
+      };
       return cache;
     }
 
-    // Baca header dari headerRow
     const headerValues = sheet.getRange(headerRow, 1, 1, sheet.getLastColumn()).getValues()[0];
     const headers = headerValues.map(h => (h && typeof h === 'string') ? h.trim() : null).filter(h => h !== null);
     const idIndex = headers.findIndex(h => h && h.toUpperCase() === 'ID');
@@ -52,7 +69,13 @@ function TransactionalSheetAdapter(yearConfig, sheetConfig) {
       }
     });
 
-    cache = { mapIdToRow, mapIdToRowNumber, headers, headerOrder: headers };
+    cache = {
+      mapIdToRow,
+      mapIdToRowNumber,
+      headers,
+      headerOrder: headers,
+      version: CacheManager.getVersion(cacheGroup)
+    };
     return cache;
   }
 
@@ -63,7 +86,6 @@ function TransactionalSheetAdapter(yearConfig, sheetConfig) {
   // ========== PUBLIC API ==========
 
   this.getPaginated = function(page, limit) {
-    // Baca langsung dari sheet per page (tetap efisien)
     const sheet = sheetReader.openSheet(spreadsheetId, sheetName);
     const lastRow = sheet.getLastRow();
     if (lastRow < startRow) return { data: [], total: 0 };

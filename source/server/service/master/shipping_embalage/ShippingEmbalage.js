@@ -1,39 +1,49 @@
 // source/server/service/shippingEmbalage/ShippingEmbalageMasterService.js
 
-/**
- * Service untuk master SEMB.
- * Update: soft‑delete + append baru.
- * Get mendukung filter statues.
- */
 function ShippingEmbalageMasterService(repository) {
   this.repo = repository;
   this.currentUser = null;
 
+  var masterCfg = ApplicationConfig.dataSources.master.shippingEmbalage;
+  var sembCfg = masterCfg.configs.find(function(c) { return c.type === 'SEMB'; });
+  if (!sembCfg) throw new Error('SEMB config not found');
+
+  var cacheGroup = CacheManager.resolveCacheGroup({
+    domain: 'master',
+    spreadsheetId: masterCfg.spreadsheetId,
+    sheetName: sembCfg.sheetName
+  });
+
+  function _invalidateCache() {
+    CacheManager.invalidate(cacheGroup);
+  }
+
   this.setCurrentUser = function (user) { this.currentUser = user; };
 
   this._prepareNewRecord = function (data) {
-    const audit = AuditUtils.getAuditTrail(this.currentUser?.email);
-    const now = audit.updatedAt;
-    return {
+    var audit = AuditUtils.getAuditTrail(this.currentUser ? this.currentUser.email : null);
+    var now = audit.updatedAt;
+    var newRec = {
       id: data.id || AppUtils.generateUUID(),
       createdAt: data.createdAt || now,
       updatedAt: now,
       updatedBy: audit.updatedBy,
-      statues: data.statues || 'ACTIVE',
-      ...data
+      statues: data.statues || 'ACTIVE'
     };
+    Object.keys(data).forEach(function(k) { newRec[k] = data[k]; });
+    return newRec;
   };
 
   this._filterByStatues = function (records, statues) {
     if (!statues) {
-      return records.filter(r => (r.statues || '').toUpperCase() !== 'DELETED');
+      return records.filter(function(r) { return (r.statues || '').toUpperCase() !== 'DELETED'; });
     }
     if (Array.isArray(statues)) {
-      const set = new Set(statues.map(s => s.toUpperCase()));
-      return records.filter(r => set.has((r.statues || '').toUpperCase()));
+      var set = {};
+      statues.forEach(function(s) { set[s.toUpperCase()] = true; });
+      return records.filter(function(r) { return set[(r.statues || '').toUpperCase()]; });
     }
-    const target = statues.toUpperCase();
-    return records.filter(r => (r.statues || '').toUpperCase() === target);
+    return records.filter(function(r) { return (r.statues || '').toUpperCase() === statues.toUpperCase(); });
   };
 
   this.getAll = function (statues) {
@@ -45,13 +55,13 @@ function ShippingEmbalageMasterService(repository) {
   };
 
   this.getPaginated = function (page, limit, statues) {
-    const all = this.getAll(statues);
+    var all = this.getAll(statues);
     page = parseInt(page) || 1;
     limit = parseInt(limit) || 20;
-    const start = (page - 1) * limit;
+    var start = (page - 1) * limit;
     return {
       data: all.slice(start, start + limit),
-      page, limit,
+      page: page, limit: limit,
       total: all.length,
       totalPages: Math.ceil(all.length / limit)
     };
@@ -62,32 +72,37 @@ function ShippingEmbalageMasterService(repository) {
   };
 
   this.create = function (data) {
-    const newRec = this._prepareNewRecord(data);
+    var newRec = this._prepareNewRecord(data);
     this.repo.create(newRec);
     this.repo.touchGlobalCells();
+    _invalidateCache();
     return newRec;
   };
 
   this.update = function (id, data) {
-    const existing = this.repo.findById(id);
+    var existing = this.repo.findById(id);
     if (!existing) throw new Error('SEMB not found');
     existing.statues = 'DELETED';
     this.repo.update(id, existing);
-    const newData = { ...existing, ...data };
+    var newData = {};
+    Object.keys(existing).forEach(function(k) { newData[k] = existing[k]; });
+    Object.keys(data).forEach(function(k) { newData[k] = data[k]; });
     newData.id = id;
     newData.statues = 'ACTIVE';
-    const updatedRec = this._prepareNewRecord(newData);
+    var updatedRec = this._prepareNewRecord(newData);
     this.repo.create(updatedRec);
     this.repo.touchGlobalCells();
+    _invalidateCache();
     return updatedRec;
   };
 
   this.delete = function (id) {
-    const existing = this.repo.findById(id);
+    var existing = this.repo.findById(id);
     if (!existing) throw new Error('SEMB not found');
     existing.statues = 'DELETED';
     this.repo.update(id, existing);
     this.repo.touchGlobalCells();
-    return { success: true, id };
+    _invalidateCache();
+    return { success: true, id: id };
   };
 }

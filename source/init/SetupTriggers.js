@@ -1,27 +1,64 @@
+// function setupAllTriggers() {
+//   Triggers.removeAllTriggers();
+//   var all = TriggerRegistry.getAllTriggers();
+
+//   // Deduplikasi: satu spreadsheet = satu pasang trigger (edit + change)
+//   var seen = {};
+//   all.forEach(function(t) {
+//     if (seen[t.spreadsheetId]) return;
+//     seen[t.spreadsheetId] = true;
+//     try {
+//       Triggers.createOnEditTrigger(t.spreadsheetId, t.onEditHandler || 'onEditHandler');
+//       Triggers.createOnChangeTrigger(t.spreadsheetId, t.onChangeHandler || 'onChangeHandler');
+//       Logger.log('Triggered spreadsheet: ' + t.spreadsheetId);
+//     } catch(e) {
+//       Logger.log('FAIL: ' + t.spreadsheetId + ' - ' + e.message);
+//     }
+//   });
+
+//   Triggers.createTimeDrivenTrigger('scheduledDailyStockSync', { everyDays: 1, atHour: 2 });
+//   Logger.log('Semua trigger telah dipasang (deduplicated).');
+// }
+
 // source/init/SetupTriggers.js
 
 function setupAllTriggers() {
-  // Hapus semua trigger yang ada
   Triggers.removeAllTriggers();
-  
-  // Dapatkan semua konfigurasi trigger dari registry
-  var allTriggers = TriggerRegistry.getAllTriggers();
-  
-  allTriggers.forEach(function(triggerConfig) {
-    var ssId = triggerConfig.spreadsheetId;
+  var all = TriggerRegistry.getAllTriggers();
+  var seen = {};
+  all.forEach(function(t) {
+    if (seen[t.spreadsheetId]) return;
+    seen[t.spreadsheetId] = true;
+
+    // onEdit & onChange untuk cache invalidasi + audit
     try {
-      // Pasang onEdit trigger
-      Triggers.createOnEditTrigger(ssId, triggerConfig.onEditHandler || 'onEditHandler');
-      // Pasang onChange trigger
-      Triggers.createOnChangeTrigger(ssId, triggerConfig.onChangeHandler || 'onChangeHandler');
-      Logger.log('Trigger terpasang untuk spreadsheet: ' + ssId);
+      Triggers.createOnEditTrigger(t.spreadsheetId, t.onEditHandler || 'onEditHandler');
+      Triggers.createOnChangeTrigger(t.spreadsheetId, t.onChangeHandler || 'onChangeHandler');
+      Logger.log('Triggers: ' + t.spreadsheetId);
     } catch(e) {
-      Logger.log('Gagal pasang trigger untuk ' + ssId + ': ' + e.message);
+      Logger.log('Gagal trigger: ' + t.spreadsheetId + ' - ' + e.message);
+    }
+
+    // onOpen untuk menu Auth
+    try {
+      var ss = SpreadsheetApp.openById(t.spreadsheetId);
+      ScriptApp.newTrigger('onOpen')
+          .forSpreadsheet(ss)
+          .onOpen()
+          .create();
+      Logger.log('onOpen terpasang: ' + t.spreadsheetId);
+    } catch(e) {
+      Logger.log('Gagal onOpen: ' + t.spreadsheetId + ' - ' + e.message);
     }
   });
-  
-  // Pasang trigger waktu untuk daily sync (jam 2 pagi)
-  Triggers.createTimeDrivenTrigger('scheduledDailyStockSync', { everyDays: 1, atHour: 2 });
-  
+
+  // Time trigger
+  try {
+    Triggers.createTimeDrivenTrigger('scheduledDailyStockSync', { everyDays: 1, atHour: 2 });
+    Logger.log('Time trigger OK');
+  } catch(e) {
+    Logger.log('Gagal time trigger: ' + e.message);
+  }
+
   Logger.log('Semua trigger telah dipasang.');
 }

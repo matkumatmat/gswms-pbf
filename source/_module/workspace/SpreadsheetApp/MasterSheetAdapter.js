@@ -84,11 +84,41 @@ function MasterSheetAdapter(config) {
   };
 
   /** Cari berdasarkan ID */
+  //v1
+  // this.findById = function (id) {
+  //   const rows = readAllRows();
+  //   const found = rows.find(r => r.std.id === id);
+  //   return found ? found.std : null;
+  // };
+
+  //v2
+  // this.findById = function (id) {
+  // var rows = readAllRows();
+  // // Cari yang pertama dengan statues bukan DELETED
+  // var found = null;
+  // for (var i = 0; i < rows.length; i++) {
+  //   var r = rows[i];
+  //   if (r.std.id === id) {
+  //     if (r.std.statues !== 'DELETED') return r.std;
+  //     if (!found) found = r.std; // fallback jika semua DELETED
+  //   }
+  // }
+  // return found || null;
+  // };
+
+  //v3
   this.findById = function (id) {
-    const rows = readAllRows();
-    const found = rows.find(r => r.std.id === id);
-    return found ? found.std : null;
-  };
+  var rows = readAllRows();
+  var found = null;
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (r.std.id === id) {
+      if (r.std.statues !== 'DELETED') return r.std;
+      if (!found) found = r.std;
+    }
+  }
+  return found || null;
+};
 
   /** Cari berdasarkan standard field (exact match, case‑insensitive) */
   this.findByField = function (standardField, value) {
@@ -109,15 +139,35 @@ function MasterSheetAdapter(config) {
   };
 
   /** Update baris berdasarkan ID (inline, untuk soft‑delete) */
-  this.updateById = function (id, stdObj) {
-    const rows = readAllRows();
-    const found = rows.find(r => r.std.id === id);
-    if (!found) throw new Error(`Record with ID ${id} not found`);
+  //v1
+  // this.updateById = function (id, stdObj) {
+  //   const rows = readAllRows();
+  //   const found = rows.find(r => r.std.id === id);
+  //   if (!found) throw new Error(`Record with ID ${id} not found`);
 
-    const raw = toRaw(stdObj);
-    SheetWriter.updateRowWithHeaderAtRow(
-      spreadsheetId, sheetName, found.rowNumber, raw, headerRow
-    );
+  //   const raw = toRaw(stdObj);
+  //   SheetWriter.updateRowWithHeaderAtRow(
+  //     spreadsheetId, sheetName, found.rowNumber, raw, headerRow
+  //   );
+  // };
+
+  this.updateById = function (id, stdObj) {
+    var rows = readAllRows();
+    var found = null;
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (r.std.id === id) {
+        if (r.std.statues !== 'DELETED') {
+          found = r;
+          break;
+        }
+        if (!found) found = r; // fallback jika semua DELETED
+      }
+    }
+    if (!found) throw new Error('Record with ID ' + id + ' not found');
+
+    var raw = toRaw(stdObj);
+    SheetWriter.updateRowWithHeaderAtRow(spreadsheetId, sheetName, found.rowNumber, raw, headerRow);
   };
 
   /** Update global metadata cells */

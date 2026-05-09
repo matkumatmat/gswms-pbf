@@ -150,19 +150,172 @@
 
 // new
 
-// source/server/adapters/document/BatchRecordAdapter.js
-function BatchRecordAdapter() {
-  const historyAdapter = new ProductHistoryReaderAdapter();
-  const batchAdapter = new BatchMasterAdapter();
+// // source/server/adapters/document/BatchRecordAdapter.js
+// function BatchRecordAdapter() {
+//   const historyAdapter = new ProductHistoryReaderAdapter();
+//   const batchAdapter = new BatchMasterAdapter();
 
-  let batchMap = null;
+//   let batchMap = null;
+
+//   function loadBatchMap() {
+//     if (batchMap) return batchMap;
+//     const batches = batchAdapter.getAll();
+//     batchMap = new Map();
+//     batches.forEach(b => {
+//       const batchNo = String(b.batch || '').trim().toUpperCase();
+//       if (batchNo) {
+//         batchMap.set(batchNo, {
+//           nie: b.nie || '-',
+//           namaBarang: b.namaDagang || '-',
+//           kodeBarang: b.kodeBarang || '-',
+//           mfgDate: b.mfgDate || '',
+//           expireDate: b.expireDate || ''
+//         });
+//       }
+//     });
+//     return batchMap;
+//   }
+
+//   // ─── CACHE INVALIDATION ────────────────────────────────────────────────────
+//   function _invalidateHistoryCache() {
+//     var sheetTypes = ['ALL_DIST', 'ALL_RCV'];
+//     var yearConfigs = ApplicationConfig.dataSources.transactional;
+//     yearConfigs.forEach(function(yearConfig) {
+//       sheetTypes.forEach(function(sheetType) {
+//         var cacheGroup = 'TRANS_' + yearConfig.year + '_' + sheetType;
+//         CacheRegistry.invalidate(cacheGroup);
+//       });
+//     });
+//     TransactionalFactory.clearCache();
+//     Logger.log('[BatchRecordAdapter] cache invalidated for ALL_DIST + ALL_RCV, all years');
+//   }
+
+//   /**
+//    * Mengambil raw history, melakukan filtering, merging dengan mergeKey yang baru,
+//    * sorting multi‑level, dan menghitung saldo berjalan.
+//    * @param {string} batchNo
+//    * @returns {Array<Object>} array objek hasil olahan
+//    */
+//   this.getEnrichedHistory = function(batchNo) {
+//     _invalidateHistoryCache();
+//     const batchInfoMap = loadBatchMap();
+//     const batchInfo = batchInfoMap.get(String(batchNo).trim().toUpperCase()) || {
+//       nie: '-', namaBarang: '-', kodeBarang: '-',
+//       mfgDate: '', expireDate: ''
+//     };
+
+//     // Ambil raw history dan filter
+//     const rawHistory = historyAdapter.findByBatch(batchNo)
+//       .filter(function(item) {
+//         if (item.sheetType === 'ALL_CONS') return false;
+
+//         if (item.sheetType === 'ALL_DIST') {
+//           var dist = NumberUtils.toNumber(item.record.distribusi);
+//           return dist > 0; // hanya distribusi asli
+//         }
+
+//         if (item.sheetType === 'ALL_RCV') {
+//           var tgl = item.record.tanggal;
+//           if (tgl) {
+//             var recordYear = String(new Date(tgl).getFullYear());
+//             if (recordYear !== item.year) return false;
+//           }
+//           return true;
+//         }
+//         return true;
+//       });
+
+//     // MERGE dengan mergeKey baru: [tanggal, sheetType, konsumen, kotaCabang]
+//     const mergeMap = new Map();
+//     rawHistory.forEach(function(item) {
+//       const record = item.record;
+//       const konsumen = (record.namaKonsumen || '').toUpperCase();
+//       if (konsumen.includes('SALDO AWAL')) return;
+
+//       // Penerimaan hanya dari ALL_RCV, distribusi hanya dari ALL_DIST
+//       const penerimaan = item.sheetType === 'ALL_RCV'
+//         ? NumberUtils.toNumber(record.jumlahFisik)
+//         : 0;
+//       const distribusi = item.sheetType === 'ALL_RCV'
+//         ? 0
+//         : NumberUtils.toNumber(record.distribusi);
+
+//       const tglKey   = DateUtils.formatYYYYMMDD(record.tanggal);
+//       const mergeKey = [
+//         tglKey,
+//         item.sheetType,
+//         (record.namaKonsumen || '').trim(),
+//         (record.kotaCabang   || '').trim()
+//       ].join('|');
+
+//       if (mergeMap.has(mergeKey)) {
+//         const existing = mergeMap.get(mergeKey);
+//         existing.penerimaan += penerimaan;
+//         existing.distribusi += distribusi;
+//       } else {
+//         mergeMap.set(mergeKey, {
+//           tanggal:      record.tanggal      || '-',
+//           sheetType:    item.sheetType,      // untuk sorting
+//           namaKonsumen: record.namaKonsumen || '-',
+//           kotaCabang:   record.kotaCabang   || '-',
+//           kodeBarang:   batchInfo.kodeBarang,
+//           namaBarang:   batchInfo.namaBarang,
+//           batch:        record.batch        || batchNo,
+//           nie:          batchInfo.nie,
+//           penerimaan:   penerimaan,
+//           distribusi:   distribusi,
+//           mfgDate:      batchInfo.mfgDate,
+//           expireDate:   batchInfo.expireDate
+//         });
+//       }
+//     });
+
+//     // Ubah Map ke array
+//     const mergedArray = Array.from(mergeMap.values());
+
+//     // --- MULTI-LEVEL SORTING ---
+//     mergedArray.sort(function(a, b) {
+//       // Utamakan tanggal ascending
+//       var dateA = new Date(a.tanggal);
+//       var dateB = new Date(b.tanggal);
+//       if (dateA < dateB) return -1;
+//       if (dateA > dateB) return 1;
+
+//       // Jika tanggal sama, ALL_RCV (penerimaan) di atas ALL_DIST (distribusi)
+//       if (a.sheetType === 'ALL_RCV' && b.sheetType === 'ALL_DIST') return -1;
+//       if (a.sheetType === 'ALL_DIST' && b.sheetType === 'ALL_RCV') return 1;
+//       return 0;
+//     });
+
+//     // --- RUNNING BALANCE ---
+//     let runningBalance = 0;
+//     const result = mergedArray.map(function(row) {
+//       runningBalance += row.penerimaan - row.distribusi;
+//       // Hapus field sheetType yang tidak diperlukan di output
+//       const { sheetType, ...cleanRow } = row;
+//       return Object.assign({}, cleanRow, { saldo: runningBalance });
+//     });
+
+//     return result;
+//   };
+// }
+
+
+
+// source/server/adapters/document/BatchRecordAdapter.js
+
+function BatchRecordAdapter() {
+  var historyAdapter = new ProductHistoryReaderAdapter();
+  var batchAdapter = new BatchMasterAdapter();
+
+  var batchMap = null;
 
   function loadBatchMap() {
     if (batchMap) return batchMap;
-    const batches = batchAdapter.getAll();
+    var batches = batchAdapter.getAll();
     batchMap = new Map();
-    batches.forEach(b => {
-      const batchNo = String(b.batch || '').trim().toUpperCase();
+    batches.forEach(function(b) {
+      var batchNo = String(b.batch || '').trim().toUpperCase();
       if (batchNo) {
         batchMap.set(batchNo, {
           nie: b.nie || '-',
@@ -176,42 +329,27 @@ function BatchRecordAdapter() {
     return batchMap;
   }
 
-  // ─── CACHE INVALIDATION ────────────────────────────────────────────────────
-  function _invalidateHistoryCache() {
-    var sheetTypes = ['ALL_DIST', 'ALL_RCV'];
-    var yearConfigs = ApplicationConfig.dataSources.transactional;
-    yearConfigs.forEach(function(yearConfig) {
-      sheetTypes.forEach(function(sheetType) {
-        var cacheGroup = 'TRANS_' + yearConfig.year + '_' + sheetType;
-        CacheRegistry.invalidate(cacheGroup);
-      });
-    });
-    TransactionalFactory.clearCache();
-    Logger.log('[BatchRecordAdapter] cache invalidated for ALL_DIST + ALL_RCV, all years');
-  }
-
   /**
-   * Mengambil raw history, melakukan filtering, merging dengan mergeKey yang baru,
+   * Mengambil raw history, melakukan filtering, merging,
    * sorting multi‑level, dan menghitung saldo berjalan.
    * @param {string} batchNo
-   * @returns {Array<Object>} array objek hasil olahan
+   * @returns {Array<Object>}
    */
   this.getEnrichedHistory = function(batchNo) {
-    _invalidateHistoryCache();
-    const batchInfoMap = loadBatchMap();
-    const batchInfo = batchInfoMap.get(String(batchNo).trim().toUpperCase()) || {
+    var batchInfoMap = loadBatchMap();
+    var batchInfo = batchInfoMap.get(String(batchNo).trim().toUpperCase()) || {
       nie: '-', namaBarang: '-', kodeBarang: '-',
       mfgDate: '', expireDate: ''
     };
 
     // Ambil raw history dan filter
-    const rawHistory = historyAdapter.findByBatch(batchNo)
+    var rawHistory = historyAdapter.findByBatch(batchNo)
       .filter(function(item) {
         if (item.sheetType === 'ALL_CONS') return false;
 
         if (item.sheetType === 'ALL_DIST') {
           var dist = NumberUtils.toNumber(item.record.distribusi);
-          return dist > 0; // hanya distribusi asli
+          return dist > 0;
         }
 
         if (item.sheetType === 'ALL_RCV') {
@@ -225,23 +363,22 @@ function BatchRecordAdapter() {
         return true;
       });
 
-    // MERGE dengan mergeKey baru: [tanggal, sheetType, konsumen, kotaCabang]
-    const mergeMap = new Map();
+    // MERGE
+    var mergeMap = new Map();
     rawHistory.forEach(function(item) {
-      const record = item.record;
-      const konsumen = (record.namaKonsumen || '').toUpperCase();
-      if (konsumen.includes('SALDO AWAL')) return;
+      var record = item.record;
+      var konsumen = (record.namaKonsumen || '').toUpperCase();
+      if (konsumen.indexOf('SALDO AWAL') !== -1) return;
 
-      // Penerimaan hanya dari ALL_RCV, distribusi hanya dari ALL_DIST
-      const penerimaan = item.sheetType === 'ALL_RCV'
+      var penerimaan = item.sheetType === 'ALL_RCV'
         ? NumberUtils.toNumber(record.jumlahFisik)
         : 0;
-      const distribusi = item.sheetType === 'ALL_RCV'
+      var distribusi = item.sheetType === 'ALL_RCV'
         ? 0
         : NumberUtils.toNumber(record.distribusi);
 
-      const tglKey   = DateUtils.formatYYYYMMDD(record.tanggal);
-      const mergeKey = [
+      var tglKey = DateUtils.formatYYYYMMDD(record.tanggal);
+      var mergeKey = [
         tglKey,
         item.sheetType,
         (record.namaKonsumen || '').trim(),
@@ -249,13 +386,13 @@ function BatchRecordAdapter() {
       ].join('|');
 
       if (mergeMap.has(mergeKey)) {
-        const existing = mergeMap.get(mergeKey);
+        var existing = mergeMap.get(mergeKey);
         existing.penerimaan += penerimaan;
         existing.distribusi += distribusi;
       } else {
         mergeMap.set(mergeKey, {
           tanggal:      record.tanggal      || '-',
-          sheetType:    item.sheetType,      // untuk sorting
+          sheetType:    item.sheetType,
           namaKonsumen: record.namaKonsumen || '-',
           kotaCabang:   record.kotaCabang   || '-',
           kodeBarang:   batchInfo.kodeBarang,
@@ -270,30 +407,39 @@ function BatchRecordAdapter() {
       }
     });
 
-    // Ubah Map ke array
-    const mergedArray = Array.from(mergeMap.values());
+    var mergedArray = Array.from(mergeMap.values());
 
-    // --- MULTI-LEVEL SORTING ---
+    // MULTI-LEVEL SORTING
     mergedArray.sort(function(a, b) {
-      // Utamakan tanggal ascending
       var dateA = new Date(a.tanggal);
       var dateB = new Date(b.tanggal);
       if (dateA < dateB) return -1;
       if (dateA > dateB) return 1;
 
-      // Jika tanggal sama, ALL_RCV (penerimaan) di atas ALL_DIST (distribusi)
       if (a.sheetType === 'ALL_RCV' && b.sheetType === 'ALL_DIST') return -1;
       if (a.sheetType === 'ALL_DIST' && b.sheetType === 'ALL_RCV') return 1;
       return 0;
     });
 
-    // --- RUNNING BALANCE ---
-    let runningBalance = 0;
-    const result = mergedArray.map(function(row) {
+    // RUNNING BALANCE
+    var runningBalance = 0;
+    var result = mergedArray.map(function(row) {
       runningBalance += row.penerimaan - row.distribusi;
-      // Hapus field sheetType yang tidak diperlukan di output
-      const { sheetType, ...cleanRow } = row;
-      return Object.assign({}, cleanRow, { saldo: runningBalance });
+      var cleanRow = {
+        tanggal: row.tanggal,
+        namaKonsumen: row.namaKonsumen,
+        kotaCabang: row.kotaCabang,
+        kodeBarang: row.kodeBarang,
+        namaBarang: row.namaBarang,
+        batch: row.batch,
+        nie: row.nie,
+        penerimaan: row.penerimaan,
+        distribusi: row.distribusi,
+        mfgDate: row.mfgDate,
+        expireDate: row.expireDate,
+        saldo: runningBalance
+      };
+      return cleanRow;
     });
 
     return result;

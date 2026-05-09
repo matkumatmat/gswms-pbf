@@ -1,3 +1,5 @@
 debug/**
 node_modules/**
 src/**
+backupCode/**
+legacy/**

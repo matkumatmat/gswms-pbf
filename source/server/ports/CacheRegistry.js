@@ -1,53 +1,39 @@
 // source/server/ports/CacheRegistry.js
 
 const CacheRegistry = (function() {
-  // Konfigurasi default TTL (detik)
-  const DEFAULT_TTL = 600; // 10 menit
-  const LONG_TTL = 86400;  // 1 hari untuk data cold
-
-  // Mapping cacheGroup ke TTL
-  const ttlMap = {
-    // Customer, product, batch (hot)
-    // [ApplicationConfig.dataSources.customer.sheetName]: DEFAULT_TTL,
-    // [ApplicationConfig.dataSources.product.sheetName]: DEFAULT_TTL,
-    // [ApplicationConfig.dataSources.batch.sheetName]: DEFAULT_TTL,
-    // [ApplicationConfig.dataSources.shippingLabel.sheetName]: DEFAULT_TTL,
-    // [ApplicationConfig.dataSources.shippingEmbalage.lookupSheetName]: DEFAULT_TTL,
-    // Cold transactional (2025) bisa LONG_TTL, hot (2026) DEFAULT_TTL
-  };
+  const DEFAULT_TTL = 600;   // 10 menit
+  const LONG_TTL    = 86400; // 1 hari (data cold)
 
   /**
-   * Mendapatkan TTL untuk cacheGroup tertentu
+   * Mendapatkan TTL untuk cache group tertentu.
    * @param {string} cacheGroup
    * @returns {number}
    */
   function getTTL(cacheGroup) {
-    if (ttlMap[cacheGroup]) return ttlMap[cacheGroup];
-    // Jika cacheGroup mengandung '2025', anggap cold
-    if (cacheGroup && cacheGroup.includes('2025')) return LONG_TTL;
+    if (cacheGroup && cacheGroup.indexOf('2025') !== -1) return LONG_TTL;
     return DEFAULT_TTL;
   }
 
   /**
-   * Invalidasi cache untuk cacheGroup tertentu (update version)
+   * Invalidasi cache group + cascade (delegasi ke CacheManager).
    * @param {string} cacheGroup
    */
   function invalidate(cacheGroup) {
     if (!cacheGroup) return;
-    CacheVersion.invalidateCache(cacheGroup);
+    CacheManager.invalidate(cacheGroup);
   }
 
   /**
-   * Mendapatkan version terbaru untuk cacheGroup
+   * Mendapatkan versi terbaru cache group (delegasi ke CacheManager).
    * @param {string} cacheGroup
    * @returns {number}
    */
   function getVersion(cacheGroup) {
-    return CacheVersion.getCacheVersion(cacheGroup);
+    return CacheManager.getVersion(cacheGroup);
   }
 
   /**
-   * Membuat cache key dengan version
+   * Membuat cache key dengan version.
    * @param {string} baseKey
    * @param {string} cacheGroup
    * @returns {string}
@@ -58,9 +44,9 @@ const CacheRegistry = (function() {
   }
 
   return {
-    getTTL: getTTL,
+    getTTL:     getTTL,
     invalidate: invalidate,
     getVersion: getVersion,
-    makeKey: makeKey
+    makeKey:    makeKey
   };
 })();

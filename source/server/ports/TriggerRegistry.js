@@ -1,46 +1,331 @@
+// // source/server/ports/TriggerRegistry.js(v1)
+// const TriggerRegistry = (function() {
+
+//   // Resolver helper — satu gaya dengan yang dipakai di service/adapter
+//   function _resolveMasterCacheGroup(spreadsheetId, sheetName) {
+//     return CacheManager.resolveCacheGroup({
+//       domain: 'master',
+//       spreadsheetId: spreadsheetId,
+//       sheetName: sheetName
+//     });
+//   }
+
+//   function _resolveTransactionalCacheGroup(spreadsheetId, sheetName, year, type) {
+//     return CacheManager.resolveCacheGroup({
+//       domain: 'transactional',
+//       spreadsheetId: spreadsheetId,
+//       sheetName: sheetName,
+//       year: year,
+//       type: type
+//     });
+//   }
+
+//   // Semua master sheet
+//   var masterCustomerCfg = ApplicationConfig.dataSources.master.customer.configs[0];
+//   var masterProductCfg  = ApplicationConfig.dataSources.master.product.configs.find(function(c) { return c.type === 'PRODUCT'; });
+//   var masterBatchCfg    = ApplicationConfig.dataSources.master.product.configs.find(function(c) { return c.type === 'BATCH'; });
+//   var masterSembCfg     = ApplicationConfig.dataSources.master.shippingEmbalage.configs[0];
+//   var masterPembCfg     = ApplicationConfig.dataSources.master.productEmbalage.configs[0];
+
+//   var masterCustomerSpreadsheetId = ApplicationConfig.dataSources.master.customer.spreadsheetId;
+//   var masterProductSpreadsheetId  = ApplicationConfig.dataSources.master.product.spreadsheetId;
+//   var masterSembSpreadsheetId     = ApplicationConfig.dataSources.master.shippingEmbalage.spreadsheetId;
+//   var masterPembSpreadsheetId     = ApplicationConfig.dataSources.master.productEmbalage.spreadsheetId;
+
+//   var triggers = [
+//     {
+//       spreadsheetId: masterCustomerSpreadsheetId,
+//       sheetName: masterCustomerCfg.sheetName,
+//       cacheGroup: _resolveMasterCacheGroup(masterCustomerSpreadsheetId, masterCustomerCfg.sheetName),
+//       onEditHandler: 'onEditHandler',
+//       onChangeHandler: 'onChangeHandler'
+//     },
+//     {
+//       spreadsheetId: masterProductSpreadsheetId,
+//       sheetName: masterProductCfg.sheetName,
+//       cacheGroup: _resolveMasterCacheGroup(masterProductSpreadsheetId, masterProductCfg.sheetName),
+//       onEditHandler: 'onEditHandler',
+//       onChangeHandler: 'onChangeHandler'
+//     },
+//     {
+//       spreadsheetId: masterProductSpreadsheetId,
+//       sheetName: masterBatchCfg.sheetName,
+//       cacheGroup: _resolveMasterCacheGroup(masterProductSpreadsheetId, masterBatchCfg.sheetName),
+//       onEditHandler: 'onEditHandler',
+//       onChangeHandler: 'onChangeHandler'
+//     },
+//     {
+//       spreadsheetId: masterSembSpreadsheetId,
+//       sheetName: masterSembCfg.sheetName,
+//       cacheGroup: _resolveMasterCacheGroup(masterSembSpreadsheetId, masterSembCfg.sheetName),
+//       onEditHandler: 'onEditHandler',
+//       onChangeHandler: 'onChangeHandler'
+//     },
+//     {
+//       spreadsheetId: masterPembSpreadsheetId,
+//       sheetName: masterPembCfg.sheetName,
+//       cacheGroup: _resolveMasterCacheGroup(masterPembSpreadsheetId, masterPembCfg.sheetName),
+//       onEditHandler: 'onEditHandler',
+//       onChangeHandler: 'onChangeHandler'
+//     }
+//   ];
+
+//   // Transactional sheets (dinamis dari config)
+//   function getTransactionalTriggers() {
+//     var transactionalTriggers = [];
+//     var configs = ApplicationConfig.dataSources.transactional;
+//     configs.forEach(function(yearConfig) {
+//       yearConfig.configs.forEach(function(sheetConfig) {
+//         transactionalTriggers.push({
+//           spreadsheetId: yearConfig.spreadsheetId,
+//           sheetName: sheetConfig.sheetName,
+//           cacheGroup: _resolveTransactionalCacheGroup(
+//             yearConfig.spreadsheetId,
+//             sheetConfig.sheetName,
+//             yearConfig.year,
+//             sheetConfig.type
+//           ),
+//           onEditHandler: 'onEditHandler',
+//           onChangeHandler: 'onChangeHandler'
+//         });
+//       });
+//     });
+//     return transactionalTriggers;
+//   }
+
+//   function getAllTriggers() {
+//     return triggers.concat(getTransactionalTriggers());
+//   }
+
+//   function getBySpreadsheetId(spreadsheetId) {
+//     return getAllTriggers().find(function(t) { return t.spreadsheetId === spreadsheetId; });
+//   }
+
+//   return {
+//     getAllTriggers: getAllTriggers,
+//     getBySpreadsheetId: getBySpreadsheetId
+//   };
+// })();
+
+const dividerzzzzzz = null
+
+// source/server/ports/TriggerRegistry.js(v2)
+// const TriggerRegistry = (function() {
+
+//   function _resolveMasterCacheGroup(spreadsheetId, sheetName) {
+//     return CacheManager.resolveCacheGroup({
+//       domain: 'master',
+//       spreadsheetId: spreadsheetId,
+//       sheetName: sheetName
+//     });
+//   }
+
+//   function _resolveTransactionalCacheGroup(spreadsheetId, sheetName, year, type) {
+//     return CacheManager.resolveCacheGroup({
+//       domain: 'transactional',
+//       spreadsheetId: spreadsheetId,
+//       sheetName: sheetName,
+//       year: year,
+//       type: type
+//     });
+//   }
+
+//   var masterCustomerCfg = ApplicationConfig.dataSources.master.customer.configs[0];
+//   var masterProductCfg  = ApplicationConfig.dataSources.master.product.configs.find(function(c) { return c.type === 'PRODUCT'; });
+//   var masterBatchCfg    = ApplicationConfig.dataSources.master.product.configs.find(function(c) { return c.type === 'BATCH'; });
+//   var masterSembCfg     = ApplicationConfig.dataSources.master.shippingEmbalage.configs[0];
+//   var masterPembCfg     = ApplicationConfig.dataSources.master.productEmbalage.configs[0];
+
+//   var masterCustomerSpreadsheetId = ApplicationConfig.dataSources.master.customer.spreadsheetId;
+//   var masterProductSpreadsheetId  = ApplicationConfig.dataSources.master.product.spreadsheetId;
+//   var masterSembSpreadsheetId     = ApplicationConfig.dataSources.master.shippingEmbalage.spreadsheetId;
+//   var masterPembSpreadsheetId     = ApplicationConfig.dataSources.master.productEmbalage.spreadsheetId;
+
+//   var triggers = [
+//     {
+//       spreadsheetId: masterCustomerSpreadsheetId,
+//       sheetName: masterCustomerCfg.sheetName,
+//       cacheGroup: _resolveMasterCacheGroup(masterCustomerSpreadsheetId, masterCustomerCfg.sheetName),
+//       onEditHandler: 'onEditHandler',
+//       onChangeHandler: 'onChangeHandler'
+//     },
+//     {
+//       spreadsheetId: masterProductSpreadsheetId,
+//       sheetName: masterProductCfg.sheetName,
+//       cacheGroup: _resolveMasterCacheGroup(masterProductSpreadsheetId, masterProductCfg.sheetName),
+//       onEditHandler: 'onEditHandler',
+//       onChangeHandler: 'onChangeHandler'
+//     },
+//     {
+//       spreadsheetId: masterProductSpreadsheetId,
+//       sheetName: masterBatchCfg.sheetName,
+//       cacheGroup: _resolveMasterCacheGroup(masterProductSpreadsheetId, masterBatchCfg.sheetName),
+//       onEditHandler: 'onEditHandler',
+//       onChangeHandler: 'onChangeHandler'
+//     },
+//     {
+//       spreadsheetId: masterSembSpreadsheetId,
+//       sheetName: masterSembCfg.sheetName,
+//       cacheGroup: _resolveMasterCacheGroup(masterSembSpreadsheetId, masterSembCfg.sheetName),
+//       onEditHandler: 'onEditHandler',
+//       onChangeHandler: 'onChangeHandler'
+//     },
+//     {
+//       spreadsheetId: masterPembSpreadsheetId,
+//       sheetName: masterPembCfg.sheetName,
+//       cacheGroup: _resolveMasterCacheGroup(masterPembSpreadsheetId, masterPembCfg.sheetName),
+//       onEditHandler: 'onEditHandler',
+//       onChangeHandler: 'onChangeHandler'
+//     }
+//   ];
+
+//   function getTransactionalTriggers() {
+//     var transactionalTriggers = [];
+//     var configs = ApplicationConfig.dataSources.transactional;
+//     configs.forEach(function(yearConfig) {
+//       yearConfig.configs.forEach(function(sheetConfig) {
+//         transactionalTriggers.push({
+//           spreadsheetId: yearConfig.spreadsheetId,
+//           sheetName: sheetConfig.sheetName,
+//           cacheGroup: _resolveTransactionalCacheGroup(
+//             yearConfig.spreadsheetId,
+//             sheetConfig.sheetName,
+//             yearConfig.year,
+//             sheetConfig.type
+//           ),
+//           onEditHandler: 'onEditHandler',
+//           onChangeHandler: 'onChangeHandler'
+//         });
+//       });
+//     });
+//     return transactionalTriggers;
+//   }
+
+//   function getAllTriggers() {
+//     return triggers.concat(getTransactionalTriggers());
+//   }
+
+//   /**
+//    * Mencari trigger berdasarkan spreadsheetId DAN sheetName.
+//    * @returns {Object|undefined}
+//    */
+//   function getBySpreadsheetAndSheet(spreadsheetId, sheetName) {
+//     return getAllTriggers().find(function(t) {
+//       return t.spreadsheetId === spreadsheetId && t.sheetName === sheetName;
+//     });
+//   }
+
+//   return {
+//     getAllTriggers: getAllTriggers,
+//     getBySpreadsheetAndSheet: getBySpreadsheetAndSheet
+//   };
+// })();
+
+
+const dividerzzz = null
+
 // source/server/ports/TriggerRegistry.js
 
 const TriggerRegistry = (function() {
-  // Daftar semua spreadsheet target beserta konfigurasi trigger
-  const triggers = [
+
+  function _resolveMasterCacheGroup(spreadsheetId, sheetName) {
+    return CacheManager.resolveCacheGroup({
+      domain: 'master',
+      spreadsheetId: spreadsheetId,
+      sheetName: sheetName
+    });
+  }
+
+  function _resolveTransactionalCacheGroup(spreadsheetId, sheetName, year, type) {
+    return CacheManager.resolveCacheGroup({
+      domain: 'transactional',
+      spreadsheetId: spreadsheetId,
+      sheetName: sheetName,
+      year: year,
+      type: type
+    });
+  }
+
+  // Master configs
+  var masterCustomerCfg = ApplicationConfig.dataSources.master.customer.configs[0];
+  var masterProductCfg  = ApplicationConfig.dataSources.master.product.configs.find(function(c) { return c.type === 'PRODUCT'; });
+  var masterBatchCfg    = ApplicationConfig.dataSources.master.product.configs.find(function(c) { return c.type === 'BATCH'; });
+  var masterSembCfg     = ApplicationConfig.dataSources.master.shippingEmbalage.configs[0];
+  var masterPembCfg     = ApplicationConfig.dataSources.master.productEmbalage.configs[0];
+
+  var masterCustomerSpreadsheetId = ApplicationConfig.dataSources.master.customer.spreadsheetId;
+  var masterProductSpreadsheetId  = ApplicationConfig.dataSources.master.product.spreadsheetId;
+  var masterSembSpreadsheetId     = ApplicationConfig.dataSources.master.shippingEmbalage.spreadsheetId;
+  var masterPembSpreadsheetId     = ApplicationConfig.dataSources.master.productEmbalage.spreadsheetId;
+
+  var triggers = [
     {
-      spreadsheetId: ApplicationConfig.dataSources.master.customer.spreadsheetId,
-      sheetName: ApplicationConfig.dataSources.master.customer.configs[0].sheetName,
-      cacheGroup: 'MASTER_CUSTOMER',
+      spreadsheetId: masterCustomerSpreadsheetId,
+      sheetName: masterCustomerCfg.sheetName,
+      cacheGroup: _resolveMasterCacheGroup(masterCustomerSpreadsheetId, masterCustomerCfg.sheetName),
+      headerRow: masterCustomerCfg.headerRow,
+      globalCells: {
+        updatedAt: masterCustomerCfg.globalUpdatedAtCell,
+        lastSync:  masterCustomerCfg.globalLastSyncAtCell,
+        updatedBy: masterCustomerCfg.globalUpdatedByCell
+      },
       onEditHandler: 'onEditHandler',
       onChangeHandler: 'onChangeHandler'
     },
     {
-      spreadsheetId: ApplicationConfig.dataSources.master.product.spreadsheetId,
-      sheetName: ApplicationConfig.dataSources.master.product.configs.find(c => c.type === 'PRODUCT').sheetName,
-      cacheGroup: 'MASTER_PRODUCT',
+      spreadsheetId: masterProductSpreadsheetId,
+      sheetName: masterProductCfg.sheetName,
+      cacheGroup: _resolveMasterCacheGroup(masterProductSpreadsheetId, masterProductCfg.sheetName),
+      headerRow: masterProductCfg.headerRow,
+      globalCells: {
+        updatedAt: masterProductCfg.globalUpdatedAtCell,
+        lastSync:  masterProductCfg.globalLastSyncAtCell,
+        updatedBy: masterProductCfg.globalUpdatedByCell
+      },
       onEditHandler: 'onEditHandler',
       onChangeHandler: 'onChangeHandler'
     },
     {
-      spreadsheetId: ApplicationConfig.dataSources.master.product.spreadsheetId,
-      sheetName: ApplicationConfig.dataSources.master.product.configs.find(c => c.type === 'BATCH').sheetName,
-      cacheGroup: 'MASTER_BATCH',
+      spreadsheetId: masterProductSpreadsheetId,
+      sheetName: masterBatchCfg.sheetName,
+      cacheGroup: _resolveMasterCacheGroup(masterProductSpreadsheetId, masterBatchCfg.sheetName),
+      headerRow: masterBatchCfg.headerRow,
+      globalCells: {
+        updatedAt: masterBatchCfg.globalUpdatedAtCell,
+        lastSync:  masterBatchCfg.globalLastSyncAtCell,
+        updatedBy: masterBatchCfg.globalUpdatedByCell
+      },
       onEditHandler: 'onEditHandler',
       onChangeHandler: 'onChangeHandler'
     },
     {
-      spreadsheetId: ApplicationConfig.dataSources.master.shippingEmbalage.spreadsheetId,
-      sheetName: ApplicationConfig.dataSources.master.shippingEmbalage.configs[0].sheetName,
-      cacheGroup: 'MASTER_SEMB',
+      spreadsheetId: masterSembSpreadsheetId,
+      sheetName: masterSembCfg.sheetName,
+      cacheGroup: _resolveMasterCacheGroup(masterSembSpreadsheetId, masterSembCfg.sheetName),
+      headerRow: masterSembCfg.headerRow,
+      globalCells: {
+        updatedAt: masterSembCfg.globalUpdatedAtCell,
+        lastSync:  masterSembCfg.globalLastSyncAtCell,
+        updatedBy: masterSembCfg.globalUpdatedByCell
+      },
       onEditHandler: 'onEditHandler',
       onChangeHandler: 'onChangeHandler'
     },
     {
-      spreadsheetId: ApplicationConfig.dataSources.master.productEmbalage.spreadsheetId,
-      sheetName: ApplicationConfig.dataSources.master.productEmbalage.configs[0].sheetName,
-      cacheGroup: 'MASTER_PEMB',
+      spreadsheetId: masterPembSpreadsheetId,
+      sheetName: masterPembCfg.sheetName,
+      cacheGroup: _resolveMasterCacheGroup(masterPembSpreadsheetId, masterPembCfg.sheetName),
+      headerRow: masterPembCfg.headerRow,
+      globalCells: {
+        updatedAt: masterPembCfg.globalUpdatedAtCell,
+        lastSync:  masterPembCfg.globalLastSyncAtCell,
+        updatedBy: masterPembCfg.globalUpdatedByCell
+      },
       onEditHandler: 'onEditHandler',
       onChangeHandler: 'onChangeHandler'
     }
   ];
 
-  // Tambahan untuk transactional sheets (bisa dinamis dari config)
   function getTransactionalTriggers() {
     var transactionalTriggers = [];
     var configs = ApplicationConfig.dataSources.transactional;
@@ -49,7 +334,18 @@ const TriggerRegistry = (function() {
         transactionalTriggers.push({
           spreadsheetId: yearConfig.spreadsheetId,
           sheetName: sheetConfig.sheetName,
-          cacheGroup: 'TRANS_' + yearConfig.year + '_' + sheetConfig.type,
+          cacheGroup: _resolveTransactionalCacheGroup(
+            yearConfig.spreadsheetId,
+            sheetConfig.sheetName,
+            yearConfig.year,
+            sheetConfig.type
+          ),
+          headerRow: sheetConfig.headerRow,
+          globalCells: {
+            updatedAt: sheetConfig.globalUpdatedAtCell,
+            lastSync:  sheetConfig.globalLastSyncAtCell,
+            updatedBy: sheetConfig.globalUpdatedByCell
+          },
           onEditHandler: 'onEditHandler',
           onChangeHandler: 'onChangeHandler'
         });
@@ -62,25 +358,14 @@ const TriggerRegistry = (function() {
     return triggers.concat(getTransactionalTriggers());
   }
 
-  function getBySpreadsheetId(spreadsheetId) {
-    return getAllTriggers().find(function(t) { return t.spreadsheetId === spreadsheetId; });
-  }
-
-  function getCacheGroup(sheetName, year, sheetType) {
-    // fallback: cari dari triggers berdasarkan sheetName
-    for (var i = 0; i < triggers.length; i++) {
-      if (triggers[i].sheetName === sheetName) return triggers[i].cacheGroup;
-    }
-    // jika tidak ditemukan, untuk transactional
-    if (year && sheetType) {
-      return 'TRANS_' + year + '_' + sheetType;
-    }
-    return null;
+  function getBySpreadsheetAndSheet(spreadsheetId, sheetName) {
+    return getAllTriggers().find(function(t) {
+      return t.spreadsheetId === spreadsheetId && t.sheetName === sheetName;
+    });
   }
 
   return {
     getAllTriggers: getAllTriggers,
-    getBySpreadsheetId: getBySpreadsheetId,
-    getCacheGroup: getCacheGroup
+    getBySpreadsheetAndSheet: getBySpreadsheetAndSheet
   };
 })();
