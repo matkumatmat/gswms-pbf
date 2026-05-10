@@ -41,27 +41,6 @@
 //   Logger.log('Daily stock sync executed');
 // }
 
-function doGet(e) {
-  try {
-    var params = e.parameter;
-    var action = params.action;
-    if (!action) throw new Error('Missing action parameter');
-    return ResponseBuilder.build(GetsRegistryV2.execute(action, params));
-  } catch (err) {
-    return ResponseBuilder.buildError(err);
-  }
-}
-
-function doPost(e) {
-  try {
-    var body = JSON.parse(e.postData.contents);
-    var user = null;
-    return ResponseBuilder.build(PostsRegistryV2.execute(body.action, body.data, user));
-  } catch (err) {
-    return ResponseBuilder.buildError(err);
-  }
-}
-
 // function onEditHandler(e) {
 //   if (!e) return;
 //   var ssId = e.source.getId();
@@ -195,6 +174,144 @@ function doPost(e) {
 //   }
 // }
 
+
+// v2
+// function doGet(e) {
+//   try {
+//     var params = e.parameter;
+//     var action = params.action;
+//     if (!action) throw new Error('Missing action parameter');
+//     return ResponseBuilder.build(GetsRegistryV2.execute(action, params));
+//   } catch (err) {
+//     return ResponseBuilder.buildError(err);
+//   }
+// }
+
+// function doPost(e) {
+//   try {
+//     var body = JSON.parse(e.postData.contents);
+//     var user = null;
+//     return ResponseBuilder.build(PostsRegistryV2.execute(body.action, body.data, user));
+//   } catch (err) {
+//     return ResponseBuilder.buildError(err);
+//   }
+// }
+
+
+// function onEditHandler(e) {
+//   if (!e) return;
+//   var ssId = e.source.getId();
+//   var sheetName = e.range.getSheet().getName();
+//   var triggerInfo = TriggerRegistry.getBySpreadsheetAndSheet(ssId, sheetName);
+//   if (triggerInfo && triggerInfo.cacheGroup) {
+//     CacheManager.invalidate(triggerInfo.cacheGroup);
+//   }
+// }
+
+// // User‑installed handler untuk audit trail + global cells
+// function onUserEditHandler(e) {
+//   if (!e) return;
+//   var sheet = e.range.getSheet();
+//   var sheetName = sheet.getName();
+//   var ssId = e.source.getId();
+//   var rowNum = e.range.getRow();
+
+//   var triggerInfo = TriggerRegistry.getBySpreadsheetAndSheet(ssId, sheetName);
+//   if (!triggerInfo) return;
+
+//   // Hanya baris di bawah header yang diaudit
+//   if (!triggerInfo.headerRow || rowNum <= triggerInfo.headerRow) return;
+
+//   var userEmail = Session.getEffectiveUser().getEmail(); // dari user trigger
+//   var now = new Date();
+
+//   // Audit per baris
+//   var lastCol = sheet.getLastColumn();
+//   var headerValues = sheet.getRange(triggerInfo.headerRow, 1, 1, lastCol).getValues()[0];
+//   var colUpdatedAt = -1, colUpdatedBy = -1;
+//   for (var c = 0; c < headerValues.length; c++) {
+//     var h = headerValues[c];
+//     if (h === 'UPDATED AT' || h === 'updatedAt') colUpdatedAt = c + 1;
+//     if (h === 'UPDATED BY' || h === 'updatedBy') colUpdatedBy = c + 1;
+//   }
+//   if (colUpdatedAt !== -1) sheet.getRange(rowNum, colUpdatedAt).setValue(now);
+//   if (colUpdatedBy !== -1) sheet.getRange(rowNum, colUpdatedBy).setValue(userEmail);
+
+//   // Global cells
+//   if (triggerInfo.globalCells) {
+//     if (triggerInfo.globalCells.updatedAt) sheet.getRange(triggerInfo.globalCells.updatedAt).setValue(now);
+//     if (triggerInfo.globalCells.lastSync)  sheet.getRange(triggerInfo.globalCells.lastSync).setValue(now);
+//     if (triggerInfo.globalCells.updatedBy) sheet.getRange(triggerInfo.globalCells.updatedBy).setValue(userEmail);
+//   }
+// }
+
+// function onChangeHandler(e) {
+//   if (!e) return;
+//   var ssId = e.source.getId();
+//   var sheetName = e.source.getActiveSheet().getName();
+//   var triggerInfo = TriggerRegistry.getBySpreadsheetAndSheet(ssId, sheetName);
+//   if (triggerInfo && triggerInfo.cacheGroup) {
+//     CacheManager.invalidate(triggerInfo.cacheGroup);
+//   }
+// }
+
+// function scheduledDailyStockSync() {
+//   Logger.log('Daily stock sync executed');
+// }
+
+
+// source/main.js
+
+// source/main.js
+
+function doGet(e) {
+  try {
+    var params = e.parameter;
+    var action = params.action;
+
+    // Jika tidak ada action, tampilkan halaman login dari source/clients/Login
+    if (!action) {
+      return HtmlService.createHtmlOutputFromFile('source/clients/Login')
+        .setTitle('PBF Manage - Login')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
+
+    return ResponseBuilder.build(GetsRegistryV2.execute(action, params));
+  } catch (err) {
+    return ResponseBuilder.buildError(err);
+  }
+}
+
+function doPost(e) {
+  try {
+    var body = JSON.parse(e.postData.contents);
+    var action = body.action;
+    var data = body.data;
+    var email = body.email;
+    var _e = body._e;
+    
+    var user = null;
+    // Aksi yang tidak perlu validasi _e
+    if (action === 'login' || action === 'register') {
+      // langsung proses, user selalu null (belum login)
+    } else if (email && _e) {
+      user = AuthService.validateRequest(email, _e);
+    } else {
+      throw new Error('Autentikasi diperlukan. Kirim email dan _e.');
+    }
+    
+    return ResponseBuilder.build(PostsRegistryV2.execute(action, data, user));
+  } catch (err) {
+    return ResponseBuilder.buildError(err);
+  }
+}
+
+// ... sisa file sama
+
+/**
+ * Simple trigger onEdit – hanya invalidasi cache.
+ * Tidak bisa akses Session.getActiveUser() karena batasan simple trigger.
+ */
 function onEditHandler(e) {
   if (!e) return;
   var ssId = e.source.getId();
@@ -205,9 +322,11 @@ function onEditHandler(e) {
   }
 }
 
-
-
-// User‑installed handler untuk audit trail + global cells
+/**
+ * Installable trigger onUserEditHandler – untuk audit trail.
+ * Dipasang oleh user melalui menu "Izinkan Script".
+ * Bisa mengakses Session.getActiveUser() karena trigger milik user.
+ */
 function onUserEditHandler(e) {
   if (!e) return;
   var sheet = e.range.getSheet();
@@ -218,13 +337,30 @@ function onUserEditHandler(e) {
   var triggerInfo = TriggerRegistry.getBySpreadsheetAndSheet(ssId, sheetName);
   if (!triggerInfo) return;
 
-  // Hanya baris di bawah header yang diaudit
+  // Invalidasi cache juga (opsional, simple trigger juga akan melakukannya)
+  if (triggerInfo.cacheGroup) {
+    CacheManager.invalidate(triggerInfo.cacheGroup);
+  }
+
+  // Audit trail hanya untuk baris data (di bawah header)
   if (!triggerInfo.headerRow || rowNum <= triggerInfo.headerRow) return;
 
-  var userEmail = Session.getEffectiveUser().getEmail(); // dari user trigger
+  var userEmail;
+  try {
+    userEmail = Session.getActiveUser().getEmail();
+  } catch(e) {
+    Logger.log('[onUserEditHandler] Gagal mendapatkan email user: ' + e.message);
+    return;
+  }
+  
+  if (!userEmail) {
+    Logger.log('[onUserEditHandler] Email user tidak tersedia.');
+    return;
+  }
+
   var now = new Date();
 
-  // Audit per baris
+  // Audit per baris: UPDATED AT, UPDATED BY
   var lastCol = sheet.getLastColumn();
   var headerValues = sheet.getRange(triggerInfo.headerRow, 1, 1, lastCol).getValues()[0];
   var colUpdatedAt = -1, colUpdatedBy = -1;
@@ -233,14 +369,30 @@ function onUserEditHandler(e) {
     if (h === 'UPDATED AT' || h === 'updatedAt') colUpdatedAt = c + 1;
     if (h === 'UPDATED BY' || h === 'updatedBy') colUpdatedBy = c + 1;
   }
-  if (colUpdatedAt !== -1) sheet.getRange(rowNum, colUpdatedAt).setValue(now);
-  if (colUpdatedBy !== -1) sheet.getRange(rowNum, colUpdatedBy).setValue(userEmail);
 
-  // Global cells
+  if (colUpdatedAt !== -1) {
+    sheet.getRange(rowNum, colUpdatedAt).setValue(now);
+    Logger.log('[onUserEditHandler] Set UPDATED AT row=' + rowNum + ' col=' + colUpdatedAt);
+  }
+  if (colUpdatedBy !== -1) {
+    sheet.getRange(rowNum, colUpdatedBy).setValue(userEmail);
+    Logger.log('[onUserEditHandler] Set UPDATED BY row=' + rowNum + ' col=' + colUpdatedBy + ' value=' + userEmail);
+  }
+
+  // Update global cells
   if (triggerInfo.globalCells) {
-    if (triggerInfo.globalCells.updatedAt) sheet.getRange(triggerInfo.globalCells.updatedAt).setValue(now);
-    if (triggerInfo.globalCells.lastSync)  sheet.getRange(triggerInfo.globalCells.lastSync).setValue(now);
-    if (triggerInfo.globalCells.updatedBy) sheet.getRange(triggerInfo.globalCells.updatedBy).setValue(userEmail);
+    if (triggerInfo.globalCells.updatedAt) {
+      sheet.getRange(triggerInfo.globalCells.updatedAt).setValue(now);
+      Logger.log('[onUserEditHandler] Set global updatedAt ' + triggerInfo.globalCells.updatedAt);
+    }
+    if (triggerInfo.globalCells.lastSync) {
+      sheet.getRange(triggerInfo.globalCells.lastSync).setValue(now);
+      Logger.log('[onUserEditHandler] Set global lastSync ' + triggerInfo.globalCells.lastSync);
+    }
+    if (triggerInfo.globalCells.updatedBy) {
+      sheet.getRange(triggerInfo.globalCells.updatedBy).setValue(userEmail);
+      Logger.log('[onUserEditHandler] Set global updatedBy ' + triggerInfo.globalCells.updatedBy);
+    }
   }
 }
 

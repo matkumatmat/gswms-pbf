@@ -6,7 +6,7 @@ const ApplicationConfig = {
     version: "2.3.0",
 
     // move to new method: --- IGNORE ---
-    // webAppUrl: "https://script.google.com/macros/s/AKfycbzlqoerdfGyCNPryzaxOvNZ0DutljadQOCM1EXzFr58e_OZwx4zimmzeLAoE3YYCNNS/exec",
+    webAppUrl: "https://script.google.com/macros/s/AKfycbx8UObuSWKRLiN1_sxoaRIuepXEM7HVpZsbm8emk79Cw44PHGBKl-uYXQPegQd05XNC/exec",
 
     externalApi: {
       productDetail: "https://script.google.com/macros/s/AKfycbwCYFD39K22lj4Z9xvVLitmMCLY2h46LEOLK83h9Nam33LacmaHKhhqPBZ8QsELF388/exec"

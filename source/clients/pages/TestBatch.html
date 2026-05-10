@@ -1,0 +1,73 @@
+<!-- source/clients/pages/TestBatch.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Create Batch</title>
+  <?!= include('source/clients/utils/Api') ?>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 2rem auto; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.25rem; font-weight: bold; }
+    input, select { width: 100%; padding: 0.5rem; }
+    button { padding: 0.5rem 1.5rem; }
+    #result { margin-top: 1rem; white-space: pre-wrap; background: #f1f5f9; padding: 1rem; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h2>Test: Create Master Batch</h2>
+  <form id="batchForm">
+    <div class="form-group">
+      <label for="productId">Product ID</label>
+      <input type="text" id="productId" required placeholder="UUID product">
+    </div>
+    <div class="form-group">
+      <label for="batch">Batch Number</label>
+      <input type="text" id="batch" required>
+    </div>
+    <div class="form-group">
+      <label for="mfgDate">MFG Date</label>
+      <input type="date" id="mfgDate">
+    </div>
+    <div class="form-group">
+      <label for="expireDate">Expire Date</label>
+      <input type="date" id="expireDate">
+    </div>
+    <div class="form-group">
+      <label for="status">Status</label>
+      <select id="status">
+        <option value="RECEIVED">RECEIVED</option>
+        <option value="NOT_RECEIVED">NOT_RECEIVED</option>
+        <option value="OTHER">OTHER</option>
+      </select>
+    </div>
+    <button type="submit">Create Batch</button>
+  </form>
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('batchForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var payload = {
+        productId: document.getElementById('productId').value.trim(),
+        batch: document.getElementById('batch').value.trim(),
+        mfgDate: document.getElementById('mfgDate').value,
+        expireDate: document.getElementById('expireDate').value,
+        status: document.getElementById('status').value
+      };
+
+      document.getElementById('result').textContent = 'Mengirim...';
+
+      Api.request('createMasterBatch', payload)
+        .then(function(result) {
+          document.getElementById('result').textContent = 'Sukses:\n' + JSON.stringify(result, null, 2);
+        })
+        .catch(function(err) {
+          document.getElementById('result').textContent = 'Error: ' + err.message;
+        });
+    });
+  </script>
+</body>
+</html>

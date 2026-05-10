@@ -281,6 +281,70 @@ const PostsRegistryV2 = (function() {
         totalPages: Math.ceil(all.length / limit)
       };
     },    
+
+    // ─── AUTH HANDLERS ─────────────────────
+    login: function(payload, user) {
+      // payload: { email, password }
+      if (!payload.email || !payload.password) throw new Error('Email dan password wajib diisi.');
+      var result = AuthService.login(payload.email, payload.password);
+      return {
+        user: result.user,
+        _e: result._e,
+        message: 'Login berhasil'
+      };
+    },
+
+    register: function(payload, user) {
+      // payload: { email, password, namaLengkap }
+      if (!payload.email || !payload.password) throw new Error('Email dan password wajib diisi.');
+      
+      var userMaster = ApplicationConfig.dataSources.master.user;
+      var userConfig = userMaster.configs[0];
+      var adapter = new MasterSheetAdapter({
+        spreadsheetId: userMaster.spreadsheetId,
+        sheetName: userConfig.sheetName,
+        headerRow: userConfig.headerRow,
+        startRow: userConfig.startRow,
+        fieldMapping: userConfig.fieldMapping
+      });
+      
+      // Cek apakah email sudah terdaftar
+      var existing = adapter.findByField('email', payload.email).find(function(u) { return u.statues === 'ACTIVE'; });
+      if (existing) throw new Error('Email sudah terdaftar.');
+      
+      // Generate salt & hash
+      var saltBytes = [];
+      for (var i = 0; i < 16; i++) {
+        saltBytes.push(Math.floor(Math.random() * 256));
+      }
+      var salt = Utilities.base64Encode(saltBytes);
+      var rawHash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, payload.password + salt);
+      var passwordHash = rawHash.map(function(b) { return ('0' + (b & 0xFF).toString(16)).slice(-2); }).join('');
+      
+      var now = new Date();
+      var record = {
+        id: AppUtils.generateUUID(),
+        createdAt: now,
+        updatedAt: now,
+        updatedBy: 'SYSTEM',
+        statues: 'ACTIVE',
+        email: payload.email.toLowerCase().trim(),
+        passwordHash: passwordHash,
+        salt: salt,
+        role: payload.role || 'VIEWER',
+        namaLengkap: payload.namaLengkap || 'User'
+      };
+      
+      adapter.append(record);
+      
+      // Generate _e untuk response
+      var _e = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, payload.email.toLowerCase().trim() + salt)
+        .map(function(b) { return ('0' + (b & 0xFF).toString(16)).slice(-2); }).join('');
+      
+      // Hapus data sensitif
+      var { passwordHash: _, salt: __, ...safeUser } = record;
+      return { user: safeUser, _e: _e, message: 'Registrasi berhasil' };
+    }
     
   };
 
