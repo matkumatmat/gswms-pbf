@@ -129,81 +129,119 @@ function doPost(e) {
 // }
 
 // v5
+// function onEditHandler(e) {
+//   if (!e) { Logger.log('No event'); return; }
+//   var ssId = e.source.getId();
+//   var sheet = e.range.getSheet();
+//   var sheetName = sheet.getName();
+//   var rowNum = e.range.getRow();
+//   Logger.log('onEdit: sheet=' + sheetName + ' row=' + rowNum);
+
+//   var triggerInfo = TriggerRegistry.getBySpreadsheetAndSheet(ssId, sheetName);
+//   if (!triggerInfo) {
+//     Logger.log('No triggerInfo found for ' + sheetName);
+//     return;
+//   }
+//   Logger.log('triggerInfo.cacheGroup=' + triggerInfo.cacheGroup);
+
+//   // Invalidasi cache
+//   if (triggerInfo.cacheGroup) {
+//     CacheManager.invalidate(triggerInfo.cacheGroup);
+//   }
+//   // Audit per baris
+//   if (triggerInfo.headerRow && rowNum > triggerInfo.headerRow && triggerInfo.globalCells) {
+//     Logger.log('Audit row: headerRow=' + triggerInfo.headerRow + ' globalCells=' + JSON.stringify(triggerInfo.globalCells));
+//     var lastCol = sheet.getLastColumn();
+//     var headerValues = sheet.getRange(triggerInfo.headerRow, 1, 1, lastCol).getValues()[0];
+//     Logger.log('Headers: ' + JSON.stringify(headerValues));
+//     var colUpdatedAt = -1, colUpdatedBy = -1;
+//     for (var c = 0; c < headerValues.length; c++) {
+//       if (headerValues[c] === 'UPDATED AT' || headerValues[c] === 'updatedAt') colUpdatedAt = c + 1;
+//       if (headerValues[c] === 'UPDATED BY' || headerValues[c] === 'updatedBy') colUpdatedBy = c + 1;
+//     }
+//     Logger.log('Cols: updatedAt=' + colUpdatedAt + ' updatedBy=' + colUpdatedBy);
+
+//     var now = new Date();
+//     var userEmail = 'Manual';
+//     try {
+//       var activeUser = Session.getActiveUser();
+//       if (activeUser && activeUser.getEmail()) userEmail = activeUser.getEmail();
+//     } catch(e) { Logger.log('Session error: ' + e.message); }
+
+//     if (colUpdatedAt !== -1) {
+//       sheet.getRange(rowNum, colUpdatedAt).setValue(now);
+//       Logger.log('Set UPDATED AT at row=' + rowNum + ' col=' + colUpdatedAt + ' value=' + now);
+//     }
+//     if (colUpdatedBy !== -1) {
+//       sheet.getRange(rowNum, colUpdatedBy).setValue(userEmail);
+//       Logger.log('Set UPDATED BY at row=' + rowNum + ' col=' + colUpdatedBy + ' value=' + userEmail);
+//     }
+
+//     // Global cells
+//     if (triggerInfo.globalCells.updatedAt) {
+//       sheet.getRange(triggerInfo.globalCells.updatedAt).setValue(now);
+//       Logger.log('Set global updatedAt ' + triggerInfo.globalCells.updatedAt);
+//     }
+//     if (triggerInfo.globalCells.lastSync) {
+//       sheet.getRange(triggerInfo.globalCells.lastSync).setValue(now);
+//       Logger.log('Set global lastSync ' + triggerInfo.globalCells.lastSync);
+//     }
+//     if (triggerInfo.globalCells.updatedBy) {
+//       sheet.getRange(triggerInfo.globalCells.updatedBy).setValue(userEmail);
+//       Logger.log('Set global updatedBy ' + triggerInfo.globalCells.updatedBy);
+//     }
+//   } else {
+//     Logger.log('Skipped audit: headerRow=' + triggerInfo.headerRow + ' rowNum=' + rowNum + ' globalCells=' + JSON.stringify(triggerInfo.globalCells));
+//   }
+// }
+
 function onEditHandler(e) {
-  if (!e) { Logger.log('No event'); return; }
+  if (!e) return;
   var ssId = e.source.getId();
-  var sheet = e.range.getSheet();
-  var sheetName = sheet.getName();
-  var rowNum = e.range.getRow();
-  Logger.log('onEdit: sheet=' + sheetName + ' row=' + rowNum);
-
+  var sheetName = e.range.getSheet().getName();
   var triggerInfo = TriggerRegistry.getBySpreadsheetAndSheet(ssId, sheetName);
-  if (!triggerInfo) {
-    Logger.log('No triggerInfo found for ' + sheetName);
-    return;
-  }
-  Logger.log('triggerInfo.cacheGroup=' + triggerInfo.cacheGroup);
-
-  // Invalidasi cache
-  if (triggerInfo.cacheGroup) {
+  if (triggerInfo && triggerInfo.cacheGroup) {
     CacheManager.invalidate(triggerInfo.cacheGroup);
-  }
-
-  // Audit per baris
-  if (triggerInfo.headerRow && rowNum > triggerInfo.headerRow && triggerInfo.globalCells) {
-    Logger.log('Audit row: headerRow=' + triggerInfo.headerRow + ' globalCells=' + JSON.stringify(triggerInfo.globalCells));
-    var lastCol = sheet.getLastColumn();
-    var headerValues = sheet.getRange(triggerInfo.headerRow, 1, 1, lastCol).getValues()[0];
-    Logger.log('Headers: ' + JSON.stringify(headerValues));
-    var colUpdatedAt = -1, colUpdatedBy = -1;
-    for (var c = 0; c < headerValues.length; c++) {
-      if (headerValues[c] === 'UPDATED AT' || headerValues[c] === 'updatedAt') colUpdatedAt = c + 1;
-      if (headerValues[c] === 'UPDATED BY' || headerValues[c] === 'updatedBy') colUpdatedBy = c + 1;
-    }
-    Logger.log('Cols: updatedAt=' + colUpdatedAt + ' updatedBy=' + colUpdatedBy);
-
-    var now = new Date();
-    var userEmail = 'Manual';
-    try {
-      var activeUser = Session.getActiveUser();
-      if (activeUser && activeUser.getEmail()) userEmail = activeUser.getEmail();
-    } catch(e) { Logger.log('Session error: ' + e.message); }
-
-    if (colUpdatedAt !== -1) {
-      sheet.getRange(rowNum, colUpdatedAt).setValue(now);
-      Logger.log('Set UPDATED AT at row=' + rowNum + ' col=' + colUpdatedAt + ' value=' + now);
-    }
-    if (colUpdatedBy !== -1) {
-      sheet.getRange(rowNum, colUpdatedBy).setValue(userEmail);
-      Logger.log('Set UPDATED BY at row=' + rowNum + ' col=' + colUpdatedBy + ' value=' + userEmail);
-    }
-
-    // Global cells
-    if (triggerInfo.globalCells.updatedAt) {
-      sheet.getRange(triggerInfo.globalCells.updatedAt).setValue(now);
-      Logger.log('Set global updatedAt ' + triggerInfo.globalCells.updatedAt);
-    }
-    if (triggerInfo.globalCells.lastSync) {
-      sheet.getRange(triggerInfo.globalCells.lastSync).setValue(now);
-      Logger.log('Set global lastSync ' + triggerInfo.globalCells.lastSync);
-    }
-    if (triggerInfo.globalCells.updatedBy) {
-      sheet.getRange(triggerInfo.globalCells.updatedBy).setValue(userEmail);
-      Logger.log('Set global updatedBy ' + triggerInfo.globalCells.updatedBy);
-    }
-  } else {
-    Logger.log('Skipped audit: headerRow=' + triggerInfo.headerRow + ' rowNum=' + rowNum + ' globalCells=' + JSON.stringify(triggerInfo.globalCells));
   }
 }
 
+
+
+// User‑installed handler untuk audit trail + global cells
 function onUserEditHandler(e) {
   if (!e) return;
   var sheet = e.range.getSheet();
+  var sheetName = sheet.getName();
+  var ssId = e.source.getId();
   var rowNum = e.range.getRow();
-  
-  // Panggil audit trail dengan email pengguna yang asli
-  var email = Session.getEffectiveUser().getEmail();
-  SystemTrigger.runAudit(sheet, rowNum, email);
+
+  var triggerInfo = TriggerRegistry.getBySpreadsheetAndSheet(ssId, sheetName);
+  if (!triggerInfo) return;
+
+  // Hanya baris di bawah header yang diaudit
+  if (!triggerInfo.headerRow || rowNum <= triggerInfo.headerRow) return;
+
+  var userEmail = Session.getEffectiveUser().getEmail(); // dari user trigger
+  var now = new Date();
+
+  // Audit per baris
+  var lastCol = sheet.getLastColumn();
+  var headerValues = sheet.getRange(triggerInfo.headerRow, 1, 1, lastCol).getValues()[0];
+  var colUpdatedAt = -1, colUpdatedBy = -1;
+  for (var c = 0; c < headerValues.length; c++) {
+    var h = headerValues[c];
+    if (h === 'UPDATED AT' || h === 'updatedAt') colUpdatedAt = c + 1;
+    if (h === 'UPDATED BY' || h === 'updatedBy') colUpdatedBy = c + 1;
+  }
+  if (colUpdatedAt !== -1) sheet.getRange(rowNum, colUpdatedAt).setValue(now);
+  if (colUpdatedBy !== -1) sheet.getRange(rowNum, colUpdatedBy).setValue(userEmail);
+
+  // Global cells
+  if (triggerInfo.globalCells) {
+    if (triggerInfo.globalCells.updatedAt) sheet.getRange(triggerInfo.globalCells.updatedAt).setValue(now);
+    if (triggerInfo.globalCells.lastSync)  sheet.getRange(triggerInfo.globalCells.lastSync).setValue(now);
+    if (triggerInfo.globalCells.updatedBy) sheet.getRange(triggerInfo.globalCells.updatedBy).setValue(userEmail);
+  }
 }
 
 function onChangeHandler(e) {

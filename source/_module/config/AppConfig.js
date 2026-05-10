@@ -257,7 +257,34 @@ const ApplicationConfig = {
           },
         ]
       },
-      user:{},
+      user:{
+        spreadsheetId: '1YV6SEg5Kd7rNHhoJquEqInZ6-DrTDKYwJZ4RGhBHJ0o',
+        spreadsheetName:'ENVIRONTMENT',
+        configs:[
+          {
+            type: "USER",
+            sheetName: "_USER",
+            headerRow: 5,
+            startRow:6,
+            globalLastSyncAtCell:"B1",
+            globalUpdatedAtCell: "B2",
+            globalUpdatedByCell: "B3", 
+            fieldMapping:           
+            {
+              id: "ID",
+              createdAt: "CREATED AT",
+              updatedAt: "UPDATED AT",
+              updatedBy: "UPDATED BY",
+              statues: "STATUES",
+              email: "EMAIL",
+              passwordHash: "PASSWORD HASH",
+              salt: "SALT",
+              role: "ROLE",
+              namaLengkap:"NAMA LENGKAP"
+            }
+          }
+        ]
+      },
     },
 
     driveArchieve: {

@@ -65,40 +65,98 @@
 // source/init/SpreadsheetMenu.js
 //v5
 
-function onOpen(e) {
-  SpreadsheetMenu.install();
-}
+// function onOpen(e) {
+//   SpreadsheetMenu.install();
+// }
+
+// const SpreadsheetMenu = (function() {
+//   const MENU_NAME = 'Auth';
+//   const ITEMS = [
+//     { name: 'Sign In / Register', functionName: 'openAuthWebApp' },
+//     { name: 'Izinkan Script', functionName: 'pasangKtp' },  // <-- GANTI INI
+//     { name: 'Generate _e (Admin)', functionName: 'adminGenerateHash' }
+//   ];
+
+//   function install() {
+//     var ui = SpreadsheetApp.getUi();
+//     var menu = ui.createMenu(MENU_NAME);
+//     ITEMS.forEach(function(item) {
+//       menu.addItem(item.name, item.functionName);
+//     });
+//     menu.addToUi();
+//   }
+
+//   return { install: install };
+// })();
+
+// function requestScriptAuthorization() {
+//   try {
+//     // Memicu OAuth dengan meminta token akses
+//     var token = ScriptApp.getOAuthToken();
+//     var email = Session.getActiveUser().getEmail();
+//     SpreadsheetApp.getUi().alert('Izin berhasil! Anda login sebagai: ' + email);
+//   } catch (e) {
+//     SpreadsheetApp.getUi().alert('Gagal mendapatkan izin. Silakan coba lagi. Error: ' + e.message);
+//   }
+// }
+
+// function openAuthWebApp() {
+//   var webAppUrl = PropertiesService.getScriptProperties().getProperty('WEB_APP_URL') || '';
+//   if (!webAppUrl) {
+//     SpreadsheetApp.getUi().alert('URL Web App belum diset. Hubungi admin.');
+//     return;
+//   }
+//   var html = '<a href="' + webAppUrl + '" target="_blank">Klik di sini untuk Sign In / Register</a>';
+//   var htmlOutput = HtmlService.createHtmlOutput(html)
+//       .setWidth(400)
+//       .setHeight(200);
+//   SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'Sign In / Register');
+// }
+
+// function pasangKtp() {
+//   var sheet = SpreadsheetApp.getActiveSpreadsheet();
+//   var email = Session.getEffectiveUser().getEmail(); // Ini berhasil karena dipanggil dari menu oleh user
+
+//   // Hapus trigger lama milik user ini (hindari duplikat)
+//   var triggers = ScriptApp.getUserTriggers(sheet);
+//   triggers.forEach(function(t) {
+//     if (t.getHandlerFunction() === 'onUserEditHandler') {
+//       ScriptApp.deleteTrigger(t);
+//     }
+//   });
+
+//   // Buat trigger onEdit baru milik user
+//   ScriptApp.newTrigger('onUserEditHandler')
+//     .forSpreadsheet(sheet)
+//     .onEdit()
+//     .create();
+
+//   SpreadsheetApp.getUi().alert('Izin berhasil!', 'Sekarang setiap perubahan akan tercatat atas nama: ' + email, SpreadsheetApp.getUi().ButtonSet.OK);
+// }
+
+// function getActiveUserEmail() {
+//   return Session.getActiveUser().getEmail();
+// }
+
+function onOpen(e) { SpreadsheetMenu.install(); }
 
 const SpreadsheetMenu = (function() {
   const MENU_NAME = 'Auth';
   const ITEMS = [
     { name: 'Sign In / Register', functionName: 'openAuthWebApp' },
-    { name: 'Izinkan Script', functionName: 'pasangKtp' },  // <-- GANTI INI
+    { name: 'Izinkan Script', functionName: 'pasangKtp' },
     { name: 'Generate _e (Admin)', functionName: 'adminGenerateHash' }
   ];
 
   function install() {
     var ui = SpreadsheetApp.getUi();
     var menu = ui.createMenu(MENU_NAME);
-    ITEMS.forEach(function(item) {
-      menu.addItem(item.name, item.functionName);
-    });
+    ITEMS.forEach(function(item) { menu.addItem(item.name, item.functionName); });
     menu.addToUi();
   }
 
   return { install: install };
 })();
-
-function requestScriptAuthorization() {
-  try {
-    // Memicu OAuth dengan meminta token akses
-    var token = ScriptApp.getOAuthToken();
-    var email = Session.getActiveUser().getEmail();
-    SpreadsheetApp.getUi().alert('Izin berhasil! Anda login sebagai: ' + email);
-  } catch (e) {
-    SpreadsheetApp.getUi().alert('Gagal mendapatkan izin. Silakan coba lagi. Error: ' + e.message);
-  }
-}
 
 function openAuthWebApp() {
   var webAppUrl = PropertiesService.getScriptProperties().getProperty('WEB_APP_URL') || '';
@@ -107,22 +165,17 @@ function openAuthWebApp() {
     return;
   }
   var html = '<a href="' + webAppUrl + '" target="_blank">Klik di sini untuk Sign In / Register</a>';
-  var htmlOutput = HtmlService.createHtmlOutput(html)
-      .setWidth(400)
-      .setHeight(200);
-  SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'Sign In / Register');
+  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(html).setWidth(400).setHeight(200), 'Sign In / Register');
 }
 
 function pasangKtp() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet();
-  var email = Session.getEffectiveUser().getEmail(); // Ini berhasil karena dipanggil dari menu oleh user
+  var email = Session.getEffectiveUser().getEmail(); // ini berhasil karena dipanggil oleh user
 
   // Hapus trigger lama milik user ini (hindari duplikat)
   var triggers = ScriptApp.getUserTriggers(sheet);
   triggers.forEach(function(t) {
-    if (t.getHandlerFunction() === 'onUserEditHandler') {
-      ScriptApp.deleteTrigger(t);
-    }
+    if (t.getHandlerFunction() === 'onUserEditHandler') ScriptApp.deleteTrigger(t);
   });
 
   // Buat trigger onEdit baru milik user
@@ -131,11 +184,7 @@ function pasangKtp() {
     .onEdit()
     .create();
 
-  SpreadsheetApp.getUi().alert('Izin berhasil!', 'Sekarang setiap perubahan akan tercatat atas nama: ' + email, SpreadsheetApp.getUi().ButtonSet.OK);
-}
-
-function getActiveUserEmail() {
-  return Session.getActiveUser().getEmail();
+  SpreadsheetApp.getUi().alert('Izin berhasil!', 'Perubahan akan tercatat atas nama: ' + email, SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function adminGenerateHash() {
