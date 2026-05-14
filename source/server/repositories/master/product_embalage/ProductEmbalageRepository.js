@@ -7,5 +7,5 @@ function ProductEmbalageMasterRepository(adapter) {
   this.findByField = (field, value) => this.adapter.findByField(field, value);
   this.create      = (data) => this.adapter.append(data);
   this.update      = (id, data) => this.adapter.updateById(id, data);
-  this.touchGlobalCells = () => this.adapter.updateGlobalCells();
+  this.touchGlobalCells = (userEmail) => this.adapter.updateGlobalCells(userEmail);
 }

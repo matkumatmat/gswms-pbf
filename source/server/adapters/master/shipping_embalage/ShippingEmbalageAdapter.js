@@ -29,5 +29,5 @@ function ShippingEmbalageMasterAdapter() {
   this.findByField        = (field, value) => adapter.findByField(field, value);
   this.append             = (data) => adapter.append(data);
   this.updateById         = (id, data) => adapter.updateById(id, data);
-  this.updateGlobalCells  = () => adapter.updateGlobalCells();
+  this.updateGlobalCells  = (userEmail) => adapter.updateGlobalCells(userEmail);
 }

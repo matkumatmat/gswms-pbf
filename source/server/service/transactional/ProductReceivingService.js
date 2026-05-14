@@ -136,6 +136,7 @@ function ProductReceivingService(yearConfig, sheetConfig, repository, batchServi
 
     var record = prepareRecord(enriched);
     this.repo.create(toRaw(record));
+    this.repo.updateGlobalCells(this.currentUser ? this.currentUser.email : null);
     _invalidateCache();
     return record;
   };
@@ -166,6 +167,7 @@ function ProductReceivingService(yearConfig, sheetConfig, repository, batchServi
     updated.updatedBy = audit.updatedBy;
 
     this.repo.update(id, toRaw(updated));
+    this.repo.updateGlobalCells(this.currentUser ? this.currentUser.email : null);
     _invalidateCache();
     return updated;
   };
@@ -176,6 +178,7 @@ function ProductReceivingService(yearConfig, sheetConfig, repository, batchServi
     var existing = toStandard(rawExisting);
     existing.statues = 'DELETED';
     this.repo.update(id, toRaw(existing));
+    this.repo.updateGlobalCells(this.currentUser ? this.currentUser.email : null);
     _invalidateCache();
     return { success: true, id: id };
   };

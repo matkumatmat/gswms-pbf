@@ -77,7 +77,7 @@ function ProductMasterService(repository) {
   this.create = function (data) {
     var newRec = this._prepareNewRecord(data);
     this.repo.create(newRec);
-    this.repo.touchGlobalCells();
+    this.repo.touchGlobalCells(this.currentUser ? this.currentUser.email : null); // <-- tambahkan
     _invalidateCache();
     return newRec;
   };
@@ -95,7 +95,7 @@ function ProductMasterService(repository) {
     newData.statues = 'ACTIVE';
     var updatedRec = this._prepareNewRecord(newData);
     this.repo.create(updatedRec);
-    this.repo.touchGlobalCells();
+    this.repo.touchGlobalCells(this.currentUser ? this.currentUser.email : null); // <-- tambahkan
     _invalidateCache();
     return updatedRec;
   };
@@ -105,7 +105,7 @@ function ProductMasterService(repository) {
     if (!existing) throw new Error('Product not found');
     existing.statues = 'DELETED';
     this.repo.update(id, existing);
-    this.repo.touchGlobalCells();
+    this.repo.touchGlobalCells(this.currentUser ? this.currentUser.email : null); // <-- tambahkan
     _invalidateCache();
     return { success: true, id: id };
   };

@@ -270,11 +270,17 @@ function doGet(e) {
     var action = params.action;
 
     // Jika tidak ada action, tampilkan halaman login dari source/clients/Login
+    // if (!action) {
+    //   return HtmlService.createHtmlOutputFromFile('source/clients/Login')
+    //     .setTitle('PBF Manage - Login')
+    //     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    // }
+    //test react
     if (!action) {
-      return HtmlService.createHtmlOutputFromFile('source/clients/Login')
-        .setTitle('PBF Manage - Login')
-        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-    }
+  return HtmlService.createHtmlOutputFromFile('source/clients/dist/index')
+    .setTitle('PBF Manage')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
 
     return ResponseBuilder.build(GetsRegistryV2.execute(action, params));
   } catch (err) {
@@ -406,6 +412,22 @@ function onChangeHandler(e) {
   }
 }
 
-function scheduledDailyStockSync() {
-  Logger.log('Daily stock sync executed');
+// moved to new method below
+// function scheduledDailyStockSync() {
+//   Logger.log('Daily stock sync executed');
+// }
+
+/**
+ * Time-triggered: rebuild OLAP_BATCH_DAILY setiap malam.
+ * Dipanggil oleh time trigger yang dipasang di SetupTriggers.
+ */
+function rebuildOlapBatchDaily() {
+  try {
+    Logger.log('[rebuildOlapBatchDaily] Starting rebuild...');
+    OlapBatchDailyFactory.getService().rebuild();
+    Logger.log('[rebuildOlapBatchDaily] Rebuild completed successfully.');
+  } catch(e) {
+    Logger.log('[rebuildOlapBatchDaily] FAILED: ' + e.message);
+    throw e;
+  }
 }

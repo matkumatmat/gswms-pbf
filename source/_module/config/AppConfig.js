@@ -92,9 +92,9 @@ const ApplicationConfig = {
             sheetName: "PMS_CUSTOMER",
             headerRow:5,
             startRow: 6,
-            globalLastSyncAtCell:"B1",
-            globalUpdatedAtCell: "B2",
-            globalUpdatedByCell: "B3",
+            globalLastSyncAtCell:"C1",
+            globalUpdatedAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: 
             {
               id: "ID",
@@ -130,9 +130,9 @@ const ApplicationConfig = {
           sheetName: "PMS_PRODUCT",
           headerRow:5,
           startRow: 6,
-          globalLastSyncAtCell:"B1",
-          globalUpdatedAtCell: "B2",
-          globalUpdatedByCell: "B3",
+          globalLastSyncAtCell:"C1",
+          globalUpdatedAtCell: "C2",
+          globalUpdatedByCell: "C3",
           fieldMapping: 
           {
             id: "ID",
@@ -158,9 +158,9 @@ const ApplicationConfig = {
           sheetName: "PMS_BATCH",
           headerRow:5,
           startRow: 6,
-          globalLastSyncAtCell:"B1",
-          globalUpdatedAtCell: "B2",
-          globalUpdatedByCell: "B3",
+          globalLastSyncAtCell:"C1",
+          globalUpdatedAtCell: "C2",
+          globalUpdatedByCell: "C3",
           fieldMapping: 
           {
             id: "ID",
@@ -202,9 +202,9 @@ const ApplicationConfig = {
             sheetName: "PMS_SEMB",
             headerRow:5,
             startRow: 6,
-            globalLastSyncAtCell:"B1",
-            globalUpdatedAtCell: "B2",
-            globalUpdatedByCell: "B3",
+            globalLastSyncAtCell:"C1",
+            globalUpdatedAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: 
             {
               id: "ID",
@@ -233,9 +233,9 @@ const ApplicationConfig = {
             sheetName: "PMS_PEMB",
             headerRow:5,
             startRow: 6,
-            globalLastSyncAtCell:"B1",
-            globalUpdatedAtCell: "B2",
-            globalUpdatedByCell: "B3",
+            globalLastSyncAtCell:"C1",
+            globalUpdatedAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: 
             {
               id: "ID",
@@ -266,9 +266,9 @@ const ApplicationConfig = {
             sheetName: "_USER",
             headerRow: 5,
             startRow:6,
-            globalLastSyncAtCell:"B1",
-            globalUpdatedAtCell: "B2",
-            globalUpdatedByCell: "B3", 
+            globalLastSyncAtCell:"C1",
+            globalUpdatedAtCell: "C2",
+            globalUpdatedByCell: "C3", 
             fieldMapping:           
             {
               id: "ID",
@@ -293,9 +293,9 @@ const ApplicationConfig = {
       headerRow:5,
       startRow: 6,
       //not yet implemented, need approach ->
-      globalLastSyncAtCell:"B1",
-      globalUpdatedAtCell: "B2",
-      globalUpdatedByCell: "B3",   
+      globalLastSyncAtCell:"C1",
+      globalUpdatedAtCell: "C2",
+      globalUpdatedByCell: "C3",   
       // -<
       configs: [{
         type: "ARCHIEVE",
@@ -336,9 +336,9 @@ const ApplicationConfig = {
             sheetName: "ALL_DIST",
             startRow: 6,
             headerRow:5,
-            globalUpdatedAtCell: "H1",
-            globalLastSyncAtCell: "H2",
-            globalUpdatedByCell: "H3",
+            globalUpdatedAtCell: "C1",
+            globalLastSyncAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: {
               id: "ID",
               createdAt: "CREATED AT",
@@ -369,9 +369,9 @@ const ApplicationConfig = {
             sheetName: "ALL_RCV",
             startRow: 6,
             headerRow:5,
-            globalUpdatedAtCell: "J1",
-            globalLastSyncAtCell: "J2",
-            globalUpdatedByCell: "J3",
+            globalUpdatedAtCell: "C1",
+            globalLastSyncAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: {
               id: "ID",
               createdAt: "CREATED AT",
@@ -406,9 +406,9 @@ const ApplicationConfig = {
             sheetName: "ALL_CONS",
             startRow: 6,
             headerRow:5,
-            globalUpdatedAtCell: "G1",
-            globalLastSyncAtCell: "G2",
-            globalUpdatedByCell: "G3",
+            globalUpdatedAtCell: "C1",
+            globalLastSyncAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: {
               id: "ID",
               createdAt: "CREATED AT",
@@ -423,9 +423,13 @@ const ApplicationConfig = {
               kodeBarang: "KODE BARANG",
               namaBarang: "NAMA BARANG",
               batch: "BATCH",
+              expireDate: "EXPIRE DATE",
               penerimaan: "PENERIMAAN",
-              distribusi: "DISTRIBUSI",
-              keterangan: "KETERANGAN"
+              saldoAwal: "SALDO AWAL",
+              pengiriman: "PENGIRIMAN",
+              pemakaian: "PEMAKAIAN",
+              pengembalian: "PENGEMBALIAN",
+              fti: "FTI",
             }
           },
           {
@@ -433,9 +437,9 @@ const ApplicationConfig = {
             sheetName: "ALL_SEMB",
             startRow: 6,
             headerRow:5,
-            globalUpdatedAtCell: "I1",
-            globalLastSyncAtCell: "I2",
-            globalUpdatedByCell: "I3",
+            globalUpdatedAtCell: "C1",
+            globalLastSyncAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: {
               id: "ID",
               createdAt: "CREATED AT",
@@ -460,9 +464,9 @@ const ApplicationConfig = {
             sheetName: "ALL_PEMB",
             startRow: 6,
             headerRow:5,
-            globalUpdatedAtCell: "I1",
-            globalLastSyncAtCell: "I2",
-            globalUpdatedByCell: "I3",
+            globalUpdatedAtCell: "C1",
+            globalLastSyncAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: {
               id: "ID",
               createdAt: "CREATED AT",
@@ -500,9 +504,9 @@ const ApplicationConfig = {
             sheetName: "ALL_DIST",
             startRow: 6,
             headerRow:5,
-            globalUpdatedAtCell: "H1",
-            globalLastSyncAtCell: "H2",
-            globalUpdatedByCell: "H3",
+            globalUpdatedAtCell: "C1",
+            globalLastSyncAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: {
               id: "ID",
               createdAt: "CREATED AT",
@@ -538,9 +542,9 @@ const ApplicationConfig = {
             sheetName: "ALL_RCV",
             startRow: 6,
             headerRow:5,
-            globalUpdatedAtCell: "J1",
-            globalLastSyncAtCell: "J2",
-            globalUpdatedByCell: "J3",
+            globalUpdatedAtCell: "C1",
+            globalLastSyncAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: {
               id: "ID",
               createdAt: "CREATED AT",
@@ -575,9 +579,9 @@ const ApplicationConfig = {
             sheetName: "ALL_CONS",
             startRow: 6,
             headerRow:5,
-            globalUpdatedAtCell: "G1",
-            globalLastSyncAtCell: "G2",
-            globalUpdatedByCell: "G3",
+            globalUpdatedAtCell: "C1",
+            globalLastSyncAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: {
               id: "ID",
               createdAt: "CREATED AT",
@@ -592,9 +596,13 @@ const ApplicationConfig = {
               kodeBarang: "KODE BARANG",
               namaBarang: "NAMA BARANG",
               batch: "BATCH",
+              expireDate: "EXPIRE DATE",
               penerimaan: "PENERIMAAN",
-              distribusi: "DISTRIBUSI",
-              keterangan: "KETERANGAN"
+              saldoAwal: "SALDO AWAL",
+              pengiriman: "PENGIRIMAN",
+              pemakaian: "PEMAKAIAN",
+              pengembalian: "PENGEMBALIAN",
+              fti: "FTI",
             }
           },
           {
@@ -602,9 +610,9 @@ const ApplicationConfig = {
             sheetName: "ALL_SEMB",
             startRow: 6,
             headerRow:5,
-            globalUpdatedAtCell: "I1",
-            globalLastSyncAtCell: "I2",
-            globalUpdatedByCell: "I3",
+            globalUpdatedAtCell: "C1",
+            globalLastSyncAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: {
               id: "ID",
               createdAt: "CREATED AT",
@@ -629,9 +637,9 @@ const ApplicationConfig = {
             sheetName: "ALL_PEMB",
             startRow: 6,
             headerRow:5,
-            globalUpdatedAtCell: "I1",
-            globalLastSyncAtCell: "I2",
-            globalUpdatedByCell: "I3",
+            globalUpdatedAtCell: "C1",
+            globalLastSyncAtCell: "C2",
+            globalUpdatedByCell: "C3",
             fieldMapping: {
               id: "ID",
               createdAt: "CREATED AT",
@@ -660,6 +668,109 @@ const ApplicationConfig = {
         ]
       }
     ],
+
+    olap: {
+      spreadsheetId:"1gj7a7zxc63cHYn5euAGFEioR07LRnxeqAicFPs5XqpQ",
+      spreadsheetName:"DATA OLAP",
+      configs:[
+        {
+          /**
+           * @ExpectedReponseLater batchJsonDetail:{
+           * productDetail:{
+           * product:{},
+           * batch:{}
+           * }
+           * }
+           * 
+           */
+
+          type: "OLAP_BATCH_DAILY",
+          sheetName: "OLAP_BATCH_DAILY",
+          headerRow: 5,
+          startRow: 6,
+          globalLastSyncAtCell:"C1",
+          globalUpdatedAtCell: "C2",
+          globalUpdatedByCell: "C3",
+          fieldMapping: {
+            id: "ID",
+            productId:"PRODUCT ID",
+            batchId: "BATCH ID",
+            kodeBarang: "KODE BARANG",
+            namaBarang: "NAMA BARANG",
+            batch: "BATCH",
+            mfgDate: "MFG DATE",
+            expireDate: "EXPIRE DATE",
+            penerimaan: "PENERIMAAN",
+            distribusi: "DISTRIBUSI",
+            stokAkhir: "STOK AKHIR",
+            batchJsonDetail:"_BATCH_JSON_DETAIL"
+          }
+        },
+        /**
+         * @Expectedresponselater consignmentJsonDetai{
+         * productDetail:{
+         * product:{},
+         * batch:{},
+         * historyConsignment:[{}]
+         * }
+         * }
+         */
+        {
+          type: "OLAP_TODAY_DIST",
+          sheetName: "OLAP_TODAY_DIST",
+          headerRow: 5,
+          startRow: 6,
+          globalLastSyncAtCell:"C1",
+          globalUpdatedAtCell: "C2",
+          globalUpdatedByCell: "C3",
+          fieldMapping: {
+            id: "ID",
+            customerId:"CUSTOMER ID",
+            productId:"PRODUCT ID",
+            batchId: "BATCH ID",
+            tanggal: "TANGGAL",
+            namaKonsumen: "NAMA KONSUMEN",
+            kotaCabang: "KOTA/CABANG",
+            kodeBarang: "KODE BARANG",
+            namaBarang: "NAMA BARANG",
+            batch: "BATCH",
+            mfgDate: "MFG DATE",
+            expireDate: "EXPIRE DATE",
+            penerimaan: "PENERIMAAN",
+            distribusi: "DISTRIBUSI",
+            distJsonDetail:"_DIST_JSON_DETAIL"
+          }
+        },
+        {
+          type: "OLAP_CONSIGNMENT",
+          sheetName: "OLAP_CONSIGNMENT",
+          headerRow: 5,
+          startRow: 6,
+          globalLastSyncAtCell:"C1",
+          globalUpdatedAtCell: "C2",
+          globalUpdatedByCell: "C3",
+          fieldMapping: {
+            id: "ID",
+            productId:"PRODUCT ID",
+            batchId: "BATCH ID",
+            namaKonsumen: "NAMA KONSUMEN",
+            kotaCabang: "KOTA/CABANG",
+            kodeBarang: "KODE BARANG",
+            namaBarang: "NAMA BARANG",
+            batch: "BATCH",
+            mfgDate: "MFG DATE",
+            expireDate: "EXPIRE DATE",
+            saldoAwal: "SALDO AWAL",
+            pengiriman: "PENGIRIMAN",
+            pemakaian: "PEMAKAIAN",
+            pengembalian: "PENGEMBALIAN",
+            fti: "FTI",
+            saldo: "SALDO",
+            distJsonDetail:"_DIST_JSON_DETAIL"
+          }
+        },
+      ]
+    }
 
     // move to new method: --- IGNORE ---
     // logging: {

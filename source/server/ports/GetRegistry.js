@@ -1,19 +1,93 @@
 const GetsRegistryV2 = (function() {
   const handlers = {
     // customer handlers (new)
+    /**
+     * @action getMasterCustomers
+     * @method GET
+     * @description Mendapatkan semua data customer, difilter berdasarkan statues (default mengecualikan DELETED).
+     * @param {Object} params
+     * @param {string} [params.statues=ACTIVE] - Filter status (contoh: ACTIVE, INACTIVE, DELETED)
+     * @returns {Array<Object>} data - Array objek customer sesuai schema `customerMasterTable`
+     *
+     * @config master.customer
+     * @spreadsheetId 1Rdb0Zx0py2ygOEDnNE1LHv4Xfdu0HHqEM2-sDmDruGM
+     * @spreadsheetName DATA MASTER
+     * @sheetName PMS_CUSTOMER
+     * @headerRow 5
+     * @startRow 6
+     * @globalLastSyncAtCell B1
+     * @globalUpdatedAtCell B2
+     * @globalUpdatedByCell B3
+     * @cacheGroup MASTER_1Rdb0Zx0py2ygOEDnNE1LHv4Xfdu0HHqEM2-sDmDruGM_PMS_CUSTOMER
+     * @fieldMapping
+     *   id              : ID
+     *   createdAt       : CREATED AT
+     *   updatedAt       : UPDATED AT
+     *   updatedBy       : UPDATED BY
+     *   statues         : STATUES
+     *   typeKonsumen    : TYPE KONSUMEN
+     *   namaKonsumen    : NAMA KONSUMEN
+     *   kotaCabang      : KOTA/CABANG
+     *   namaSingkat     : NAMA SINGKAT
+     *   slug            : SLUG
+     *   provinsi        : PROVINSI
+     *   kota            : KOTA
+     *   alamat          : ALAMAT
+     *   pic             : PIC
+     *   kontak          : KONTAK
+     *   maps            : MAPS
+     *   jarak           : JARAK (KM)
+     *   kategori        : KATEGORI
+     */    
     getMasterCustomers: function (params) {
       var service = CustomerMasterFactory.getService();
       var statues = params.statues || 'ACTIVE';
       return service.getAll(statues);
     },
+
+    /**
+     * @action getMasterCustomerById
+     * @method GET
+     * @description Mendapatkan satu data customer berdasarkan ID.
+     * @param {Object} params
+     * @param {string} params.id - UUID customer
+     * @returns {Object|null} - Objek customer sesuai schema `customerMasterDetail` atau null
+     *
+     * @config Sama seperti getMasterCustomers
+     */
     getMasterCustomerById: function (params) {
       var service = CustomerMasterFactory.getService();
       return service.getById(params.id);
     },
+
+    /**
+     * @action getMasterCustomersPaginated
+     * @method GET
+     * @description Mendapatkan data customer secara paginasi.
+     * @param {Object} params
+     * @param {number} params.page - Nomor halaman (1‑based)
+     * @param {number} params.limit - Jumlah item per halaman
+     * @param {string} [params.statues=ACTIVE]
+     * @returns {Object} { data, page, limit, total, totalPages }
+     *
+     * @config Sama seperti getMasterCustomers
+     */    
     getMasterCustomersPaginated: function (params) {
       var service = CustomerMasterFactory.getService();
       return service.getPaginated(params.page, params.limit, params.statues);
     },
+
+    /**
+     * @action getMasterCustomersByField
+     * @method GET
+     * @description Mencari customer berdasarkan field standar dan value.
+     * @param {Object} params
+     * @param {string} params.field - Nama field standar (camelCase sesuai fieldMapping)
+     * @param {string} params.value - Nilai yang dicari (case‑insensitive)
+     * @returns {Array<Object>} - Array objek customer sesuai schema
+     *
+     * @config Sama seperti getMasterCustomers
+     */    
     getMasterCustomersByField: function (params) {
       var service = CustomerMasterFactory.getService();
       return service.findByField(params.field, params.value);

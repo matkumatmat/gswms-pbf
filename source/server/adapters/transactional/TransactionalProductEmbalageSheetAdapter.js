@@ -86,14 +86,22 @@ function TransactionalProductEmbalageSheetAdapter(yearConfig, sheetConfig) {
     cache = null;
   }
 
-  function _updateGlobalCells() {
-    if (!globalCells) return;
-    const sheet = sheetReader.openSheet(spreadsheetId, sheetName);
-    const audit = AuditUtils.getAuditTrail();
-    if (globalCells.updatedAt) sheet.getRange(globalCells.updatedAt).setValue(audit.updatedAt);
-    if (globalCells.lastSync)  sheet.getRange(globalCells.lastSync).setValue(audit.updatedAt);
-    if (globalCells.updatedBy) sheet.getRange(globalCells.updatedBy).setValue(audit.updatedBy);
-  }
+  // function _updateGlobalCells() {
+  //   if (!globalCells) return;
+  //   const sheet = sheetReader.openSheet(spreadsheetId, sheetName);
+  //   const audit = AuditUtils.getAuditTrail();
+  //   if (globalCells.updatedAt) sheet.getRange(globalCells.updatedAt).setValue(audit.updatedAt);
+  //   if (globalCells.lastSync)  sheet.getRange(globalCells.lastSync).setValue(audit.updatedAt);
+  //   if (globalCells.updatedBy) sheet.getRange(globalCells.updatedBy).setValue(audit.updatedBy);
+  // }
+  this.updateGlobalCells = function(userEmail) {
+  if (!globalCells) return;
+  const sheet = sheetReader.openSheet(spreadsheetId, sheetName);
+  const audit = AuditUtils.getAuditTrail(userEmail);
+  if (globalCells.updatedAt) sheet.getRange(globalCells.updatedAt).setValue(audit.updatedAt);
+  if (globalCells.lastSync) sheet.getRange(globalCells.lastSync).setValue(audit.updatedAt);
+  if (globalCells.updatedBy) sheet.getRange(globalCells.updatedBy).setValue(audit.updatedBy);
+};
 
   // ─── PUBLIC API ───────────────────
   this.getPaginated = function(page, limit) {
@@ -154,7 +162,7 @@ function TransactionalProductEmbalageSheetAdapter(yearConfig, sheetConfig) {
     });
     sheet.appendRow(rowArray);
     _invalidateCache();
-    _updateGlobalCells();
+    // _updateGlobalCells();
   };
 
   this.updateById = function(id, dataObj) {
@@ -171,7 +179,7 @@ function TransactionalProductEmbalageSheetAdapter(yearConfig, sheetConfig) {
     });
     sheet.getRange(rowNumber, 1, 1, rowArray.length).setValues([rowArray]);
     _invalidateCache();
-    _updateGlobalCells();
+    // _updateGlobalCells();
   };
 
   this.deleteById = function(id) {

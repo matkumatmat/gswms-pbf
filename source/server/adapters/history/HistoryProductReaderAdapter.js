@@ -149,4 +149,23 @@ function ProductHistoryReaderAdapter() {
   }
   return _filterRecords(allRecords, fieldName, value);
   };
+
+  /**
+ * Mengambil semua record dari semua tahun dan semua sheet type yang relevan
+ * (ALL_DIST, ALL_RCV, ALL_CONS).
+ * @returns {Array<{year: string, sheetType: string, record: Object}>}
+ */
+this.getAll = function() {
+  var allYears = TransactionalFactory.getAllYears();
+  var allRecords = [];
+  for (var i = 0; i < allYears.length; i++) {
+    var year = allYears[i];
+    for (var j = 0; j < RELEVANT_SHEET_TYPES.length; j++) {
+      var sheetType = RELEVANT_SHEET_TYPES[j];
+      var records = _fetchAllFromSheet(year, sheetType);
+      allRecords = allRecords.concat(records);
+    }
+  }
+  return allRecords;
+};
 }

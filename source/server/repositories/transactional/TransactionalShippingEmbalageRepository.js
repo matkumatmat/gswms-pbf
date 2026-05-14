@@ -8,4 +8,7 @@ function TransactionalShippingEmbalageRepository(adapter) {
   this.create = function(data) { this.adapter.append(data); };
   this.update = function(id, data) { this.adapter.updateById(id, data); };
   this.delete = function(id) { this.adapter.deleteById(id); };
+  this.updateGlobalCells = function(userEmail) {
+  this.adapter.updateGlobalCells(userEmail);
+};
 }

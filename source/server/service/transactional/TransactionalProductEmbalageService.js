@@ -116,6 +116,7 @@ function TransactionalProductEmbalageService(yearConfig, sheetConfig, repository
   this.create = function(data) {
     var raw = this._prepareNewRecord(data);
     this.repo.create(raw);
+    this.repo.updateGlobalCells(this.currentUser ? this.currentUser.email : null);
     _invalidateCache();
     return this._toStandard(raw);
   };
@@ -123,12 +124,14 @@ function TransactionalProductEmbalageService(yearConfig, sheetConfig, repository
   this.update = function(id, data) {
     var raw = this._prepareUpdate(id, data);
     this.repo.update(id, raw);
+    this.repo.updateGlobalCells(this.currentUser ? this.currentUser.email : null);
     _invalidateCache();
     return this.getById(id);
   };
 
   this.delete = function(id) {
     this.repo.delete(id);
+    this.repo.updateGlobalCells(this.currentUser ? this.currentUser.email : null);
     _invalidateCache();
     return { success: true, id: id };
   };

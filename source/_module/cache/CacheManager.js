@@ -43,6 +43,11 @@ const CacheManager = (function() {
     } else if (config.domain === 'archive') {
       return 'ARCHIVE_' + config.spreadsheetId + '_' + config.sheetName;
     }
+      else if (config.domain === 'olap') {
+      return 'OLAP_' + config.spreadsheetId + '_' + config.sheetName;
+    }
+    
+    
     // fallback
     return config.spreadsheetId + '_' + config.sheetName;
   }

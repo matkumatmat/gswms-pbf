@@ -24,6 +24,7 @@
 
 function setupAllTriggers() {
   Triggers.removeAllTriggers();
+  Triggers.createTimeDrivenTrigger('rebuildOlapBatchDaily', { everyDays: 1, atHour: 2 });
   var all = TriggerRegistry.getAllTriggers();
   var seen = {};
   all.forEach(function(t) {

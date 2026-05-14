@@ -44,4 +44,8 @@ function TransactionalProductEmbalageRepository(adapter) {
    * @param {string} id
    */
   this.delete = function(id) { this.adapter.deleteById(id); };
+
+  this.updateGlobalCells = function(userEmail) {
+  this.adapter.updateGlobalCells(userEmail);
+};
 }
